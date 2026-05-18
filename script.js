@@ -275,7 +275,7 @@ function comprimirImagem(file, maxSize=800) {
 function mostrarBoot() {
   document.body.innerHTML = `
     <div class="boot-screen" id="boot-screen">
-      <img src="https://i.imgur.com/Nej39mf.jpeg"
+      <img src="bliss_jpg.jpg"
         class="boot-logo" alt="XP" onerror="this.style.display='none'">
       <div class="boot-titulo">Microsoft Windows XP</div>
       <div class="boot-sub">Professional</div>
