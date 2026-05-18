@@ -68,7 +68,7 @@ body { width:100vw; height:100vh; overflow:hidden; }
 ══════════════════════════════════════════ */
 .desktop {
   width:100vw; height:100vh;
-  background:url('https://i.imgur.com/Nej39mf.jpeg') center/cover;
+  background:url('bliss_jpg.jpg') center/cover;
   position:relative; overflow:hidden;
 }
 .icons { padding:14px 10px; display:flex; flex-direction:column; gap:8px; }
