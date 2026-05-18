@@ -359,7 +359,7 @@ function mostrarDesktop() {
           </div>
           <div class="start-menu-divider"></div>
           <div class="start-menu-col right">
-            <div class="menu-item-right">📁 Meu Perfil</div>
+            <div class="menu-item-right" onclick="abrirPerfil()">📁 Meu Perfil</div>
             <div class="menu-item-right">🏆 Ranking</div>
             <div class="menu-item-right">🎟️ ${escapeHtml(currentProfile.referral_code||'')}</div>
             <div class="menu-item-right" style="margin-top:auto;border-top:1px solid #7090c0;padding-top:8px" onclick="fazerLogout()">🔴 Sair</div>
@@ -739,8 +739,144 @@ function iniciarRealtimeFotolog(){
 }
 
 // ══════════════════════════════════════════
-//  WINAMP / IE placeholders
+//  MEU PERFIL
 // ══════════════════════════════════════════
+async function abrirPerfil() {
+  fecharMenu();
+  if(document.getElementById('janela-perfil-user')){trazerFrente('janela-perfil-user');return;}
+  zTop++;
+  const j=document.createElement('div');
+  j.className='xp-window'; j.id='janela-perfil-user';
+  j.style.cssText=`width:520px;height:560px;top:40px;left:120px;z-index:${zTop}`;
+
+  const avHtml=currentProfile.avatar_url
+    ?`<img src="${currentProfile.avatar_url}" class="up-avatar-img" alt="">`
+    :`<div class="up-avatar-inicial" style="background:${currentProfile.color}">${currentProfile.nickname.charAt(0).toUpperCase()}</div>`;
+
+  const xp   = currentProfile.xp   || 0;
+  const level= currentProfile.level || 'Rookie';
+  const ref  = currentProfile.referral_code || '';
+
+  // barra de progresso até próximo nível
+  const levels = [{name:'Rookie',min:0},{name:'Insider',min:100},{name:'Cult Member',min:300},{name:'Legend',min:700},{name:'Bad Idea Elite',min:1500}];
+  let proxMin=1500, atualMin=0;
+  for(let i=0;i<levels.length;i++){
+    if(xp>=levels[i].min) atualMin=levels[i].min;
+    if(levels[i].min>xp){ proxMin=levels[i].min; break; }
+  }
+  const pct = level==='Bad Idea Elite' ? 100 : Math.round((xp-atualMin)/(proxMin-atualMin)*100);
+
+  j.innerHTML=`
+    <div class="xp-titlebar">
+      <div class="xp-title-left">👤 Meu Perfil</div>
+      <div class="title-btns">
+        <div class="tbtn">_</div><div class="tbtn">□</div>
+        <div class="tbtn fechar" onclick="fecharJanela('janela-perfil-user')">✕</div>
+      </div>
+    </div>
+    <div class="up-body">
+
+      <!-- cabeçalho do perfil -->
+      <div class="up-header">
+        <div class="up-avatar-wrap">
+          ${avHtml}
+          <label class="up-avatar-edit" title="Trocar foto">
+            📷
+            <input type="file" accept="image/*" style="display:none" onchange="trocarAvatar(event)">
+          </label>
+        </div>
+        <div class="up-info">
+          <div class="up-nick" style="color:${currentProfile.color}">${escapeHtml(currentProfile.nickname)}</div>
+          <div class="up-level">⭐ ${xp} XP &nbsp;·&nbsp; ${escapeHtml(level)}</div>
+          <div class="up-barra-wrap">
+            <div class="up-barra-bg">
+              <div class="up-barra-fill" style="width:${pct}%"></div>
+            </div>
+            <div class="up-barra-txt">${level==='Bad Idea Elite'?'Nível máximo!':xp+' / '+proxMin+' XP para '+levels[levels.findIndex(l=>l.min===proxMin)].name}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- cupom -->
+      <div class="up-cupom-box">
+        <div class="up-cupom-label">🎟️ Seu cupom de indicação</div>
+        <div class="up-cupom-code">${escapeHtml(ref)}</div>
+        <div class="up-cupom-sub">10% de desconto em ingressos Bad Idea</div>
+        <button class="up-cupom-copy" onclick="copiarCupom('${escapeHtml(ref)}')">📋 Copiar cupom</button>
+      </div>
+
+      <!-- ranking -->
+      <div class="up-ranking-box">
+        <div class="up-ranking-title">🏆 Ranking geral</div>
+        <div class="up-ranking-lista" id="up-ranking-lista">
+          <div class="up-ranking-loading">carregando ranking...</div>
+        </div>
+      </div>
+
+    </div>`;
+
+  document.querySelector('.desktop').appendChild(j);
+  tornarArrastavel(j);
+  carregarRanking();
+}
+
+async function carregarRanking() {
+  const lista = document.getElementById('up-ranking-lista');
+  if(!lista) return;
+  const {data, error} = await supabaseClient
+    .from('profiles')
+    .select('nickname, color, avatar_url, xp, level')
+    .order('xp', {ascending:false})
+    .limit(10);
+  if(error||!data){lista.innerHTML='<div class="up-ranking-loading">Erro ao carregar.</div>';return;}
+  lista.innerHTML = data.map((p,i)=>{
+    const av = p.avatar_url
+      ?`<img src="${p.avatar_url}" class="up-rank-avatar" alt="">`
+      :`<div class="up-rank-avatar-inicial" style="background:${p.color||'#0000cc'}">${p.nickname.charAt(0).toUpperCase()}</div>`;
+    const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':`<span class="up-rank-num">${i+1}</span>`;
+    const mine  = p.nickname===currentProfile.nickname;
+    return `<div class="up-rank-row ${mine?'mine':''}">
+      <div class="up-rank-medal">${medal}</div>
+      ${av}
+      <div class="up-rank-info">
+        <span class="up-rank-nick" style="color:${p.color||'#0000cc'}">${escapeHtml(p.nickname)}</span>
+        <span class="up-rank-level">${escapeHtml(p.level||'Rookie')}</span>
+      </div>
+      <div class="up-rank-xp">⭐ ${p.xp||0}</div>
+    </div>`;
+  }).join('');
+}
+
+function copiarCupom(codigo) {
+  navigator.clipboard.writeText(codigo).then(()=>{
+    mostrarNotificacao('✅ Cupom copiado!');
+  }).catch(()=>{
+    mostrarNotificacao('Cupom: '+codigo);
+  });
+}
+
+async function trocarAvatar(event) {
+  const file = event.target.files[0]; if(!file) return;
+  mostrarNotificacao('Enviando foto...');
+  const c = await comprimirImagem(file, 200);
+  const nome = currentUser.id+'_avatar.jpg';
+  const {error:ue} = await supabaseClient.storage.from('avatars').upload(nome,c,{upsert:true,contentType:'image/jpeg'});
+  if(ue){mostrarNotificacao('Erro no upload.');return;}
+  const {data:ud} = supabaseClient.storage.from('avatars').getPublicUrl(nome);
+  const novaUrl = ud.publicUrl;
+  await supabaseClient.from('profiles').update({avatar_url:novaUrl}).eq('id',currentUser.id);
+  currentProfile.avatar_url = novaUrl;
+  // atualiza visual na janela de perfil
+  const imgEl = document.querySelector('.up-avatar-wrap .up-avatar-img');
+  const inicialEl = document.querySelector('.up-avatar-wrap .up-avatar-inicial');
+  if(imgEl) imgEl.src = novaUrl;
+  else if(inicialEl) {
+    inicialEl.outerHTML = `<img src="${novaUrl}" class="up-avatar-img" alt="">`;
+  }
+  mostrarNotificacao('✅ Foto atualizada!');
+}
+
+
 function abrirWinamp(){
   fecharMenu();
   tocarSomErro();
