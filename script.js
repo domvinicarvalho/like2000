@@ -152,7 +152,7 @@ const ICONS_SVG = {
 };
 
 function svgToDataUri(svgStr) {
-  return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgStr)));
+  return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgStr);
 }
 function iconTag(key, size = 48) {
   const svg = ICONS_SVG[key];
@@ -275,7 +275,7 @@ function comprimirImagem(file, maxSize=800) {
 function mostrarBoot() {
   document.body.innerHTML = `
     <div class="boot-screen" id="boot-screen">
-      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Windows_XP_bliss_%28trimmed%29.jpg/1200px-Windows_XP_bliss_%28trimmed%29.jpg"
+      <img src="https://i.imgur.com/Nej39mf.jpeg"
         class="boot-logo" alt="XP" onerror="this.style.display='none'">
       <div class="boot-titulo">Microsoft Windows XP</div>
       <div class="boot-sub">Professional</div>
