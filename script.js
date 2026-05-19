@@ -386,7 +386,9 @@ function atualizarRelogio() {
 // ── MENU ─────────────────────────────────────────────────────
 function toggleMenu(e) { e.stopPropagation(); const m=document.getElementById('start-menu'); if(!m)return; menuAberto=!menuAberto; m.classList.toggle('aberto',menuAberto); }
 function fecharMenu()   { const m=document.getElementById('start-menu'); if(m)m.classList.remove('aberto'); menuAberto=false; }
-function fecharMenuSeAberto(e) { if(menuAberto)fecharMenu(); }
+function fecharMenuSeAberto(e) { 
+  if(menuAberto && !e.target.closest('.start-menu')) fecharMenu(); 
+}
 async function fazerLogout() { await supabaseClient.auth.signOut(); location.reload(); }
 
 // ── DRAG MOUSE + TOUCH ────────────────────────────────────────
@@ -743,6 +745,7 @@ function iniciarRealtimeFotolog(){
 // ══════════════════════════════════════════
 async function abrirPerfil() {
   fecharMenu();
+  await new Promise(r => setTimeout(r, 50));
   if(document.getElementById('janela-perfil-user')){trazerFrente('janela-perfil-user');return;}
   zTop++;
   const j=document.createElement('div');
