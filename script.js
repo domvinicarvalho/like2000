@@ -863,15 +863,15 @@ async function trocarAvatar(event) {
   const {error:ue} = await supabaseClient.storage.from('avatars').upload(nome,c,{upsert:true,contentType:'image/jpeg'});
   if(ue){mostrarNotificacao('Erro no upload.');return;}
   const {data:ud} = supabaseClient.storage.from('avatars').getPublicUrl(nome);
-  const novaUrl = ud.publicUrl;
-  await supabaseClient.from('profiles').update({avatar_url:novaUrl}).eq('id',currentUser.id);
-  currentProfile.avatar_url = novaUrl;
+  // força cache bust com timestamp
+  const novaUrl = ud.publicUrl + '?t=' + Date.now();
+  await supabaseClient.from('profiles').update({avatar_url:ud.publicUrl}).eq('id',currentUser.id);
+  currentProfile.avatar_url = ud.publicUrl;
   // atualiza visual na janela de perfil
-  const imgEl = document.querySelector('.up-avatar-wrap .up-avatar-img');
-  const inicialEl = document.querySelector('.up-avatar-wrap .up-avatar-inicial');
-  if(imgEl) imgEl.src = novaUrl;
-  else if(inicialEl) {
-    inicialEl.outerHTML = `<img src="${novaUrl}" class="up-avatar-img" alt="">`;
+  const wrap = document.querySelector('.up-avatar-wrap');
+  if(wrap) {
+    const existing = wrap.querySelector('.up-avatar-img, .up-avatar-inicial');
+    if(existing) existing.outerHTML = `<img src="${novaUrl}" class="up-avatar-img" alt="">`;
   }
   mostrarNotificacao('✅ Foto atualizada!');
 }
