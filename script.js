@@ -15,6 +15,7 @@ let zTop            = 100;
 let unreadMessages  = 0;
 let docTitleBase    = 'LIKE 2000';
 let titleFlashInterval = null;
+let temporadaAtiva  = null;
 let fotologPostFile = null;
 
 // ── NÍVEIS ───────────────────────────────────────────────────
@@ -46,6 +47,40 @@ function tocarSomErro()    { tocarSom(SOM_XP_ERRO,    0.8); }
 function tocarSomStartup() { tocarSom(SOM_XP_STARTUP, 0.8); }
 
 // ── NOTIFICAÇÃO NA ABA ───────────────────────────────────────
+
+// ── TEMPORADA ────────────────────────────────────────────────
+async function carregarTemporada() {
+  try {
+    const { data, error } = await supabaseClient
+      .from('seasons')
+      .select('*')
+      .eq('active', true)
+      .single();
+    
+    if (error || !data) return null;
+
+    const fim = new Date(data.end_date);
+    const hoje = new Date();
+    const diff = fim - hoje;
+    const dias = Math.ceil(diff / (1000 * 60 * 60 * 24));
+    
+    temporadaAtiva = {
+      nome: data.name,
+      id: data.id,
+      restante: dias > 0 ? dias : 0
+    };
+    return temporadaAtiva;
+  } catch (e) {
+    return null;
+  }
+}
+
+function getTemporadaHtml() {
+  if (!temporadaAtiva) return '';
+  return `<div style="font-size:10px; color:#ffcc00; margin-top:2px;">
+    🏆 ${escapeHtml(temporadaAtiva.nome)} (${temporadaAtiva.restante} dias restantes)
+  </div>`;
+}
 function iniciarFlashAba(count) {
   if (titleFlashInterval) return;
   titleFlashInterval = setInterval(() => {
@@ -147,6 +182,19 @@ const ICONS_SVG = {
     <line x1="7" y1="24" x2="41" y2="24"
       stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
     <ellipse cx="19" cy="17" rx="6" ry="3.5"
+      fill="rgba(255,255,255,0.25)" transform="rotate(-20 19 17)"/>
+  </svg>`,
+
+  // Amigos — Ícone estilo "Contatos" do XP
+  amigos: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="18" cy="16" r="7" fill="#4A90E8"/>
+    <path d="M6,38 C6,28 30,28 30,38 L30,44 L6,44 Z" fill="#1464D8"/>
+    <circle cx="34" cy="19" r="5" fill="#5C8FD6"/>
+    <path d="M26,35 C26,30 42,30 42,35 L42,40 L26,40 Z" fill="#3A6EC8"/>
+    <rect x="32" y="8" width="10" height="2" fill="#FFCC00"/>
+    <rect x="36" y="4" width="2" height="10" fill="#FFCC00"/>
+    <ellipse cx="15" cy="13" rx="2" ry="1.5"
+      fill="rgba(255,255,255,0.25)" transform="rotate(-20 15 13)"/>
       fill="rgba(255,255,255,0.25)" transform="rotate(-20 19 17)"/>
   </svg>`,
 };
@@ -359,6 +407,7 @@ async function checarLoginDiario() {
 async function mostrarDesktop() {
   tocarSomStartup();
   await checarLoginDiario();
+  await carregarTemporada();
 
   document.body.innerHTML = `
     <div class="desktop" onclick="fecharMenuSeAberto(event)">
@@ -367,6 +416,7 @@ async function mostrarDesktop() {
         <div class="icon" onclick="trazerFrente('janela-fotolog');abrirFotolog()">${iconTag('fotolog')}<span>Fotolog</span></div>
         <div class="icon" onclick="trazerFrente('janela-winamp');abrirWinamp()">${iconTag('winamp')}<span>Winamp</span></div>
         <div class="icon" onclick="trazerFrente('janela-ie');abrirIE()">${iconTag('ie')}<span>Internet Explorer</span></div>
+        <div class="icon" onclick="trazerFrente('janela-amigos');abrirAmigos()">${iconTag('amigos')}<span>Meus Amigos</span></div>
       </div>
 
       <div class="start-menu" id="start-menu">
@@ -379,6 +429,7 @@ async function mostrarDesktop() {
           <div>
             <div class="start-menu-nick" style="color:${currentProfile.color}">${escapeHtml(currentProfile.nickname)}</div>
             <div style="font-size:11px;color:#aac4ff">⭐ ${currentProfile.xp||0} XP · ${currentProfile.level||'Rookie'}</div>
+            ${getTemporadaHtml()}
           </div>
         </div>
         <div class="start-menu-body">
@@ -799,6 +850,154 @@ function iniciarRealtimeFotolog(){
 }
 
 // ══════════════════════════════════════════
+//  AMIGOS
+// ══════════════════════════════════════════
+async function abrirAmigos() {
+  fecharMenu();
+  if(document.getElementById('janela-amigos')){trazerFrente('janela-amigos');return;}
+  
+  const j = criarJanela('janela-amigos', 'Meus Amigos', 'amigos', 400, 450, 100, 200, `
+    <div style="display:flex; flex-direction:column; height:100%; background:#f0f0e8;">
+      <div style="padding:10px; border-bottom:1px solid #c0b090; background:#e8e0d0;">
+        <div style="font-size:11px; font-weight:bold; margin-bottom:5px;">Adicionar Amigo</div>
+        <div style="display:flex; gap:5px;">
+          <input type="text" id="busca-amigo-nick" placeholder="Digite o nickname..." style="flex:1; padding:4px; font-size:12px; border:1px solid #7f9db9;">
+          <button onclick="buscarAmigo()" style="padding:4px 8px; font-size:11px; cursor:pointer;">Buscar</button>
+        </div>
+        <div id="resultado-busca-amigo" style="margin-top:8px;"></div>
+      </div>
+      <div style="flex:1; overflow-y:auto; padding:10px;">
+        <div style="font-size:11px; font-weight:bold; margin-bottom:8px; color:#555;">Lista de Amigos</div>
+        <div id="lista-amigos-container" style="display:flex; flex-direction:column; gap:6px;">
+          <div style="font-size:11px; color:#888; text-align:center; padding:20px;">Carregando amigos...</div>
+        </div>
+      </div>
+    </div>
+  `);
+  if(j) carregarAmigos();
+}
+
+async function buscarAmigo() {
+  const nick = document.getElementById('busca-amigo-nick').value.trim();
+  const res = document.getElementById('resultado-busca-amigo');
+  if(!nick || nick.toLowerCase() === currentProfile.nickname.toLowerCase()){
+    res.innerHTML = '<div style="font-size:11px; color:red;">Nickname inválido.</div>';
+    return;
+  }
+  res.innerHTML = '<div style="font-size:11px; color:#666;">Buscando...</div>';
+  
+  const { data, error } = await supabaseClient.from('profiles').select('id, nickname, avatar_url, color').ilike('nickname', nick).single();
+  
+  if(error || !data) {
+    res.innerHTML = '<div style="font-size:11px; color:red;">Usuário não encontrado.</div>';
+    return;
+  }
+
+  const av = data.avatar_url 
+    ? `<img src="${data.avatar_url}" style="width:24px; height:24px; border-radius:3px; object-fit:cover;">`
+    : `<div style="width:24px; height:24px; border-radius:3px; background:${data.color}; color:white; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:bold;">${data.nickname[0].toUpperCase()}</div>`;
+
+  res.innerHTML = `
+    <div style="display:flex; align-items:center; gap:8px; padding:6px; background:white; border:1px solid #c0b090; border-radius:4px;">
+      ${av}
+      <div style="flex:1; font-size:12px; font-weight:bold; color:${data.color}">${escapeHtml(data.nickname)}</div>
+      <button onclick="enviarSolicitacaoAmigo('${data.id}')" style="padding:2px 8px; font-size:10px; cursor:pointer; background:#5aad5a; color:white; border:none; border-radius:2px;">Adicionar</button>
+    </div>
+  `;
+}
+
+async function enviarSolicitacaoAmigo(targetId) {
+  const res = document.getElementById('resultado-busca-amigo');
+  try {
+    const { data, error } = await supabaseClient.functions.invoke('friendship-request', {
+      body: { target_user_id: targetId, action: 'send' }
+    });
+    
+    if(error) {
+      const errJson = await error.context.json();
+      mostrarNotificacao(errJson.error || 'Erro ao enviar solicitação.');
+    } else {
+      mostrarNotificacao('✅ Solicitação enviada!');
+      res.innerHTML = '';
+      document.getElementById('busca-amigo-nick').value = '';
+    }
+  } catch (e) {
+    mostrarNotificacao('Erro na conexão.');
+  }
+}
+
+async function carregarAmigos() {
+  const container = document.getElementById('lista-amigos-container');
+  if(!container) return;
+
+  // Busca amizades aceitas (user_id ou friend_id pode ser o usuário logado)
+  const { data: friendships, error } = await supabaseClient
+    .from('friendships')
+    .select(`
+      id,
+      user_id,
+      friend_id,
+      status,
+      profiles_user:user_id (id, nickname, avatar_url, color, xp, level),
+      profiles_friend:friend_id (id, nickname, avatar_url, color, xp, level)
+    `)
+    .or(`user_id.eq.${currentUser.id},friend_id.eq.${currentUser.id}`)
+    .eq('status', 'accepted');
+
+  if(error) {
+    container.innerHTML = '<div style="font-size:11px; color:red; text-align:center;">Erro ao carregar lista.</div>';
+    return;
+  }
+
+  if(!friendships || friendships.length === 0) {
+    container.innerHTML = '<div style="font-size:11px; color:#888; text-align:center; padding:20px;">Você ainda não tem amigos adicionados.</div>';
+    return;
+  }
+
+  container.innerHTML = friendships.map(f => {
+    const amigo = f.user_id === currentUser.id ? f.profiles_friend : f.profiles_user;
+    const av = amigo.avatar_url 
+      ? `<img src="${amigo.avatar_url}" style="width:32px; height:32px; border-radius:3px; object-fit:cover; border:1px solid #c0d0e8;">`
+      : `<div style="width:32px; height:32px; border-radius:3px; background:${amigo.color}; color:white; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:bold; border:1px solid #c0d0e8;">${amigo.nickname[0].toUpperCase()}</div>`;
+    
+    return `
+      <div style="display:flex; align-items:center; gap:10px; padding:8px; background:white; border:1px solid #d0e0f4; border-radius:4px; box-shadow:1px 1px 2px rgba(0,0,0,0.05);">
+        ${av}
+        <div style="flex:1;">
+          <div style="font-size:12px; font-weight:bold; color:${amigo.color}">${escapeHtml(amigo.nickname)}</div>
+          <div style="font-size:10px; color:#888;">Nível: ${amigo.level} · ⭐ ${amigo.xp}</div>
+        </div>
+        <div style="font-size:14px; cursor:pointer; opacity:0.6;" title="Ver perfil" onclick="abrirPerfilAlheio('${amigo.id}')">👤</div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function abrirPerfilAlheio(userId) {
+  // Mock de visualização de perfil de terceiros para manter consistência
+  const { data } = await supabaseClient.from('profiles').select('*').eq('id', userId).single();
+  if(!data) return;
+  
+  const idJ = 'janela-perfil-' + userId;
+  const av = data.avatar_url 
+    ? `<img src="${data.avatar_url}" style="width:64px; height:64px; border-radius:6px; border:2px solid #fff;">`
+    : `<div style="width:64px; height:64px; border-radius:6px; background:${data.color}; color:white; display:flex; align-items:center; justify-content:center; font-size:28px; font-weight:bold; border:2px solid #fff;">${data.nickname[0].toUpperCase()}</div>`;
+
+  criarJanela(idJ, 'Perfil de ' + data.nickname, 'amigos', 300, 200, 150, 250, `
+    <div style="padding:20px; background:#f0f0e8; height:100%; display:flex; flex-direction:column; align-items:center; text-align:center; gap:10px;">
+      ${av}
+      <div>
+        <div style="font-size:16px; font-weight:bold; color:${data.color}">${escapeHtml(data.nickname)}</div>
+        <div style="font-size:12px; color:#666;">⭐ ${data.xp} XP · ${data.level}</div>
+      </div>
+      <div style="font-size:10px; background:rgba(0,0,0,0.05); padding:4px 10px; border-radius:10px; color:#888;">
+        Membro desde ${new Date(data.created_at).toLocaleDateString()}
+      </div>
+    </div>
+  `);
+}
+
+// ══════════════════════════════════════════
 //  MEU PERFIL
 // ══════════════════════════════════════════
 async function abrirPerfil() {
@@ -866,6 +1065,15 @@ async function abrirPerfil() {
         <button class="up-cupom-copy" onclick="copiarCupom('${escapeHtml(ref)}')">📋 Copiar cupom</button>
       </div>
 
+      <!-- Ranking da Temporada -->
+      ${temporadaAtiva ? `
+      <div class="up-ranking-box" style="border-color:#4a90e8;">
+        <div class="up-ranking-title" style="background:linear-gradient(to bottom,#4a90e8,#1464d8); color:white;">🏆 Ranking: ${escapeHtml(temporadaAtiva.nome)} (Top 10)</div>
+        <div class="up-ranking-lista" id="up-ranking-temporada">
+          <div class="up-ranking-loading">carregando temporada...</div>
+        </div>
+      </div>` : ''}
+
       <!-- ranking -->
       <div class="up-ranking-box">
         <div class="up-ranking-title">🏆 Ranking geral</div>
@@ -879,6 +1087,7 @@ async function abrirPerfil() {
   document.querySelector('.desktop').appendChild(j);
   tornarArrastavel(j);
   carregarRanking();
+  if(temporadaAtiva) carregarRankingTemporada();
 }
 
 async function carregarRanking() {
@@ -904,6 +1113,40 @@ async function carregarRanking() {
         <span class="up-rank-level">${escapeHtml(p.level||'Rookie')}</span>
       </div>
       <div class="up-rank-xp">⭐ ${p.xp||0}</div>
+    </div>`;
+  }).join('');
+}
+
+async function carregarRankingTemporada() {
+  const lista = document.getElementById('up-ranking-temporada');
+  if(!lista || !temporadaAtiva) return;
+  
+  // Tenta buscar da tabela de snapshots da temporada, se não existir, mostra os top globais
+  const {data, error} = await supabaseClient
+    .from('season_snapshots')
+    .select('nickname, color, avatar_url, xp, level')
+    .eq('season_id', temporadaAtiva.id)
+    .order('xp', {ascending:false})
+    .limit(10);
+
+  if(error || !data || data.length === 0){
+    lista.innerHTML = '<div class="up-ranking-loading" style="font-style:italic;">Nenhum registro nesta temporada ainda.</div>';
+    return;
+  }
+  
+  lista.innerHTML = data.map((p,i)=>{
+    const av = p.avatar_url
+      ?`<img src="${p.avatar_url}" class="up-rank-avatar" alt="">`
+      :`<div class="up-rank-avatar-inicial" style="background:${p.color||'#0000cc'}">${p.nickname.charAt(0).toUpperCase()}</div>`;
+    const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':`<span class="up-rank-num">${i+1}</span>`;
+    return `<div class="up-rank-row">
+      <div class="up-rank-medal">${medal}</div>
+      ${av}
+      <div class="up-rank-info">
+        <span class="up-rank-nick" style="color:${p.color||'#0000cc'}">${escapeHtml(p.nickname)}</span>
+        <span class="up-rank-level">${escapeHtml(p.level||'Rookie')}</span>
+      </div>
+      <div class="up-rank-xp" style="color:#1464d8;">⭐ ${p.xp||0}</div>
     </div>`;
   }).join('');
 }
