@@ -317,10 +317,48 @@ function mostrarNotificacao(txt) {
   setTimeout(()=>{ n.classList.remove('visivel'); setTimeout(()=>n.remove(),400); },3000);
 }
 
+async function checarLoginDiario() {
+  if (!currentUser) return;
+
+  // 1. Busca os dados atuais de login do banco de dados
+  const { data, error } = await supabaseClient
+    .from('profiles')
+    .select('last_login, streak')
+    .eq('id', currentUser.id)
+    .single();
+
+  if (error || !data) return;
+
+  const agora = new Date();
+  const hojeStr = agora.toISOString().split('T')[0];
+  const ultimoLoginStr = data.last_login ? data.last_login.split('T')[0] : null;
+
+  // 2. Verifica se é um novo dia de acesso
+  if (ultimoLoginStr !== hojeStr) {
+    let novoStreak = 1;
+    if (ultimoLoginStr) {
+      const ontem = new Date();
+      ontem.setDate(agora.getDate() - 1);
+      const ontemStr = ontem.toISOString().split('T')[0];
+      if (ultimoLoginStr === ontemStr) novoStreak = (data.streak || 0) + 1;
+    }
+
+    // 3. Calcula XP baseado no streak
+    let xpGanho = 3;
+    if (novoStreak > 30) xpGanho = 24;
+    else if (novoStreak > 20) xpGanho = 12;
+    else if (novoStreak > 10) xpGanho = 6;
+
+    // 4. Atualiza banco de dados e 5. Adiciona XP via adicionarXP
+    await supabaseClient.from('profiles').update({ last_login: agora.toISOString(), streak: novoStreak }).eq('id', currentUser.id);
+    await adicionarXP(xpGanho, `Login diário (Combo ${novoStreak} dias)`);
+  }
+}
+
 // ── DESKTOP ───────────────────────────────────────────────────
-function mostrarDesktop() {
+async function mostrarDesktop() {
   tocarSomStartup();
-  checarLoginDiario();
+  await checarLoginDiario();
 
   document.body.innerHTML = `
     <div class="desktop" onclick="fecharMenuSeAberto(event)">
