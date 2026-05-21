@@ -902,8 +902,34 @@ async function trocarAvatar(event) {
 
 function abrirWinamp(){
   fecharMenu();
-  tocarSomErro();
-  criarJanela('janela-winamp','Winamp','winamp',320,100,200,300,`<div style="padding:20px;text-align:center;font-size:13px;color:#555">🎵 Rádio online — em breve!</div>`);
+  criarJanela('janela-ie','Internet Explorer','ie',500,200,220,200,`
+    <div style="padding:15px; font-size:12px; color:#333;">
+      <div style="background:#f0f0f0; padding:10px; border:1px solid #ccc; margin-bottom:10px;">
+        <strong>Bad Idea Events</strong> - Compre seu ingresso antecipado!
+      </div>
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <label>Código do Cupom:</label>
+        <div style="display:flex; gap:5px;">
+          <input type="text" id="ie-coupon" placeholder="CUPOM10" style="flex:1; padding:4px; border:1px solid #7f9db9;">
+          <button onclick="comprarIngresso()" style="padding:4px 10px; cursor:pointer;">Comprar (+200 XP)</button>
+        </div>
+        <div id="ie-msg" style="font-weight:bold; margin-top:5px;"></div>
+      </div>
+    </div>
+  `);
+}
+
+async function comprarIngresso() {
+  const input = document.getElementById('ie-coupon');
+  const msg = document.getElementById('ie-msg');
+  if(!input.value.trim()) { mostrarNotificacao('Digite um cupom!'); return; }
+  msg.style.color = 'green';
+  msg.textContent = 'Processando compra...';
+  setTimeout(async () => {
+    await adicionarXP(200, 'compra de ingresso');
+    msg.textContent = '✅ Compra realizada! +200 XP';
+    input.value = '';
+  }, 1200);
 }
 function abrirIE(){
   fecharMenu();
