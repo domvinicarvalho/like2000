@@ -320,6 +320,7 @@ function mostrarNotificacao(txt) {
 // ── DESKTOP ───────────────────────────────────────────────────
 function mostrarDesktop() {
   tocarSomStartup();
+  checarLoginDiario();
 
   document.body.innerHTML = `
     <div class="desktop" onclick="fecharMenuSeAberto(event)">
@@ -636,7 +637,7 @@ async function publicarPost() {
     image_url:imageUrl, caption:caption, xp_awarded:true
   }]).select().single();
   if(!error&&postData){
-    await adicionarXP(20,'post no Fotolog');
+    await adicionarXP(10,'post no Fotolog');
     const feed=document.getElementById('fotolog-feed');
     if(feed){
       const semPosts=feed.querySelector('.fl-loading'); if(semPosts)semPosts.remove();
@@ -701,7 +702,7 @@ async function toggleLike(postId,btn){
   }else{
     await supabaseClient.from('likes').insert([{post_id:postId,user_id:currentUser.id}]);
     btn.classList.add('liked'); btn.innerHTML=`❤️ <span class="like-count">${cnt+1}</span>`;
-    await adicionarXP(2,'curtiu um post');
+    // O Fotolog não tinha curtida originalmente, XP removido.
   }
 }
 function toggleComentarios(postId){
@@ -712,12 +713,31 @@ function toggleComentarios(postId){
 async function enviarComentario(postId){
   const input=document.getElementById('comment-input-'+postId);
   const text=input.value.trim(); if(!text)return; input.value='';
-  const {error}=await supabaseClient.from('comments').insert([{
+
+  const { data: post } = await supabaseClient.from('posts').select('user_id').eq('id', postId).single();
+
+  const { data: commentData, error } = await supabaseClient.from('comments').insert([{
     post_id:postId, user_id:currentUser.id, nickname:currentProfile.nickname,
     avatar_url:currentProfile.avatar_url, color:currentProfile.color, content:text, xp_awarded:true
-  }]);
-  if(!error){
-    await adicionarXP(5,'comentou no Fotolog');
+  }]).select().single();
+
+  if(!error && commentData){
+    if (post && post.user_id !== currentUser.id) {
+      const { count: commentsOnPost } = await supabaseClient.from('comments')
+        .select('*', { count: 'exact', head: true }).eq('post_id', postId).eq('user_id', currentUser.id);
+      
+      if (commentsOnPost === 1) {
+        const hoje = new Date().toISOString().split('T')[0];
+        const { count: totalHoje } = await supabaseClient.from('comments')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', currentUser.id).gte('created_at', hoje);
+        
+        if (totalHoje <= 10) { // Limite de 50 XP (10 comentários de 5 XP cada)
+          await adicionarXP(5, 'comentou no Fotolog');
+        }
+      }
+    }
+
     const lista=document.getElementById('comments-list-'+postId);
     if(lista){
       const d=document.createElement('div'); d.className='fl-comment';
