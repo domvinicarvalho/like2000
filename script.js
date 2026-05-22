@@ -56,7 +56,7 @@ async function carregarTemporada() {
     const { data, error } = await supabaseClient
       .from('seasons')
       .select('*')
-      .eq('active', true)
+      .eq('status', 'active')
       .single();
     
     if (error || !data) return null;
@@ -879,6 +879,16 @@ function iniciarRealtimeFotolog(){
       const semPosts=feed.querySelector('.fl-loading'); if(semPosts)semPosts.remove();
       feed.insertBefore(criarCardPost(p.new,0,false,[]),feed.firstChild);
     }).subscribe();
+}
+
+function iniciarRealtimeAmizades() {
+  if (friendshipRealtime) supabaseClient.removeChannel(friendshipRealtime);
+  friendshipRealtime = supabaseClient.channel('friendship-updates')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'friendships' }, async () => {
+      await carregarCacheAmizades();
+      if (document.getElementById('janela-amigos')) carregarAmigos();
+    })
+    .subscribe();
 }
 
 // ══════════════════════════════════════════
