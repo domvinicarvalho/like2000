@@ -17,6 +17,7 @@ let docTitleBase    = 'LIKE 2000';
 let titleFlashInterval = null;
 let temporadaAtiva  = null;
 let fotologPostFile = null;
+let cacheAmizades   = new Map(); // target_id -> status
 
 // ── NÍVEIS ───────────────────────────────────────────────────
 const LEVELS = [
@@ -403,11 +404,39 @@ async function checarLoginDiario() {
   }
 }
 
+// ── AMIZADES CACHE ───────────────────────────────────────────
+async function carregarCacheAmizades() {
+  try {
+    const { data, error } = await supabaseClient
+      .from('friendships')
+      .select('user_id, friend_id, status')
+      .or(`user_id.eq.${currentUser.id},friend_id.eq.${currentUser.id}`);
+    
+    if (error) return;
+    
+    cacheAmizades.clear();
+    data.forEach(f => {
+      const targetId = f.user_id === currentUser.id ? f.friend_id : f.user_id;
+      cacheAmizades.set(targetId, f.status);
+    });
+  } catch (e) {}
+}
+
+function getBotaoAmizade(targetUserId) {
+  if (!targetUserId || targetUserId === currentUser.id) return '';
+  const status = cacheAmizades.get(targetUserId);
+  if (status === 'accepted') return `<span title="Já são amigos" style="cursor:default;margin-left:5px;font-size:10px;opacity:0.7">✓</span>`;
+  if (status === 'pending') return `<span title="Solicitação pendente" style="cursor:default;margin-left:5px;font-size:10px;opacity:0.7">⏳</span>`;
+  if (status === 'removed') return ''; // Oculta se removido para evitar spam
+  return `<span title="Adicionar amigo" style="cursor:pointer;margin-left:5px;color:#5aad5a;font-weight:bold;font-size:12px" onclick="enviarSolicitacaoAmigoRapida('${targetUserId}', this)">+</span>`;
+}
+
 // ── DESKTOP ───────────────────────────────────────────────────
 async function mostrarDesktop() {
   tocarSomStartup();
   await checarLoginDiario();
   await carregarTemporada();
+  await carregarCacheAmizades();
 
   document.body.innerHTML = `
     <div class="desktop" onclick="fecharMenuSeAberto(event)">
@@ -450,6 +479,7 @@ async function mostrarDesktop() {
           <div class="start-menu-divider"></div>
           <div class="start-menu-col right">
             <div class="menu-item-right" onclick="abrirPerfil()">📁 Meu Perfil</div>
+            <div class="menu-item-right" onclick="abrirAmigos()">👥 Meus Amigos</div>
             <div class="menu-item-right">🏆 Ranking</div>
             <div class="menu-item-right">🎟️ ${escapeHtml(currentProfile.referral_code||'')}</div>
             <div class="menu-item-right" style="margin-top:auto;border-top:1px solid #7090c0;padding-top:8px" onclick="fazerLogout()">🔴 Sair</div>
@@ -640,7 +670,7 @@ function addMessage(msg) {
     :`<div class="msg-avatar-inicial" style="background:${cor}">${msg.nickname.charAt(0).toUpperCase()}</div>`;
   const p=document.createElement('div');
   p.className=mine?'msg-bloco minha':'msg-bloco';
-  p.innerHTML=`${av}<div class="msg-conteudo"><span class="nick" style="color:${cor}">${escapeHtml(msg.nickname)}</span><span class="msg-text">${escapeHtml(msg.message)}</span></div>`;
+  p.innerHTML=`${av}<div class="msg-conteudo"><span class="nick" style="color:${cor}">${escapeHtml(msg.nickname)}${getBotaoAmizade(msg.user_id)}</span><span class="msg-text">${escapeHtml(msg.message)}</span></div>`;
   c.appendChild(p); c.scrollTop=c.scrollHeight;
 }
 function inserirEmote(e){const i=document.getElementById('messageInput');if(!i)return;i.value+=e;i.focus();}
@@ -764,7 +794,7 @@ function criarCardPost(post,likes,jaGostei,comments){
   const dt=new Date(post.created_at).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
   const comHtml=comments.map(c=>`<div class="fl-comment"><span class="fl-comment-nick" style="color:${c.color||'#0000cc'}">${escapeHtml(c.nickname)}:</span> <span>${escapeHtml(c.content)}</span></div>`).join('');
   card.innerHTML=`
-    <div class="fl-card-header">${av}<div><div class="fl-card-nick" style="color:${post.color||'#0000cc'}">${escapeHtml(post.nickname)}</div><div class="fl-card-data">${dt}</div></div></div>
+    <div class="fl-card-header">${av}<div><div class="fl-card-nick" style="color:${post.color||'#0000cc'}">${escapeHtml(post.nickname)}${getBotaoAmizade(post.user_id)}</div><div class="fl-card-data">${dt}</div></div></div>
     ${post.image_url?`<img src="${post.image_url}" class="fl-card-img" alt="">`:''}
     ${post.caption?`<div class="fl-card-caption">${escapeHtml(post.caption)}</div>`:''}
     <div class="fl-card-actions">
@@ -924,6 +954,23 @@ async function enviarSolicitacaoAmigo(targetId) {
   } catch (e) {
     mostrarNotificacao('Erro na conexão.');
   }
+}
+
+async function enviarSolicitacaoAmigoRapida(targetId, el) {
+  try {
+    const { data, error } = await supabaseClient.functions.invoke('friendship-request', {
+      body: { target_user_id: targetId, action: 'send' }
+    });
+    
+    if(error) {
+      const errJson = await error.context.json();
+      mostrarNotificacao(errJson.error || 'Erro ao enviar solicitação.');
+    } else {
+      mostrarNotificacao('✅ Solicitação enviada!');
+      cacheAmizades.set(targetId, 'pending');
+      el.outerHTML = `<span title="Solicitação pendente" style="cursor:default;margin-left:5px;font-size:10px;opacity:0.7">⏳</span>`;
+    }
+  } catch (e) { mostrarNotificacao('Erro na conexão.'); }
 }
 
 async function carregarAmigos() {
