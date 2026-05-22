@@ -382,6 +382,36 @@ body { width:100vw; height:100vh; overflow:hidden; }
 }
 .notificacao.visivel { opacity:1; transform:translateY(0); }
 
+/* Popup estilo MSN */
+.msn-popup {
+  position: fixed;
+  bottom: 40px;
+  right: 10px;
+  width: 220px;
+  background: linear-gradient(to bottom, #ffffff 0%, #e3e8f1 100%);
+  border: 1px solid #716f64;
+  border-radius: 6px 6px 0 0;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  z-index: 10001;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: msnSlideUp 0.5s ease-out;
+}
+@keyframes msnSlideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.msn-popup-header { font-size: 11px; font-weight: bold; color: #003399; display: flex; align-items: center; gap: 5px; }
+.msn-popup-body { font-size: 12px; color: #333; }
+.msn-popup-btns { display: flex; gap: 5px; margin-top: 5px; }
+.msn-popup-btns button {
+  flex: 1; padding: 3px; font-size: 10px; cursor: pointer;
+  background: #f0f0f0; border: 1px solid #999; border-radius: 3px;
+}
+.msn-popup-btns button.accept { background: #e1f5fe; border-color: #039be5; font-weight: bold; }
+
 /* ══════════════════════════════════════════
    MOBILE
 ══════════════════════════════════════════ */

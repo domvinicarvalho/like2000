@@ -18,6 +18,7 @@ let titleFlashInterval = null;
 let temporadaAtiva  = null;
 let fotologPostFile = null;
 let cacheAmizades   = new Map(); // target_id -> status
+let friendshipRealtime = null;
 
 // ── NÍVEIS ───────────────────────────────────────────────────
 const LEVELS = [
@@ -437,6 +438,7 @@ async function mostrarDesktop() {
   await checarLoginDiario();
   await carregarTemporada();
   await carregarCacheAmizades();
+  iniciarRealtimeAmizades();
 
   document.body.innerHTML = `
     <div class="desktop" onclick="fecharMenuSeAberto(event)">
@@ -897,6 +899,11 @@ async function abrirAmigos() {
         <div id="resultado-busca-amigo" style="margin-top:8px;"></div>
       </div>
       <div style="flex:1; overflow-y:auto; padding:10px;">
+        <div id="secao-pendentes" style="display:none; margin-bottom:15px;">
+           <div style="font-size:11px; font-weight:bold; margin-bottom:8px; color:#c03030;">Solicitações Recebidas</div>
+           <div id="lista-pendentes-container" style="display:flex; flex-direction:column; gap:6px;"></div>
+           <div style="height:1px; background:#c0b090; margin-top:10px;"></div>
+        </div>
         <div style="font-size:11px; font-weight:bold; margin-bottom:8px; color:#555;">Lista de Amigos</div>
         <div id="lista-amigos-container" style="display:flex; flex-direction:column; gap:6px;">
           <div style="font-size:11px; color:#888; text-align:center; padding:20px;">Carregando amigos...</div>
@@ -992,16 +999,16 @@ async function carregarAmigos() {
     .eq('status', 'accepted');
 
   if(error) {
-    container.innerHTML = '<div style="font-size:11px; color:red; text-align:center;">Erro ao carregar lista.</div>';
+    containerAmigos.innerHTML = '<div style="font-size:11px; color:red; text-align:center;">Erro ao carregar lista.</div>';
     return;
   }
 
   if(!friendships || friendships.length === 0) {
-    container.innerHTML = '<div style="font-size:11px; color:#888; text-align:center; padding:20px;">Você ainda não tem amigos adicionados.</div>';
+    containerAmigos.innerHTML = '<div style="font-size:11px; color:#888; text-align:center; padding:20px;">Você ainda não tem amigos adicionados.</div>';
     return;
   }
 
-  container.innerHTML = friendships.map(f => {
+  containerAmigos.innerHTML = friendships.map(f => {
     const amigo = f.user_id === currentUser.id ? f.profiles_friend : f.profiles_user;
     const av = amigo.avatar_url 
       ? `<img src="${amigo.avatar_url}" style="width:32px; height:32px; border-radius:3px; object-fit:cover; border:1px solid #c0d0e8;">`
