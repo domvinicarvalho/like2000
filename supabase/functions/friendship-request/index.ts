@@ -38,12 +38,10 @@ Deno.serve(async (req) => {
     return new Response("Não pode adicionar a si mesmo", { status: 400, headers: corsHeaders });
   }
 
-  const [uid, fid] = [user.id, target_user_id].sort();
-
   if (action === "send") {
     const { error } = await supabase
       .from("friendships")
-      .insert({ user_id: uid, friend_id: fid, status: "pending" });
+      .insert({ user_id: user.id, friend_id: target_user_id, status: "pending" });
 
     if (error) {
       if (error.code === "23505") {
@@ -65,8 +63,8 @@ Deno.serve(async (req) => {
     const { data: friendship, error: fetchError } = await supabase
       .from("friendships")
       .select("id, xp_awarded")
-      .eq("user_id", uid)
-      .eq("friend_id", fid)
+      .eq("user_id", target_user_id)
+      .eq("friend_id", user.id)
       .eq("status", "pending")
       .single();
 
@@ -110,8 +108,7 @@ Deno.serve(async (req) => {
     await supabase
       .from("friendships")
       .update({ status: "removed", updated_at: new Date().toISOString() })
-      .eq("user_id", uid)
-      .eq("friend_id", fid);
+      .or(`and(user_id.eq.${user.id},friend_id.eq.${target_user_id}),and(user_id.eq.${target_user_id},friend_id.eq.${user.id})`);
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
