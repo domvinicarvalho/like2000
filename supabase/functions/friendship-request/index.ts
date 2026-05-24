@@ -25,96 +25,113 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
   );
 
-  const { data: { user }, error: authError } = await supabase.auth.getUser(
-    authHeader.replace("Bearer ", "")
-  );
-  if (authError || !user) return new Response("Unauthorized", { status: 401, headers: corsHeaders });
-
-  const { target_user_id, action } = await req.json();
-  if (!target_user_id || !action) {
-    return new Response("target_user_id e action são obrigatórios", { status: 400, headers: corsHeaders });
-  }
-  if (target_user_id === user.id) {
-    return new Response("Não pode adicionar a si mesmo", { status: 400, headers: corsHeaders });
-  }
-
-  if (action === "send") {
-    const { error } = await supabase
-      .from("friendships")
-      .insert({ user_id: user.id, friend_id: target_user_id, status: "pending" });
-
-    if (error) {
-      if (error.code === "23505") {
-        return new Response(
-          JSON.stringify({ error: "Solicitação já existe" }),
-          { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  try {
+    const { data: { user }, error: authError } = await supabase.auth.getUser(
+      authHeader.replace("Bearer ", "")
+    );
+    if (authError || !user) {
+      console.error("Erro de autenticação:", authError);
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    return new Response(JSON.stringify({ success: true }), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
+    let body;
+    try {
+      body = await req.json();
+    } catch (e) {
+      console.error("Erro ao parsear JSON do body:", e);
+      return new Response(JSON.stringify({ error: "Invalid JSON body" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
 
-  if (action === "accept") {
-    const { data: friendship, error: fetchError } = await supabase
-      .from("friendships")
-      .select("id, xp_awarded")
-      .eq("user_id", target_user_id)
-      .eq("friend_id", user.id)
-      .eq("status", "pending")
-      .single();
+    const { target_user_id, action } = body;
 
-    if (fetchError || !friendship) {
+    if (!target_user_id || !action) {
+      return new Response(JSON.stringify({ error: "target_user_id e action são obrigatórios" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    if (target_user_id === user.id) {
+      return new Response(JSON.stringify({ error: "Não pode adicionar a si mesmo" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    if (action === "send") {
+      const { error } = await supabase
+        .from("friendships")
+        .insert({ user_id: user.id, friend_id: target_user_id, status: "pending" });
+
+      if (error) {
+        if (error.code === "23505") {
+          return new Response(
+            JSON.stringify({ error: "Solicitação já existe" }),
+            { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        console.error("Erro ao inserir amizade (send):", error);
+        return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      return new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "accept") {
+      const { data: friendship, error: fetchError } = await supabase
+        .from("friendships")
+        .select("id, xp_awarded")
+        .eq("user_id", target_user_id)
+        .eq("friend_id", user.id)
+        .eq("status", "pending")
+        .single();
+
+      if (fetchError || !friendship) {
+        console.error("Solicitação não encontrada para aceitar:", fetchError);
+        return new Response(
+          JSON.stringify({ error: "Solicitação não encontrada" }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const { error: updateError } = await supabase
+        .from("friendships")
+        .update({ status: "accepted", updated_at: new Date().toISOString() })
+        .eq("id", friendship.id);
+
+      if (updateError) {
+        console.error("Erro ao atualizar status da amizade:", updateError);
+        throw updateError;
+      }
+
+      if (!friendship.xp_awarded) {
+        await supabase.from("friendships").update({ xp_awarded: true }).eq("id", friendship.id);
+        await supabase.rpc("increment_xp", { p_user_id: user.id, p_amount: XP_FRIENDSHIP, p_reason: "friendship_accepted" });
+        await supabase.rpc("increment_xp", { p_user_id: target_user_id, p_amount: XP_FRIENDSHIP, p_reason: "friendship_accepted" });
+      }
+
       return new Response(
-        JSON.stringify({ error: "Solicitação não encontrada" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ success: true, xp_earned: friendship.xp_awarded ? 0 : XP_FRIENDSHIP }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    await supabase
-      .from("friendships")
-      .update({ status: "accepted", updated_at: new Date().toISOString() })
-      .eq("id", friendship.id);
-
-    if (!friendship.xp_awarded) {
-      await supabase
+    if (action === "remove") {
+      const { error: removeError } = await supabase
         .from("friendships")
-        .update({ xp_awarded: true })
-        .eq("id", friendship.id);
+        .update({ status: "removed", updated_at: new Date().toISOString() })
+        .or(`and(user_id.eq.${user.id},friend_id.eq.${target_user_id}),and(user_id.eq.${target_user_id},friend_id.eq.${user.id})`);
 
-      await supabase.rpc("increment_xp", {
-        p_user_id: user.id,
-        p_amount: XP_FRIENDSHIP,
-        p_reason: "friendship_accepted",
-      });
-      await supabase.rpc("increment_xp", {
-        p_user_id: target_user_id,
-        p_amount: XP_FRIENDSHIP,
-        p_reason: "friendship_accepted",
+      if (removeError) {
+        console.error("Erro ao remover amizade:", removeError);
+        throw removeError;
+      }
+
+      return new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    return new Response(
-      JSON.stringify({ success: true, xp_earned: friendship.xp_awarded ? 0 : XP_FRIENDSHIP }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: "action inválida" }), { status: 400, headers: corsHeaders });
+  } catch (err) {
+    console.error("Erro crítico na Edge Function friendship-request:", err);
+    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
-
-  if (action === "remove") {
-    await supabase
-      .from("friendships")
-      .update({ status: "removed", updated_at: new Date().toISOString() })
-      .or(`and(user_id.eq.${user.id},friend_id.eq.${target_user_id}),and(user_id.eq.${target_user_id},friend_id.eq.${user.id})`);
-
-    return new Response(JSON.stringify({ success: true }), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-
-  return new Response("action inválida", { status: 400, headers: corsHeaders });
 });
