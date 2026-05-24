@@ -532,7 +532,7 @@ async function mostrarDesktop() {
 
   document.body.innerHTML = `
     <div class="desktop" onclick="fecharMenuSeAberto(event)">
-      <div class="icons" style="${isSetup ? 'filter:blur(2px); pointer-events:none;' : ''}">
+      <div class="icons" id="desktop-icons" style="${isSetup ? 'filter:blur(2px); pointer-events:none;' : ''}">
         <div class="icon" onclick="trazerFrente('janela-msn');abrirMSN()">${iconTag('msn')}<span>MSN Messenger</span></div>
         <div class="icon" onclick="trazerFrente('janela-fotolog');abrirFotolog()">${iconTag('fotolog')}<span>Fotolog</span></div>
         <div class="icon" onclick="trazerFrente('janela-winamp');abrirWinamp()">${iconTag('winamp')}<span>Winamp</span></div>
@@ -587,7 +587,7 @@ async function mostrarDesktop() {
         </div>
       </div>
 
-      <div class="taskbar">
+      <div class="taskbar" id="taskbar">
         <div class="start" onclick="toggleMenu(event)">iniciar</div>
         <div class="taskbar-xp" id="taskbar-xp">⭐ ${currentProfile.xp||0} XP · ${currentProfile.level||'Rookie'}</div>
         <div class="taskbar-right"><div class="clock" id="clock">00:00</div></div>
