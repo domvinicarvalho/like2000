@@ -704,7 +704,13 @@ function abrirMSN() {
       ${avatarHtml}
       <div class="msn-userinfo">
         <h3 style="color:${currentProfile.color}">${escapeHtml(currentProfile.nickname)}</h3>
-        <span id="msn-my-status">● ${currentProfile.status || 'online'} — LIKE 2000</span>
+        <select class="status-select" onchange="mudarStatus(this.value)" id="msn-my-status-select" style="background:transparent; border:none; color:#3070c0; font-size:11px; padding:0; cursor:pointer; outline:none; width:auto; display:inline-block;">
+          <option value="online" ${currentProfile.status === 'online' ? 'selected' : ''}>🟢 Online</option>
+          <option value="ausente" ${currentProfile.status === 'ausente' ? 'selected' : ''}>🟠 Ausente</option>
+          <option value="ocupado" ${currentProfile.status === 'ocupado' ? 'selected' : ''}>🔴 Ocupado</option>
+          <option value="offline" ${currentProfile.status === 'offline' ? 'selected' : ''}>⚪ Offline</option>
+        </select>
+        <span style="font-size:11px; color:#3070c0;"> — LIKE 2000</span>
       </div>
     </div>
     <div class="msn-main-container">
@@ -742,7 +748,6 @@ function abrirMSN() {
           <div class="msn-panel-block">
             <div class="msn-frame banner-frame">
               <img id="msn-banner-img" src="" width="150" height="150">
-              <div class="msn-status-dot online"></div>
             </div>
             ${currentUser.id === '6ddf2883-da69-4a8f-8525-6d7a1b45869d' ? `<button class="btn-admin-banner" onclick="trocarBannerAdmin()">Trocar banner</button>` : ''}
           </div>

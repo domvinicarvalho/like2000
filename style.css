@@ -301,6 +301,11 @@ body { width:100vw; height:100vh; overflow:hidden; }
   border-radius: 8px;
 }
 
+/* Moldura do banner - sempre verde e mais espessa */
+.banner-frame {
+  border: 3px solid #00b300 !important;
+}
+
 /* Moldura colorida do avatar conforme status */
 .avatar-frame.status-online  { padding: 4px; background: #00b300; }
 .avatar-frame.status-ausente { padding: 4px; background: #ff8c00; }
