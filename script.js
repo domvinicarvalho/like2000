@@ -19,6 +19,8 @@ let temporadaAtiva  = null;
 let fotologPostFile = null;
 let cacheAmizades   = new Map(); // target_id -> status
 let friendshipRealtime = null;
+let configRealtime = null;
+let onlineUsersRealtime = null;
 
 // ── NÍVEIS ───────────────────────────────────────────────────
 const LEVELS = [
@@ -241,7 +243,19 @@ async function fazerLogin() {
   const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password: senha });
   if (error) { msg.style.color='#ffaaaa'; msg.textContent='E-mail ou senha incorretos.'; return; }
   currentUser = data.user;
+  await supabaseClient.from('profiles').update({ status: 'online' }).eq('id', currentUser.id);
   await verificarPerfil();
+}
+
+// ── STATUS ───────────────────────────────────────────────────
+async function mudarStatus(novoStatus) {
+  if (!currentUser) return;
+  const { error } = await supabaseClient.from('profiles').update({ status: novoStatus }).eq('id', currentUser.id);
+  if (!error) {
+    currentProfile.status = novoStatus;
+    mostrarNotificacao(`Status alterado para: ${novoStatus}`);
+    // Atualiza borda se perfil aberto
+  }
 }
 
 // ── LOGIN SOCIAL ─────────────────────────────────────────────
@@ -264,6 +278,8 @@ async function fazerCadastro() {
   const { data, error } = await supabaseClient.auth.signUp({ email, password: senha });
   if (error) { msg.style.color='#ffaaaa'; msg.textContent='Erro: '+error.message; return; }
   currentUser = data.user;
+  // Set default status on signup
+  await supabaseClient.from('profiles').update({ status: 'online' }).eq('id', currentUser.id);
   msg.style.color='#aaffaa'; msg.textContent='✅ Conta criada! Vá para "Entrar" e faça login.';
 }
 
@@ -534,6 +550,14 @@ async function mostrarDesktop() {
           <div>
             <div class="start-menu-nick" style="color:${currentProfile?.color || '#fff'}">${escapeHtml(currentProfile?.nickname || 'Usuário')}</div>
             <div style="font-size:11px;color:#aac4ff">⭐ ${currentProfile.xp||0} XP · ${currentProfile.level||'Rookie'}</div>
+            <div style="margin-top:4px;">
+              <select class="status-select" onchange="mudarStatus(this.value)">
+                <option value="online" ${currentProfile.status === 'online' ? 'selected' : ''}>🟢 Online</option>
+                <option value="ausente" ${currentProfile.status === 'ausente' ? 'selected' : ''}>🟠 Ausente</option>
+                <option value="ocupado" ${currentProfile.status === 'ocupado' ? 'selected' : ''}>🔴 Ocupado</option>
+                <option value="offline" ${currentProfile.status === 'offline' ? 'selected' : ''}>⚪ Invisível</option>
+              </select>
+            </div>
             ${getTemporadaHtml()}
           </div>
         </div>
@@ -587,7 +611,11 @@ function fecharMenu()   { const m=document.getElementById('start-menu'); if(m)m.
 function fecharMenuSeAberto(e) { 
   if(menuAberto && !e.target.closest('.start-menu')) fecharMenu(); 
 }
-async function fazerLogout() { await supabaseClient.auth.signOut(); location.reload(); }
+async function fazerLogout() { 
+  await supabaseClient.from('profiles').update({ status: 'offline' }).eq('id', currentUser.id);
+  await supabaseClient.auth.signOut(); 
+  location.reload(); 
+}
 
 // ── DRAG MOUSE + TOUCH ────────────────────────────────────────
 function trazerFrente(id) {
@@ -654,13 +682,15 @@ function fecharJanela(id) {
 function abrirMSN() {
   fecharMenu();
   if(document.getElementById('janela-msn')){trazerFrente('janela-msn');return;}
+  const statusClass = `status-${currentProfile.status || 'online'}`;
   const avatarHtml=currentProfile.avatar_url
-    ?`<img src="${currentProfile.avatar_url}" class="avatar-img" alt="">`
-    :`<div class="avatar">${currentProfile.nickname.charAt(0).toUpperCase()}</div>`;
+    ?`<img src="${currentProfile.avatar_url}" class="avatar-img ${statusClass}" alt="">`
+    :`<div class="avatar ${statusClass}">${currentProfile.nickname.charAt(0).toUpperCase()}</div>`;
+    
   zTop++;
   const j=document.createElement('div');
   j.className='xp-window'; j.id='janela-msn';
-  j.style.cssText=`width:680px;height:520px;top:40px;left:60px;z-index:${zTop}`;
+  j.style.cssText=`width:720px;height:520px;top:40px;left:60px;z-index:${zTop}`;
   j.innerHTML=`
     <div class="xp-titlebar">
       <div class="xp-title-left">${iconTag('msn',16)} MSN Messenger</div>
@@ -673,32 +703,46 @@ function abrirMSN() {
       ${avatarHtml}
       <div class="msn-userinfo">
         <h3 style="color:${currentProfile.color}">${escapeHtml(currentProfile.nickname)}</h3>
-        <span>● online — LIKE 2000</span>
+        <span id="msn-my-status">● ${currentProfile.status || 'online'} — LIKE 2000</span>
       </div>
     </div>
-    <div class="msn-toolbar">
-      <button class="tool-btn">📁 Arquivo</button>
-      <div class="toolbar-sep"></div>
-      <button class="tool-btn">😊 Emoticons</button>
-    </div>
-    <div class="msn-body">
-      <div id="messages" class="messages">
-        <div class="msg-system">— Bem-vindo ao LIKE 2000 —</div>
-        <div class="msg-system">${escapeHtml(currentProfile.nickname)} entrou na sala</div>
-      </div>
-      <div class="send-area">
-        <div class="send-toolbar">
-          <button class="emote-btn" onclick="inserirEmote(':)')">😊</button>
-          <button class="emote-btn" onclick="inserirEmote(':D')">😄</button>
-          <button class="emote-btn" onclick="inserirEmote(';)')">😉</button>
-          <button class="emote-btn" onclick="inserirEmote(':P')">😛</button>
-          <button class="emote-btn" onclick="inserirEmote(':(')" >😢</button>
-          <button class="emote-btn" onclick="inserirEmote('xD')">🤣</button>
-          <button class="emote-btn" onclick="inserirEmote('&lt;3')">❤️</button>
+    <div class="msn-main-container">
+      <div class="msn-left-col">
+        <div class="msn-toolbar">
+          <button class="tool-btn">📁 Arquivo</button>
+          <div class="toolbar-sep"></div>
+          <button class="tool-btn" onclick="document.getElementById('msn-emotes').classList.toggle('aberto')">😊 Emoticons</button>
         </div>
-        <div class="send-box">
-          <input id="messageInput" type="text" placeholder="escreva uma mensagem..." maxlength="300">
-          <button onclick="sendMessage()">Enviar</button>
+        <div class="msn-body">
+          <div id="messages" class="messages"></div>
+          <div class="send-area">
+            <div id="msn-emotes" class="emoticons-panel">
+              <span onclick="inserirEmote('😊')">😊</span><span onclick="inserirEmote('😂')">😂</span>
+              <span onclick="inserirEmote('😢')">😢</span><span onclick="inserirEmote('😡')">😡</span>
+              <span onclick="inserirEmote('😎')">😎</span><span onclick="inserirEmote('❤️')">❤️</span>
+              <span onclick="inserirEmote('👍')">👍</span><span onclick="inserirEmote('😜')">😜</span>
+              <span onclick="inserirEmote('😏')">😏</span><span onclick="inserirEmote('🙄')">🙄</span>
+              <span onclick="inserirEmote('😈')">😈</span><span onclick="inserirEmote('💀')">💀</span>
+            </div>
+            <div class="send-toolbar">
+              <button class="emote-btn" style="font-weight:bold;font-family:serif">A</button>
+              <button class="emote-btn" onclick="document.getElementById('msn-emotes').classList.toggle('aberto')">😊</button>
+            </div>
+            <div class="send-box">
+              <input id="messageInput" type="text" placeholder="escreva uma mensagem..." maxlength="300">
+              <button onclick="sendMessage()">Enviar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="msn-right-col">
+        <div class="msn-right-header"><i>msn</i></div>
+        <div class="msn-banner-area" id="msn-banner-container">
+          <img src="bliss.jpg" class="msn-banner-img" id="msn-banner-img">
+          ${currentUser.id === '6ddf2883-da69-4a8f-8525-6d7a1b45869d' ? `<button class="btn-admin-banner" onclick="trocarBannerAdmin()">Trocar banner</button>` : ''}
+        </div>
+        <div class="msn-online-list" id="msn-online-list">
+          <div style="font-size:10px; color:#666; margin-bottom:5px;">Contatos Online</div>
         </div>
       </div>
     </div>`;
@@ -706,11 +750,55 @@ function abrirMSN() {
   tornarArrastavel(j);
   tocarSomOnline();
   document.getElementById('messageInput').addEventListener('keydown',e=>{if(e.key==='Enter')sendMessage();});
-  loadMessages(); iniciarRealtime();
+  loadMessages(); iniciarRealtime(); carregarBannerMSN(); carregarUsuariosOnlineMSN();
 }
+
+async function carregarBannerMSN() {
+  const { data } = await supabaseClient.from('app_config').select('value').eq('key', 'msn_banner_url').single();
+  const img = document.getElementById('msn-banner-img');
+  if (img) img.src = data?.value || svgToDataUri(ICONS_SVG.fotolog); // fallback para algo visual
+}
+
+async function trocarBannerAdmin() {
+  const url = prompt("Cole a URL da nova imagem para o banner:");
+  if (!url) return;
+  const { error } = await supabaseClient.from('app_config').upsert({ key: 'msn_banner_url', value: url });
+  if (!error) {
+    mostrarNotificacao("Banner atualizado!");
+    carregarBannerMSN();
+  }
+}
+
+async function carregarUsuariosOnlineMSN() {
+  const list = document.getElementById('msn-online-list');
+  if (!list) return;
+  
+  const { data } = await supabaseClient.from('profiles').select('id, nickname, avatar_url, color, status')
+    .neq('status', 'offline').order('nickname');
+    
+  const html = data.map(u => {
+    const stClass = `status-${u.status || 'online'}`;
+    const av = u.avatar_url 
+      ? `<img src="${u.avatar_url}" class="msn-online-avatar ${stClass}">`
+      : `<div class="msn-online-avatar ${stClass}" style="background:${u.color}; color:white; display:flex; align-items:center; justify-content:center; font-size:10px;">${u.nickname[0]}</div>`;
+    return `<div class="msn-online-item" title="${u.status}" onclick="abrirPerfilAlheio('${u.id}')" style="cursor:pointer">
+      ${av} <div class="msn-online-nick" style="color:${u.color}">${escapeHtml(u.nickname)}</div>
+    </div>`;
+  }).join('');
+  
+  list.innerHTML = `<div style="font-size:10px; color:#666; margin-bottom:8px; font-weight:bold; border-bottom:1px solid #ccc;">Contatos Online (${data.length})</div>` + html;
+}
+
 
 function iniciarRealtime() {
   if(realtimeChannel)supabaseClient.removeChannel(realtimeChannel);
+  
+  // Listener para o banner e lista de usuários
+  supabaseClient.channel('msn-system')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'app_config' }, carregarBannerMSN)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, carregarUsuariosOnlineMSN)
+    .subscribe();
+
   realtimeChannel=supabaseClient.channel('chat-room')
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'}, p => {
       addMessage(p.new);
