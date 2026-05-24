@@ -550,14 +550,6 @@ async function mostrarDesktop() {
           <div>
             <div class="start-menu-nick" style="color:${currentProfile?.color || '#fff'}">${escapeHtml(currentProfile?.nickname || 'Usuário')}</div>
             <div style="font-size:11px;color:#aac4ff">⭐ ${currentProfile.xp||0} XP · ${currentProfile.level||'Rookie'}</div>
-            <div style="margin-top:4px;">
-              <select class="status-select" onchange="mudarStatus(this.value)">
-                <option value="online" ${currentProfile.status === 'online' ? 'selected' : ''}>🟢 Online</option>
-                <option value="ausente" ${currentProfile.status === 'ausente' ? 'selected' : ''}>🟠 Ausente</option>
-                <option value="ocupado" ${currentProfile.status === 'ocupado' ? 'selected' : ''}>🔴 Ocupado</option>
-                <option value="offline" ${currentProfile.status === 'offline' ? 'selected' : ''}>⚪ Invisível</option>
-              </select>
-            </div>
             ${getTemporadaHtml()}
           </div>
         </div>
@@ -703,7 +695,13 @@ function abrirMSN() {
       ${avatarHtml}
       <div class="msn-userinfo">
         <h3 style="color:${currentProfile.color}">${escapeHtml(currentProfile.nickname)}</h3>
-        <span id="msn-my-status">● ${currentProfile.status || 'online'} — LIKE 2000</span>
+        <select class="status-select" onchange="mudarStatus(this.value)" id="msn-my-status-select">
+          <option value="online" ${currentProfile.status === 'online' ? 'selected' : ''}>🟢 Online</option>
+          <option value="ausente" ${currentProfile.status === 'ausente' ? 'selected' : ''}>🟠 Ausente</option>
+          <option value="ocupado" ${currentProfile.status === 'ocupado' ? 'selected' : ''}>🔴 Ocupado</option>
+          <option value="offline" ${currentProfile.status === 'offline' ? 'selected' : ''}>⚪ Invisível</option>
+        </select>
+        <span style="font-size:11px;color:#3070c0;"> — LIKE 2000</span>
       </div>
     </div>
     <div class="msn-main-container">
@@ -737,10 +735,24 @@ function abrirMSN() {
       </div>
       <div class="msn-right-col">
         <div class="msn-right-header"><i>msn</i></div>
-        <div class="msn-banner-area" id="msn-banner-container">
-          <img src="bliss.jpg" class="msn-banner-img" id="msn-banner-img">
+        <!-- Bloco Superior: Banner Publicitário -->
+        <div class="msn-banner-area">
+          <div class="msn-banner-border">
+            <img src="bliss.jpg" class="msn-banner-img" id="msn-banner-img">
+            <div class="msn-banner-online-dot"></div>
+          </div>
           ${currentUser.id === '6ddf2883-da69-4a8f-8525-6d7a1b45869d' ? `<button class="btn-admin-banner" onclick="trocarBannerAdmin()">Trocar banner</button>` : ''}
         </div>
+        <!-- Bloco Inferior: Avatar do Usuário Logado -->
+        <div class="msn-logged-user-status-area">
+          <div class="msn-logged-user-avatar-wrap">
+            ${currentProfile.avatar_url
+              ? `<img src="${currentProfile.avatar_url}" class="msn-logged-user-avatar status-${currentProfile.status || 'online'}" alt="">`
+              : `<div class="msn-logged-user-avatar status-${currentProfile.status || 'online'}" style="background:${currentProfile.color}; color:white;">${currentProfile.nickname.charAt(0).toUpperCase()}</div>`}
+          </div>
+          <div class="msn-logged-user-nick" style="color:${currentProfile.color}">${escapeHtml(currentProfile.nickname)}</div>
+        </div>
+        <!-- Lista de Outros Usuários Online -->
         <div class="msn-online-list" id="msn-online-list">
           <div style="font-size:10px; color:#666; margin-bottom:5px;">Contatos Online</div>
         </div>
@@ -753,7 +765,15 @@ function abrirMSN() {
   loadMessages(); iniciarRealtime(); carregarBannerMSN(); carregarUsuariosOnlineMSN();
 }
 
+function updateMsnMyStatusSelectColor() {
+  const select = document.getElementById('msn-my-status-select');
+  if (select) {
+    select.style.color = select.options[select.selectedIndex].style.color;
+  }
+}
+
 async function carregarBannerMSN() {
+  // Fallback para o logo do fotolog, que é o logo da Like 2000
   const { data } = await supabaseClient.from('app_config').select('value').eq('key', 'msn_banner_url').single();
   const img = document.getElementById('msn-banner-img');
   if (img) img.src = data?.value || svgToDataUri(ICONS_SVG.fotolog); // fallback para algo visual
@@ -774,7 +794,7 @@ async function carregarUsuariosOnlineMSN() {
   if (!list) return;
   
   const { data } = await supabaseClient.from('profiles').select('id, nickname, avatar_url, color, status')
-    .neq('status', 'offline').order('nickname');
+    .neq('status', 'offline').neq('id', currentUser.id).order('nickname'); // Excluir o próprio usuário
     
   const html = data.map(u => {
     const stClass = `status-${u.status || 'online'}`;
@@ -783,7 +803,7 @@ async function carregarUsuariosOnlineMSN() {
       : `<div class="msn-online-avatar ${stClass}" style="background:${u.color}; color:white; display:flex; align-items:center; justify-content:center; font-size:10px;">${u.nickname[0]}</div>`;
     return `<div class="msn-online-item" title="${u.status}" onclick="abrirPerfilAlheio('${u.id}')" style="cursor:pointer">
       ${av} <div class="msn-online-nick" style="color:${u.color}">${escapeHtml(u.nickname)}</div>
-    </div>`;
+    </div>`; // Adicionado escapeHtml para o nickname
   }).join('');
   
   list.innerHTML = `<div style="font-size:10px; color:#666; margin-bottom:8px; font-weight:bold; border-bottom:1px solid #ccc;">Contatos Online (${data.length})</div>` + html;
@@ -809,6 +829,10 @@ function iniciarRealtime() {
           iniciarFlashAba(unreadMessages);
         }
       }
+    })
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${currentUser.id}` }, p => {
+      currentProfile.status = p.new.status;
+      updateMsnMyStatusSelectColor(); // Update color of the select dropdown
     })
     .subscribe();
 }
