@@ -914,6 +914,11 @@ async function abrirAmigos() {
            <div id="lista-pendentes-container" style="display:flex; flex-direction:column; gap:6px;"></div>
            <div style="height:1px; background:#c0b090; margin-top:10px;"></div>
         </div>
+        <div id="secao-enviadas" style="display:none; margin-bottom:15px;">
+           <div style="font-size:11px; font-weight:bold; margin-bottom:8px; color:#3070c0;">Solicitações Enviadas</div>
+           <div id="lista-enviadas-container" style="display:flex; flex-direction:column; gap:6px;"></div>
+           <div style="height:1px; background:#c0b090; margin-top:10px;"></div>
+        </div>
         <div style="font-size:11px; font-weight:bold; margin-bottom:8px; color:#555;">Lista de Amigos</div>
         <div id="lista-amigos-container" style="display:flex; flex-direction:column; gap:6px;">
           <div style="font-size:11px; color:#888; text-align:center; padding:20px;">Carregando amigos...</div>
@@ -991,10 +996,14 @@ async function enviarSolicitacaoAmigoRapida(targetId, el) {
 }
 
 async function carregarAmigos() {
-  const container = document.getElementById('lista-amigos-container');
-  if(!container) return;
+  const containerAmigos = document.getElementById('lista-amigos-container');
+  const containerRecebidas = document.getElementById('lista-pendentes-container');
+  const containerEnviadas = document.getElementById('lista-enviadas-container');
+  const secaoPendentes = document.getElementById('secao-pendentes');
+  const secaoEnviadas = document.getElementById('secao-enviadas');
+  
+  if (!containerAmigos) return;
 
-  // Busca amizades aceitas (user_id ou friend_id pode ser o usuário logado)
   const { data: friendships, error } = await supabaseClient
     .from('friendships')
     .select(`
@@ -1006,35 +1015,102 @@ async function carregarAmigos() {
       profiles_friend:friend_id (id, nickname, avatar_url, color, xp, level)
     `)
     .or(`user_id.eq.${currentUser.id},friend_id.eq.${currentUser.id}`)
-    .eq('status', 'accepted');
+    .in('status', ['accepted', 'pending']);
 
   if(error) {
     containerAmigos.innerHTML = '<div style="font-size:11px; color:red; text-align:center;">Erro ao carregar lista.</div>';
     return;
   }
 
-  if(!friendships || friendships.length === 0) {
-    containerAmigos.innerHTML = '<div style="font-size:11px; color:#888; text-align:center; padding:20px;">Você ainda não tem amigos adicionados.</div>';
-    return;
+  const aceitos = (friendships || []).filter(f => f.status === 'accepted');
+  const recebidos = (friendships || []).filter(f => f.status === 'pending' && f.friend_id === currentUser.id);
+  const enviados = (friendships || []).filter(f => f.status === 'pending' && f.user_id === currentUser.id);
+
+  // Lista de Amigos (Aceitos)
+  if(aceitos.length === 0) {
+    containerAmigos.innerHTML = '<div style="font-size:11px; color:#888; text-align:center; padding:20px;">Você ainda não tem amigos.</div>';
+  } else {
+    containerAmigos.innerHTML = aceitos.map(f => {
+      const amigo = f.user_id === currentUser.id ? f.profiles_friend : f.profiles_user;
+      return renderCardAmigo(amigo, '');
+    }).join('');
   }
 
-  containerAmigos.innerHTML = friendships.map(f => {
-    const amigo = f.user_id === currentUser.id ? f.profiles_friend : f.profiles_user;
-    const av = amigo.avatar_url 
-      ? `<img src="${amigo.avatar_url}" style="width:32px; height:32px; border-radius:3px; object-fit:cover; border:1px solid #c0d0e8;">`
-      : `<div style="width:32px; height:32px; border-radius:3px; background:${amigo.color}; color:white; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:bold; border:1px solid #c0d0e8;">${amigo.nickname[0].toUpperCase()}</div>`;
-    
-    return `
-      <div style="display:flex; align-items:center; gap:10px; padding:8px; background:white; border:1px solid #d0e0f4; border-radius:4px; box-shadow:1px 1px 2px rgba(0,0,0,0.05);">
-        ${av}
-        <div style="flex:1;">
-          <div style="font-size:12px; font-weight:bold; color:${amigo.color}">${escapeHtml(amigo.nickname)}</div>
-          <div style="font-size:10px; color:#888;">Nível: ${amigo.level} · ⭐ ${amigo.xp}</div>
-        </div>
+  // Solicitações Recebidas
+  if(recebidos.length > 0) {
+    secaoPendentes.style.display = 'block';
+    containerRecebidas.innerHTML = recebidos.map(f => {
+      const amigo = f.profiles_user; 
+      return renderCardAmigo(amigo, `
+        <button onclick="aceitarSolicitacaoAmigo('${amigo.id}')" style="background:#5aad5a; color:white; border:none; padding:2px 6px; font-size:10px; border-radius:2px; cursor:pointer;">Aceitar</button>
+        <button onclick="cancelarSolicitacaoAmigo('${amigo.id}')" style="background:#999; color:white; border:none; padding:2px 6px; font-size:10px; border-radius:2px; cursor:pointer;">Recusar</button>
+      `);
+    }).join('');
+  } else {
+    secaoPendentes.style.display = 'none';
+  }
+
+  // Solicitações Enviadas
+  if(enviados.length > 0) {
+    secaoEnviadas.style.display = 'block';
+    containerEnviadas.innerHTML = enviados.map(f => {
+      const amigo = f.profiles_friend;
+      return renderCardAmigo(amigo, `<button onclick="cancelarSolicitacaoAmigo('${amigo.id}')" style="background:#c03030; color:white; border:none; padding:2px 6px; font-size:10px; border-radius:2px; cursor:pointer;">Cancelar</button>`);
+    }).join('');
+  } else {
+    secaoEnviadas.style.display = 'none';
+  }
+}
+
+function renderCardAmigo(amigo, botoesHtml) {
+  const av = amigo.avatar_url 
+    ? `<img src="${amigo.avatar_url}" style="width:32px; height:32px; border-radius:3px; object-fit:cover; border:1px solid #c0d0e8;">`
+    : `<div style="width:32px; height:32px; border-radius:3px; background:${amigo.color}; color:white; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:bold; border:1px solid #c0d0e8;">${amigo.nickname[0].toUpperCase()}</div>`;
+  
+  return `
+    <div style="display:flex; align-items:center; gap:10px; padding:8px; background:white; border:1px solid #d0e0f4; border-radius:4px; box-shadow:1px 1px 2px rgba(0,0,0,0.05);">
+      ${av}
+      <div style="flex:1;">
+        <div style="font-size:12px; font-weight:bold; color:${amigo.color}">${escapeHtml(amigo.nickname)}</div>
+        <div style="font-size:10px; color:#888;">${amigo.level} · ⭐ ${amigo.xp}</div>
+      </div>
+      <div style="display:flex; gap:5px; align-items:center;">
+        ${botoesHtml}
         <div style="font-size:14px; cursor:pointer; opacity:0.6;" title="Ver perfil" onclick="abrirPerfilAlheio('${amigo.id}')">👤</div>
       </div>
-    `;
-  }).join('');
+    </div>
+  `;
+}
+
+async function aceitarSolicitacaoAmigo(targetId) {
+  try {
+    const { data, error } = await supabaseClient.functions.invoke('friendship-request', {
+      body: { target_user_id: targetId, action: 'accept' }
+    });
+    if(error) {
+      const errJson = await error.context.json();
+      mostrarNotificacao(errJson.error || 'Erro ao aceitar.');
+    } else {
+      mostrarNotificacao('Agora vocês são amigos!');
+      if(data.xp_earned > 0) adicionarXP(data.xp_earned, 'nova amizade');
+      carregarAmigos();
+    }
+  } catch (e) { mostrarNotificacao('Erro na conexão.'); }
+}
+
+async function cancelarSolicitacaoAmigo(targetId) {
+  try {
+    const { data, error } = await supabaseClient.functions.invoke('friendship-request', {
+      body: { target_user_id: targetId, action: 'remove' }
+    });
+    if(error) {
+      const errJson = await error.context.json();
+      mostrarNotificacao(errJson.error || 'Erro ao remover.');
+    } else {
+      mostrarNotificacao('Solicitação removida.');
+      carregarAmigos();
+    }
+  } catch (e) { mostrarNotificacao('Erro na conexão.'); }
 }
 
 async function abrirPerfilAlheio(userId) {
