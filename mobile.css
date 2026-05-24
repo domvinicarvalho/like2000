@@ -1,0 +1,95 @@
+@media (max-width: 600px) {
+
+  /* DESKTOP — ícones em grid */
+  #desktop-icons {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 10px !important;
+    padding: 10px !important;
+    position: relative !important;
+    z-index: 1 !important;
+  }
+
+  /* JANELA MSN — forçar maximizada no mobile */
+  #janela-msn {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: calc(100vh - 48px) !important;
+    z-index: 1000 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    transform: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+  }
+
+  #janela-msn .msn-body {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    min-height: 0 !important;
+  }
+
+  /* Mapeado de .msn-chat-column para a classe real .msn-left-col */
+  #janela-msn .msn-left-col {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    min-height: 0 !important;
+  }
+
+  #janela-msn .messages {
+    flex: 1 !important;
+    overflow-y: auto !important;
+    min-height: 0 !important;
+    height: auto !important;
+  }
+
+  /* Ajuste das colunas */
+  #janela-msn .msn-right-col {
+    width: 30% !important;
+    min-width: 30% !important;
+    overflow: hidden !important;
+  }
+
+  #janela-msn .msn-right-panel {
+    width: 100% !important;
+  }
+
+  #janela-msn .msn-right-panel .msn-frame img {
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 1/1 !important;
+    object-fit: cover !important;
+  }
+
+  /* TASKBAR — fixa no rodapé */
+  #taskbar {
+    position: fixed !important;
+    bottom: 0 !important;
+    top: auto !important;
+    left: 0 !important;
+    width: 100% !important;
+    z-index: 9999 !important;
+  }
+
+  /* Reduzir tamanho da fonte e elementos no mobile */
+  #janela-msn * {
+    font-size: 13px !important;
+  }
+
+  /* Mapeado de .msn-header img e .messages .avatar para as classes reais */
+  #janela-msn .msn-userbar .avatar-img,
+  #janela-msn .msn-userbar .avatar,
+  #janela-msn .msg-avatar,
+  #janela-msn .msg-avatar-inicial {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+}
