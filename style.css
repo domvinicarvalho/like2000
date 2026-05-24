@@ -531,102 +531,28 @@ body { width:100vw; height:100vh; overflow:hidden; }
   .login-box  { width:92vw; padding:20px 18px; }
   .perfil-box { width:92vw; }
 
-  .icons { flex-direction:row; flex-wrap:wrap; padding:16px 12px; gap:12px; }
-  .icon  { width:80px; }
-  .icon img { width:52px; height:52px; }
-  .icon span { font-size:12px; }
-
-  .taskbar { height:44px; }
-  .taskbar-xp { font-size:10px; }
-  .start { font-size:13px; padding:0 12px 0 8px; border-radius:0 10px 10px 0; }
-  .clock { font-size:12px; }
-
-  /* janela XP → tela cheia no mobile */
-  .xp-window {
-    width:100vw !important; height:calc(100vh - 44px) !important;
-    top:0 !important; left:0 !important; border-radius:0; border:none; box-shadow:none; z-index:200 !important;
-  }
-  .xp-titlebar { height:38px; padding:0 6px 0 10px; }
-  .xp-title-left { font-size:13px; }
-  .xp-title-left img { width:20px; height:20px; }
-  .tbtn { width:28px; height:26px; font-size:13px; }
-
-  /* MSN mobile */
-  .msn-userbar { height:56px; padding:0 12px; }
-  .avatar, .avatar-img { width:40px; height:40px; }
-  .msn-userinfo h3 { font-size:14px; }
-  .msn-toolbar { display:none; }
-  .messages { padding:10px; font-size:14px; }
-  .msg-text  { font-size:14px; }
-  .msg-avatar, .msg-avatar-inicial { width:28px; height:28px; }
-  .send-toolbar { height:36px; overflow-x:auto; overflow-y:hidden; gap:6px; padding:0 10px; -webkit-overflow-scrolling:touch; }
-  .emote-btn { font-size:20px; min-width:32px; height:28px; }
-  .send-box { padding:8px 10px; gap:8px; }
-  .send-box input  { font-size:16px; height:40px; padding:0 10px; }
-  .send-box button { height:40px; padding:0 18px; font-size:14px; }
-
-  /* Fotolog mobile */
-  .fotolog-body { flex-direction:column; }
-  .fotolog-sidebar { width:100%; height:auto; flex-direction:row; flex-wrap:wrap; border-right:none; border-bottom:2px solid #c0b090; }
-  .fotolog-meu-perfil { flex-direction:row; padding:10px 12px; gap:10px; flex:1; align-items:center; }
-  .fl-avatar, .fl-avatar-inicial { width:44px; height:44px; font-size:20px; }
-  .fl-post-box { flex-direction:row; flex-wrap:wrap; padding:8px 12px; flex:2; }
-  .fl-post-foto { width:80px; height:70px; flex-shrink:0; }
-  .fl-post-box textarea { flex:1; min-width:100px; }
-  .fl-btn-postar { width:100%; }
-  .fotolog-feed { padding:8px; }
-  .fl-card-img { max-height:280px; }
-
-  /* Menu iniciar mobile */
-  .start-menu { width:100vw; bottom:44px; border-radius:12px 12px 0 0; }
-  .start-menu-header { padding:16px; }
-  .start-menu-avatar { width:56px; height:56px; }
-  .start-menu-nick { font-size:16px; }
-  .start-menu-col.right { width:130px; }
-  .menu-item { padding:12px 16px; }
-  .menu-item img { width:36px; height:36px; }
-  .menu-item-title { font-size:14px; }
-  .menu-item-sub   { font-size:11px; }
-  .menu-item-right { padding:12px 16px; font-size:14px; }
-
   .notificacao { bottom:54px; right:10px; left:10px; text-align:center; }
 }
 
-/* ── MSN RESPONSIVO 600PX ── */
 @media (max-width: 600px) {
-  /* Permite que o desktop e o corpo da página rolem verticalmente no mobile */
-  body, .desktop { overflow-y: auto !important; height: auto !important; min-height: 100vh; display: block !important; }
-  
   #janela-msn {
-    position: relative !important; 
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
     width: 100% !important;
     height: auto !important;
-    top: 0 !important; 
-    left: 0 !important;
-    border-radius: 0;
-    box-shadow: none;
-    display: flex !important;
   }
 
-  .taskbar {
-    position: relative !important;
-    bottom: auto !important;
+  #janela-msn .messages {
+    height: 250px !important;
+    overflow-y: auto !important;
+    flex-shrink: 0 !important;
   }
 
-  #janela-msn .msn-main-container { height: auto !important; display: flex !important; }
-  #janela-msn .msn-left-col { width: 60% !important; flex: none !important; border-right: 1px solid #8ab0e0; }
-  #janela-msn .msn-right-col { width: 40% !important; flex: none !important; background: #eff7ff; }
-  
-  #janela-msn .msn-right-panel { padding: 5px; gap: 8px; width: 100%; }
-  #janela-msn .msn-frame { width: 100% !important; height: auto !important; aspect-ratio: 1/1; border-radius: 8px; }
-  #janela-msn .msn-frame img { border-radius: 8px; }
-
-  #janela-msn .msn-toolbar { display: flex !important; flex-wrap: wrap; height: auto !important; }
-  #janela-msn .messages { height: 280px !important; overflow-y: auto !important; }
-  
-  #janela-msn .msn-userinfo h3 { font-size: 11px; }
-  #janela-msn .msn-userinfo select, #janela-msn .msn-userinfo span { font-size: 9px !important; }
-  #janela-msn .send-box input { min-width: 0; }
+  #janela-msn .msn-right-panel img {
+    width: 100% !important;
+    height: auto !important;
+  }
 }
 
 /* ══════════════════════════════════════════
