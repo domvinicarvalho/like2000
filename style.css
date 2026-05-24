@@ -182,7 +182,7 @@ body { width:100vw; height:100vh; overflow:hidden; }
 }
 .msn-main-container { display: flex; flex: 1; overflow: hidden; }
 .msn-left-col { width: 72%; display: flex; flex-direction: column; border-right: 1px solid #8ab0e0; }
-.msn-right-col { width: 28%; background: #d4d0c8; border-left: 1px solid #8ab0e0; overflow: hidden; }
+.msn-right-col { width: 28%; background: #eff7ff; border-left: 1px solid #8ab0e0; overflow: hidden; }
 
 .avatar {
   width:44px; height:44px; border-radius:4px;
@@ -279,7 +279,7 @@ body { width:100vw; height:100vh; overflow:hidden; }
   align-items: center;
   gap: 10px;
   padding: 10px;
-  background: #d4d0c8;
+  background: #eff7ff;
   height: 100%;
 }
 
@@ -290,6 +290,7 @@ body { width:100vw; height:100vh; overflow:hidden; }
   background: #d4d0c8;
   border: 1px solid #808080;
   position: relative;
+  border-radius: 8px;
 }
 
 .msn-frame img {
@@ -297,6 +298,7 @@ body { width:100vw; height:100vh; overflow:hidden; }
   height: 100%;
   object-fit: cover;
   display: block;
+  border-radius: 8px;
 }
 
 /* Moldura colorida do avatar conforme status */
@@ -313,8 +315,8 @@ body { width:100vw; height:100vh; overflow:hidden; }
   border: 2px solid white;
   border-radius: 50%;
   position: absolute;
-  bottom: 4px;
-  right: 4px;
+  bottom: 2px;
+  right: 2px;
   z-index: 2;
 }
 

@@ -742,8 +742,8 @@ function abrirMSN() {
           <div class="msn-panel-block">
             <div class="msn-frame banner-frame">
               <img id="msn-banner-img" src="" width="150" height="150">
+              <div class="msn-status-dot online"></div>
             </div>
-            <div class="msn-status-dot online"></div>
             ${currentUser.id === '6ddf2883-da69-4a8f-8525-6d7a1b45869d' ? `<button class="btn-admin-banner" onclick="trocarBannerAdmin()">Trocar banner</button>` : ''}
           </div>
 
