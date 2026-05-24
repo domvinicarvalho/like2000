@@ -248,7 +248,7 @@ async function fazerLogin() {
 async function loginSocial(provider) {
   const { error } = await supabaseClient.auth.signInWithOAuth({
     provider,
-    options: { redirectTo: window.location.origin }
+    options: { redirectTo: 'https://like2000.vercel.app' }
   });
   if (error) mostrarNotificacao("Erro ao conectar: " + error.message);
 }
