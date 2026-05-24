@@ -598,15 +598,19 @@ body { width:100vw; height:100vh; overflow:hidden; }
   body, .desktop { overflow-y: auto !important; height: auto !important; min-height: 100vh; display: block !important; }
   
   #janela-msn {
-    position: absolute !important; 
+    position: relative !important; 
     width: 100% !important;
     height: auto !important;
     top: 0 !important; 
     left: 0 !important;
     border-radius: 0;
     box-shadow: none;
-    margin-bottom: 44px; /* Espaço para a taskbar mobile não sobrepor o final da janela */
     display: flex !important;
+  }
+
+  .taskbar {
+    position: relative !important;
+    bottom: auto !important;
   }
 
   #janela-msn .msn-main-container { height: auto !important; display: flex !important; }
@@ -618,7 +622,7 @@ body { width:100vw; height:100vh; overflow:hidden; }
   #janela-msn .msn-frame img { border-radius: 8px; }
 
   #janela-msn .msn-toolbar { display: flex !important; flex-wrap: wrap; height: auto !important; }
-  #janela-msn .messages { height: 320px !important; overflow-y: auto !important; }
+  #janela-msn .messages { height: 280px !important; overflow-y: auto !important; }
   
   #janela-msn .msn-userinfo h3 { font-size: 11px; }
   #janela-msn .msn-userinfo select, #janela-msn .msn-userinfo span { font-size: 9px !important; }
