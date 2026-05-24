@@ -182,7 +182,7 @@ body { width:100vw; height:100vh; overflow:hidden; }
 }
 .msn-main-container { display: flex; flex: 1; overflow: hidden; }
 .msn-left-col { width: 72%; display: flex; flex-direction: column; border-right: 1px solid #8ab0e0; }
-.msn-right-col { width: 28%; background: #eff7ff; display: flex; flex-direction: column; overflow: hidden; }
+.msn-right-col { width: 28%; background: #eff7ff; display: flex; flex-direction: column; overflow: hidden; align-items: center; gap: 20px; }
 
 .avatar {
   width:44px; height:44px; border-radius:4px;

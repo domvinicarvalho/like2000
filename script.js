@@ -675,6 +675,7 @@ function abrirMSN() {
   fecharMenu();
   if(document.getElementById('janela-msn')){trazerFrente('janela-msn');return;}
   const statusClass = `status-${currentProfile.status || 'online'}`;
+  const frameStatusClass = `bg-status-${currentProfile.status || 'online'}`;
   const avatarHtml=currentProfile.avatar_url
     ?`<img src="${currentProfile.avatar_url}" class="avatar-img ${statusClass}" alt="">`
     :`<div class="avatar ${statusClass}">${currentProfile.nickname.charAt(0).toUpperCase()}</div>`;
@@ -735,27 +736,23 @@ function abrirMSN() {
       </div>
       <div class="msn-right-col">
         <div class="msn-right-header"><i>msn</i></div>
-        <!-- Bloco Superior: Banner Publicitário -->
-        <div class="msn-banner-area">
-          <div class="msn-banner-border">
-            <img src="bliss.jpg" class="msn-banner-img" id="msn-banner-img">
-            <div class="msn-banner-online-dot"></div>
+        
+        <!-- Bloco Superior: Banner -->
+        <div class="msn-frame-outer">
+          <div class="msn-frame-inner" style="background-color: #d4d0c8;">
+            <img src="bliss.jpg" class="msn-frame-img" id="msn-banner-img">
+            <div class="msn-status-dot-green"></div>
           </div>
           ${currentUser.id === '6ddf2883-da69-4a8f-8525-6d7a1b45869d' ? `<button class="btn-admin-banner" onclick="trocarBannerAdmin()">Trocar banner</button>` : ''}
         </div>
-        <!-- Bloco Inferior: Avatar do Usuário Logado -->
-        <div class="msn-logged-user-status-area">
-          <div class="msn-logged-user-avatar-wrap">
+
+        <!-- Bloco Inferior: Meu Avatar -->
+        <div class="msn-frame-outer">
+          <div class="msn-frame-inner ${frameStatusClass}" id="msn-my-avatar-frame">
             ${currentProfile.avatar_url
-              ? `<img src="${currentProfile.avatar_url}" class="msn-logged-user-avatar status-${currentProfile.status || 'online'}" alt="">`
-              : `<div class="msn-logged-user-avatar status-${currentProfile.status || 'online'}" style="background:${currentProfile.color}; color:white;">${currentProfile.nickname.charAt(0).toUpperCase()}</div>`}
+              ? `<img src="${currentProfile.avatar_url}" class="msn-frame-img" alt="">`
+              : `<div class="msn-frame-img" style="background:${currentProfile.color}; color:white; display:flex; align-items:center; justify-content:center; font-size:48px; font-weight:bold;">${currentProfile.nickname.charAt(0).toUpperCase()}</div>`}
           </div>
-          <div class="msn-logged-user-nick" style="color:${currentProfile.color}">${escapeHtml(currentProfile.nickname)}</div>
-        </div>
-        <!-- Lista de Outros Usuários Online -->
-        <div class="msn-online-list" id="msn-online-list">
-          <div style="font-size:10px; color:#666; margin-bottom:5px;">Contatos Online</div>
-        </div>
       </div>
     </div>`;
   document.querySelector('.desktop').appendChild(j);
@@ -763,6 +760,12 @@ function abrirMSN() {
   tocarSomOnline();
   document.getElementById('messageInput').addEventListener('keydown',e=>{if(e.key==='Enter')sendMessage();});
   loadMessages(); iniciarRealtime(); carregarBannerMSN(); carregarUsuariosOnlineMSN();
+}
+
+function atualizarMolduraStatusMSN(status) {
+  const frame = document.getElementById('msn-my-avatar-frame');
+  if (!frame) return;
+  frame.className = `msn-frame-inner bg-status-${status || 'online'}`;
 }
 
 function updateMsnMyStatusSelectColor() {
@@ -833,6 +836,7 @@ function iniciarRealtime() {
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${currentUser.id}` }, p => {
       currentProfile.status = p.new.status;
       updateMsnMyStatusSelectColor(); // Update color of the select dropdown
+      atualizarMolduraStatusMSN(p.new.status);
     })
     .subscribe();
 }
