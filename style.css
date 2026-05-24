@@ -592,6 +592,39 @@ body { width:100vw; height:100vh; overflow:hidden; }
   .notificacao { bottom:54px; right:10px; left:10px; text-align:center; }
 }
 
+/* ── MSN RESPONSIVO 600PX ── */
+@media (max-width: 600px) {
+  /* Permite que o desktop e o corpo da página rolem verticalmente no mobile */
+  body, .desktop { overflow-y: auto !important; height: auto !important; min-height: 100vh; display: block !important; }
+  
+  #janela-msn {
+    position: relative !important; /* Muda de absolute para relative para fluir no scroll da página */
+    width: 100% !important;
+    height: auto !important;
+    top: 0 !important;
+    left: 0 !important;
+    border-radius: 0;
+    box-shadow: none;
+    margin-bottom: 44px; /* Espaço para a taskbar mobile não sobrepor o final da janela */
+    display: flex !important;
+  }
+
+  #janela-msn .msn-main-container { height: auto !important; overflow: visible !important; display: flex !important; }
+  #janela-msn .msn-left-col { width: 60% !important; flex: none !important; border-right: 1px solid #8ab0e0; }
+  #janela-msn .msn-right-col { width: 40% !important; flex: none !important; background: #eff7ff; overflow: visible !important; }
+  
+  #janela-msn .msn-right-panel { padding: 5px; gap: 8px; width: 100%; }
+  #janela-msn .msn-frame { width: 100% !important; height: auto !important; aspect-ratio: 1/1; border-radius: 8px; }
+  #janela-msn .msn-frame img { border-radius: 8px; }
+
+  #janela-msn .msn-toolbar { display: flex !important; flex-wrap: wrap; height: auto !important; }
+  #janela-msn .messages { height: auto !important; min-height: 300px; overflow-y: visible !important; }
+  
+  #janela-msn .msn-userinfo h3 { font-size: 11px; }
+  #janela-msn .msn-userinfo select, #janela-msn .msn-userinfo span { font-size: 9px !important; }
+  #janela-msn .send-box input { min-width: 0; }
+}
+
 /* ══════════════════════════════════════════
    BOOT SCREEN XP
 ══════════════════════════════════════════ */
