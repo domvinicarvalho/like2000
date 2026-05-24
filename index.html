@@ -24,6 +24,14 @@
         <input type="email" id="login-email" placeholder="seu e-mail">
         <input type="password" id="login-senha" placeholder="sua senha">
         <button onclick="fazerLogin()">ENTRAR</button>
+        
+        <div class="social-divider"><span>ou conecte-se com</span></div>
+        <div class="social-btns">
+          <button class="social-btn google" onclick="loginSocial('google')">Google</button>
+          <button class="social-btn discord" onclick="loginSocial('discord')">Discord</button>
+          <button class="social-btn twitter" onclick="loginSocial('twitter')">X / Twitter</button>
+        </div>
+
         <div class="auth-msg" id="msg-login"></div>
       </div>
 
@@ -33,37 +41,6 @@
         <button onclick="fazerCadastro()">CRIAR CONTA</button>
         <div class="auth-msg" id="msg-cadastro"></div>
       </div>
-    </div>
-  </div>
-
-  <!-- TELA 2: SETUP DE PERFIL (primeira vez) -->
-  <div class="login-screen" id="tela-perfil" style="display:none">
-    <div class="logo">LIKE 2000</div>
-    <div class="sub">configure seu perfil</div>
-
-    <div class="login-box perfil-box">
-      <div class="avatar-upload" onclick="document.getElementById('foto-input').click()">
-        <img id="avatar-preview" src="" alt="" style="display:none">
-        <span id="avatar-placeholder">📷<br><small>clique para escolher foto</small></span>
-      </div>
-      <input type="file" id="foto-input" accept="image/*" style="display:none" onchange="previewFoto(event)">
-
-      <input type="text" id="perfil-nick" placeholder="seu nickname" maxlength="20">
-
-      <div class="cor-label">cor do nickname:</div>
-      <div class="cores">
-        <div class="cor selected" style="background:#0000cc" onclick="selecionarCor('#0000cc',this)"></div>
-        <div class="cor" style="background:#cc0000" onclick="selecionarCor('#cc0000',this)"></div>
-        <div class="cor" style="background:#008800" onclick="selecionarCor('#008800',this)"></div>
-        <div class="cor" style="background:#800080" onclick="selecionarCor('#800080',this)"></div>
-        <div class="cor" style="background:#cc6600" onclick="selecionarCor('#cc6600',this)"></div>
-        <div class="cor" style="background:#cc0088" onclick="selecionarCor('#cc0088',this)"></div>
-        <div class="cor" style="background:#008888" onclick="selecionarCor('#008888',this)"></div>
-        <div class="cor" style="background:#000000" onclick="selecionarCor('#000000',this)"></div>
-      </div>
-
-      <button onclick="salvarPerfil()">ENTRAR NO CHAT</button>
-      <div class="auth-msg" id="msg-perfil"></div>
     </div>
   </div>
 

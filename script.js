@@ -213,13 +213,19 @@ function iconTag(key, size = 48) {
 // ── INIT ─────────────────────────────────────────────────────
 window.addEventListener('load', async () => {
   const { data: { session } } = await supabaseClient.auth.getSession();
-  if (session) { currentUser = session.user; await verificarPerfil(); }
+  if (session) { 
+    currentUser = session.user; 
+    setTimeout(verificarPerfil, 500); 
+  }
 });
 
 // ── TABS ─────────────────────────────────────────────────────
 function alternarTab(tab) {
-  document.getElementById('tab-entrar').style.display    = tab==='entrar'    ? 'flex' : 'none';
-  document.getElementById('tab-cadastrar').style.display = tab==='cadastrar' ? 'flex' : 'none';
+  const tabEntrar = document.getElementById('tab-entrar');
+  const tabCad = document.getElementById('tab-cadastrar');
+  if (!tabEntrar || !tabCad) return;
+  tabEntrar.style.display    = tab==='entrar'    ? 'flex' : 'none';
+  tabCad.style.display = tab==='cadastrar' ? 'flex' : 'none';
   document.querySelectorAll('.tab-btn').forEach((b,i) => {
     b.classList.toggle('active',(i===0&&tab==='entrar')||(i===1&&tab==='cadastrar'));
   });
@@ -238,6 +244,15 @@ async function fazerLogin() {
   await verificarPerfil();
 }
 
+// ── LOGIN SOCIAL ─────────────────────────────────────────────
+async function loginSocial(provider) {
+  const { error } = await supabaseClient.auth.signInWithOAuth({
+    provider,
+    options: { redirectTo: window.location.origin }
+  });
+  if (error) mostrarNotificacao("Erro ao conectar: " + error.message);
+}
+
 // ── CADASTRO ─────────────────────────────────────────────────
 async function fazerCadastro() {
   const email = document.getElementById('cad-email').value.trim();
@@ -253,54 +268,111 @@ async function fazerCadastro() {
 }
 
 // ── VERIFICAR PERFIL ──────────────────────────────────────────
+let primeiroAcesso = false;
 async function verificarPerfil() {
-  const { data } = await supabaseClient.from('profiles').select('*').eq('id',currentUser.id).single();
-  if (data&&data.nickname) { currentProfile=data; mostrarBoot(); }
-  else mostrarTelaPerfil();
+  const { data } = await supabaseClient.from('profiles').select('*').eq('id',currentUser.id).maybeSingle();
+  if (data && data.nickname) { 
+    currentProfile = data; 
+    primeiroAcesso = false;
+    mostrarBoot(); 
+  } else { 
+    primeiroAcesso = true;
+    mostrarBoot(); 
+  }
 }
 
-// ── TELA DE PERFIL ────────────────────────────────────────────
-function mostrarTelaPerfil() {
-  document.getElementById('tela-login').style.display  = 'none';
-  document.getElementById('tela-perfil').style.display = 'flex';
-}
-function previewFoto(event) {
-  fotoFile = event.target.files[0]; if (!fotoFile) return;
-  const r = new FileReader();
-  r.onload = e => {
-    const img = document.getElementById('avatar-preview');
-    img.src=e.target.result; img.style.display='block';
-    document.getElementById('avatar-placeholder').style.display='none';
-  }; r.readAsDataURL(fotoFile);
-}
 function selecionarCor(cor, el) {
   corSelecionada=cor;
   document.querySelectorAll('.cor').forEach(c=>c.classList.remove('selected'));
   el.classList.add('selected');
 }
-async function salvarPerfil() {
-  const nick = document.getElementById('perfil-nick').value.trim();
-  const msg  = document.getElementById('msg-perfil');
-  if (!nick) { msg.textContent='Escolha um nickname!'; return; }
-  msg.style.color='#ffddaa'; msg.textContent='Salvando...';
+
+// ── JANELA DE COMPLEMENTO DE PERFIL ──────────────────────────
+function abrirJanelaComplemento() {
+  const content = `
+    <div class="up-field-group">
+      <div style="text-align:center; margin-bottom:10px;">
+        <div class="avatar-upload" style="margin:0 auto;" onclick="document.getElementById('foto-comp-input').click()">
+          <img id="comp-avatar-preview" src="" style="display:none">
+          <span id="comp-avatar-placeholder">📷<br><small>foto de perfil</small></span>
+        </div>
+        <input type="file" id="foto-comp-input" accept="image/*" style="display:none" onchange="previewFotoComp(event)">
+      </div>
+      <label>Nickname:</label>
+      <input type="text" id="comp-nick" maxlength="20" placeholder="Ex: Master_2000">
+      <label>Data de Nascimento:</label>
+      <input type="date" id="comp-nasc">
+      <label>Cidade:</label>
+      <input type="text" id="comp-cidade" placeholder="Ex: São Paulo, SP">
+      <div class="cor-label" style="color:#333">cor do nick:</div>
+      <div class="cores">
+        <div class="cor selected" style="background:#0000cc" onclick="selecionarCor('#0000cc',this)"></div>
+        <div class="cor" style="background:#cc0000" onclick="selecionarCor('#cc0000',this)"></div>
+        <div class="cor" style="background:#008800" onclick="selecionarCor('#008800',this)"></div>
+        <div class="cor" style="background:#800080" onclick="selecionarCor('#800080',this)"></div>
+        <div class="cor" style="background:#cc6600" onclick="selecionarCor('#cc6600',this)"></div>
+      </div>
+      <button class="up-btn-save" id="btn-save-comp" onclick="salvarPerfilCompleto()">CONCLUIR INSTALAÇÃO</button>
+    </div>`;
+
+  const j = criarJanela('janela-complemento', 'Configuração de Usuário', 'ie', 360, 520, 40, 0, content);
+  if (j) {
+    j.style.left = (window.innerWidth / 2 - 180) + 'px';
+    const closeBtn = j.querySelector('.tbtn.fechar');
+    if (closeBtn) closeBtn.style.display = 'none';
+  }
+}
+
+function previewFotoComp(event) {
+  fotoFile = event.target.files[0]; if (!fotoFile) return;
+  const r = new FileReader();
+  r.onload = e => {
+    const img = document.getElementById('comp-avatar-preview');
+    img.src=e.target.result; img.style.display='block';
+    document.getElementById('comp-avatar-placeholder').style.display='none';
+  }; r.readAsDataURL(fotoFile);
+}
+
+async function salvarPerfilCompleto() {
+  const nick = document.getElementById('comp-nick').value.trim();
+  const nasc = document.getElementById('comp-nasc').value;
+  const cidade = document.getElementById('comp-cidade').value.trim();
+  const btn = document.getElementById('btn-save-comp');
+  if (!nick || !nasc || !cidade) { mostrarNotificacao('Preencha tudo!'); return; }
+
+  const hoje = new Date();
+  const dataNasc = new Date(nasc);
+  let idade = hoje.getFullYear() - dataNasc.getFullYear();
+  if (hoje.getMonth() < dataNasc.getMonth() || (hoje.getMonth() === dataNasc.getMonth() && hoje.getDate() < dataNasc.getDate())) idade--;
+
+  if (idade < 18) {
+    tocarSomErro();
+    alert("ERRO: Você precisa ter 18 anos ou mais para acessar.");
+    await supabaseClient.auth.signOut();
+    location.reload();
+    return;
+  }
+
+  btn.disabled = true; btn.textContent = 'Salvando...';
   let avatarUrl = null;
   if (fotoFile) {
-    msg.textContent='Enviando foto...';
     const c = await comprimirImagem(fotoFile, 200);
     const nome = currentUser.id+'_avatar.jpg';
     const { error:ue } = await supabaseClient.storage.from('avatars').upload(nome,c,{upsert:true,contentType:'image/jpeg'});
-    if (ue) { msg.style.color='#ffaaaa'; msg.textContent='Erro no upload.'; return; }
+    if (!ue) {
     const { data:ud } = supabaseClient.storage.from('avatars').getPublicUrl(nome);
     avatarUrl = ud.publicUrl;
+    }
   }
+
   const ref = nick.toUpperCase().replace(/\s+/g,'').slice(0,8)+Math.floor(Math.random()*900+100);
   const { error } = await supabaseClient.from('profiles').upsert({
     id:currentUser.id, nickname:nick, color:corSelecionada,
-    avatar_url:avatarUrl, xp:0, level:'Rookie', referral_code:ref
+    avatar_url:avatarUrl, xp:0, level:'Rookie', referral_code:ref,
+    birth_date: nasc, city: cidade
   });
-  if (error) { msg.style.color='#ffaaaa'; msg.textContent='Erro ao salvar.'; return; }
-  currentProfile = { nickname:nick, color:corSelecionada, avatar_url:avatarUrl, xp:0, level:'Rookie', referral_code:ref };
-  mostrarBoot();
+  if (error) { mostrarNotificacao('Erro ao salvar.'); btn.disabled = false; return; }
+  location.reload();
 }
 
 // ── COMPRIMIR IMAGEM ──────────────────────────────────────────
@@ -439,10 +511,12 @@ async function mostrarDesktop() {
   await carregarTemporada();
   await carregarCacheAmizades();
   iniciarRealtimeAmizades();
+  
+  const isSetup = primeiroAcesso;
 
   document.body.innerHTML = `
     <div class="desktop" onclick="fecharMenuSeAberto(event)">
-      <div class="icons">
+      <div class="icons" style="${isSetup ? 'filter:blur(2px); pointer-events:none;' : ''}">
         <div class="icon" onclick="trazerFrente('janela-msn');abrirMSN()">${iconTag('msn')}<span>MSN Messenger</span></div>
         <div class="icon" onclick="trazerFrente('janela-fotolog');abrirFotolog()">${iconTag('fotolog')}<span>Fotolog</span></div>
         <div class="icon" onclick="trazerFrente('janela-winamp');abrirWinamp()">${iconTag('winamp')}<span>Winamp</span></div>
@@ -453,12 +527,12 @@ async function mostrarDesktop() {
       <div class="start-menu" id="start-menu">
         <div class="start-menu-header">
           <div class="start-menu-avatar">
-            ${currentProfile.avatar_url
+            ${currentProfile && currentProfile.avatar_url
               ? `<img src="${currentProfile.avatar_url}" alt="">`
-              : `<div class="start-menu-inicial">${currentProfile.nickname.charAt(0).toUpperCase()}</div>`}
+              : `<div class="start-menu-inicial">${currentProfile ? currentProfile.nickname.charAt(0).toUpperCase() : '?'}</div>`}
           </div>
           <div>
-            <div class="start-menu-nick" style="color:${currentProfile.color}">${escapeHtml(currentProfile.nickname)}</div>
+            <div class="start-menu-nick" style="color:${currentProfile?.color || '#fff'}">${escapeHtml(currentProfile?.nickname || 'Usuário')}</div>
             <div style="font-size:11px;color:#aac4ff">⭐ ${currentProfile.xp||0} XP · ${currentProfile.level||'Rookie'}</div>
             ${getTemporadaHtml()}
           </div>
@@ -498,6 +572,8 @@ async function mostrarDesktop() {
 
   atualizarRelogio();
   setInterval(atualizarRelogio, 1000);
+  
+  if (isSetup) abrirJanelaComplemento();
 }
 function atualizarRelogio() {
   const el=document.getElementById('clock'); if(!el)return;
