@@ -697,6 +697,9 @@ function abrirMSN() {
     j.style.cssText = `width:720px;height:520px;top:40px;left:60px;z-index:${zTop}`;
   }
 
+  // DEPLOY_FORCE_2026
+  console.log('MOBILE CHECK:', window.innerWidth, j.style.cssText);
+
   j.innerHTML=`
     <div class="xp-titlebar">
       <div class="xp-title-left">${iconTag('msn',16)} MSN Messenger</div>
