@@ -1,5 +1,11 @@
 @media (max-width: 600px) {
 
+  body, #desktop, .desktop {
+    overflow-y: auto !important;
+    height: auto !important;
+    min-height: 100vh !important;
+  }
+
   /* DESKTOP — ícones em grid */
   #desktop-icons {
     display: grid !important;
@@ -54,28 +60,36 @@
   #janela-msn .msn-right-col {
     width: 30% !important;
     min-width: 30% !important;
+    max-width: 30% !important;
+    display: flex !important;
+    flex-direction: column !important;
     overflow: hidden !important;
+    padding: 6px !important;
+    gap: 6px !important;
   }
 
   #janela-msn .msn-right-panel {
     width: 100% !important;
   }
 
-  #janela-msn .msn-right-panel .msn-frame img {
+  #janela-msn .msn-frame {
     width: 100% !important;
     height: auto !important;
     aspect-ratio: 1/1 !important;
+    padding: 3px !important;
+  }
+
+  #janela-msn .msn-frame img {
+    width: 100% !important;
+    height: 100% !important;
     object-fit: cover !important;
+    display: block !important;
   }
 
   /* TASKBAR — fixa no rodapé */
   #taskbar {
-    position: fixed !important;
-    bottom: 0 !important;
-    top: auto !important;
-    left: 0 !important;
-    width: 100% !important;
-    z-index: 9999 !important;
+    position: relative !important;
+    bottom: auto !important;
   }
 
   /* Reduzir tamanho da fonte e elementos no mobile */
