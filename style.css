@@ -535,14 +535,6 @@ body { width:100vw; height:100vh; overflow:hidden; }
 }
 
 @media (max-width: 600px) {
-  #janela-msn {
-    position: relative !important;
-    top: auto !important;
-    left: auto !important;
-    width: 100% !important;
-    height: auto !important;
-  }
-
   #janela-msn .messages {
     height: 250px !important;
     overflow-y: auto !important;
