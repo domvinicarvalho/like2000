@@ -691,11 +691,7 @@ function abrirMSN() {
   zTop++;
   const j=document.createElement('div');
   j.className='xp-window'; j.id='janela-msn';
-  if (window.innerWidth <= 600) {
-    j.style.cssText = `position:fixed;top:0;left:0;width:100vw;height:calc(100vh - 48px);transform:none;z-index:1000`;
-  } else {
-    j.style.cssText = `width:720px;height:520px;top:40px;left:60px;z-index:${zTop}`;
-  }
+  j.style.cssText = `width:720px;height:520px;top:40px;left:60px;z-index:${zTop}`;
 
   // DEPLOY_FORCE_2026
   console.log('MOBILE CHECK:', window.innerWidth, j.style.cssText);
