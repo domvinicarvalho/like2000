@@ -1,12 +1,14 @@
 @media (max-width: 600px) {
 
+  /* BODY E DESKTOP — Liberar scroll vertical */
   body, #desktop, .desktop {
-    overflow-y: auto !important;
     height: auto !important;
     min-height: 100vh !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
   }
 
-  /* DESKTOP — ícones em grid */
+  /* ICONES — Grid de 4 colunas */
   #desktop-icons {
     display: grid !important;
     grid-template-columns: repeat(4, 1fr) !important;
@@ -16,66 +18,42 @@
     z-index: 1 !important;
   }
 
-  /* JANELA MSN — forçar maximizada no mobile */
+  /* JANELA MSN — No fluxo da página (relative) para permitir scroll geral */
   #janela-msn {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100vw !important;
-    height: calc(100vh - 48px) !important;
-    z-index: 1000 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    overflow: hidden !important;
-    transform: none !important;
-    border: none !important;
-    border-radius: 0 !important;
-  }
-
-  #janela-msn .msn-body {
-    flex: 1 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    overflow: hidden !important;
-    min-height: 0 !important;
-  }
-
-  /* Mapeado de .msn-chat-column para a classe real .msn-left-col */
-  #janela-msn .msn-left-col {
-    flex: 1 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    overflow: hidden !important;
-    min-height: 0 !important;
-  }
-
-  #janela-msn .messages {
-    flex: 1 !important;
-    overflow-y: auto !important;
-    min-height: 0 !important;
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    width: 100% !important;
     height: auto !important;
+    transform: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    margin-bottom: 20px !important;
   }
 
-  /* Ajuste das colunas */
+  /* AREA DE MENSAGENS — Altura fixa com scroll interno */
+  #janela-msn .messages {
+    height: 260px !important;
+    overflow-y: auto !important;
+    flex: none !important;
+  }
+
+  /* COLUNA DIREITA — Ajuste de largura e empilhamento */
   #janela-msn .msn-right-col {
     width: 30% !important;
     min-width: 30% !important;
     max-width: 30% !important;
     display: flex !important;
     flex-direction: column !important;
-    overflow: hidden !important;
     padding: 6px !important;
     gap: 6px !important;
   }
 
-  #janela-msn .msn-right-panel {
-    width: 100% !important;
-  }
-
+  /* MOLDURAS — Quadradas e responsivas */
   #janela-msn .msn-frame {
     width: 100% !important;
     height: auto !important;
-    aspect-ratio: 1/1 !important;
+    aspect-ratio: 1 / 1 !important;
     padding: 3px !important;
   }
 
@@ -86,24 +64,12 @@
     display: block !important;
   }
 
-  /* TASKBAR — fixa no rodapé */
+  /* TASKBAR — No fluxo normal abaixo do conteúdo */
   #taskbar {
     position: relative !important;
     bottom: auto !important;
+    top: auto !important;
+    left: auto !important;
+    width: 100% !important;
   }
-
-  /* Reduzir tamanho da fonte e elementos no mobile */
-  #janela-msn * {
-    font-size: 13px !important;
-  }
-
-  /* Mapeado de .msn-header img e .messages .avatar para as classes reais */
-  #janela-msn .msn-userbar .avatar-img,
-  #janela-msn .msn-userbar .avatar,
-  #janela-msn .msg-avatar,
-  #janela-msn .msg-avatar-inicial {
-    width: 32px !important;
-    height: 32px !important;
-  }
-
 }
