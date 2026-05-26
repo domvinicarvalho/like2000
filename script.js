@@ -1540,9 +1540,20 @@ async function abrirWinamp() {
     <div class="winamp-container">
       <div class="winamp-top">
         <div class="winamp-display">
+          <div class="winamp-kbps-info">
+            <div class="wa-info-line">128 <small>kbps</small></div>
+            <div class="wa-info-line">44 <small>khz</small></div>
+            <div class="wa-info-stereo">
+              <span class="wa-active">mono</span> <span class="wa-active">stereo</span>
+            </div>
+          </div>
           <div class="winamp-lcd">
             <div class="winamp-marquee-container">
               <div id="wa-title" class="winamp-marquee">LIKE 2000 - Selecione uma faixa</div>
+            </div>
+            <div class="winamp-visualizer">
+              <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+              <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
             </div>
             <div class="winamp-timer">
               <span id="wa-time-cur">00:00</span> / <span id="wa-time-total">00:00</span>
@@ -1551,7 +1562,7 @@ async function abrirWinamp() {
         </div>
         <div class="winamp-controls">
           <div class="winamp-progress-container" onclick="seekWinamp(event)">
-             <div id="wa-progress-bar" class="winamp-progress-fill"></div>
+             <div id="wa-progress-bar" class="winamp-progress-fill"><div class="wa-handle"></div></div>
           </div>
           <div class="winamp-buttons">
             <button onclick="prevWinamp()" title="Anterior">⏮</button>
@@ -1561,7 +1572,7 @@ async function abrirWinamp() {
             <button onclick="nextWinamp()" title="Próxima">⏭</button>
           </div>
           <div class="winamp-volume-container">
-            <span style="font-size:9px">VOL</span>
+            <div class="wa-vol-label">VOL</div>
             <input type="range" min="0" max="1" step="0.05" value="0.8" oninput="changeVolumeWinamp(this.value)" style="flex:1; height:4px; cursor:pointer;">
           </div>
         </div>
