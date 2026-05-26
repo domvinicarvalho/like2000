@@ -1540,20 +1540,23 @@ async function abrirWinamp() {
     <div class="winamp-container">
       <div class="winamp-top">
         <div class="winamp-display">
-          <div class="winamp-kbps-info">
-            <div class="wa-info-line">128 <small>kbps</small></div>
-            <div class="wa-info-line">44 <small>khz</small></div>
-            <div class="wa-info-stereo">
-              <span class="wa-active">mono</span> <span class="wa-active">stereo</span>
-            </div>
-          </div>
           <div class="winamp-lcd">
+            <div class="winamp-lcd-top">
+              <div class="winamp-kbps-info">
+                <div class="wa-info-line">128 <small>kbps</small></div>
+                <div class="wa-info-line">44 <small>khz</small></div>
+                <div class="wa-info-stereo">
+                  <span class="wa-active">mono</span> <span class="wa-active">stereo</span>
+                </div>
+              </div>
+              <div id="wa-visualizer" class="winamp-visualizer">
+                <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+                <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+                <div class="bar"></div><div class="bar"></div>
+              </div>
+            </div>
             <div class="winamp-marquee-container">
               <div id="wa-title" class="winamp-marquee">LIKE 2000 - Selecione uma faixa</div>
-            </div>
-            <div class="winamp-visualizer">
-              <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
-              <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
             </div>
             <div class="winamp-timer">
               <span id="wa-time-cur">00:00</span> / <span id="wa-time-total">00:00</span>
@@ -1593,12 +1596,22 @@ async function abrirWinamp() {
     winampAudio = new Audio();
     winampAudio.volume = 0.8;
   }
+  
+  const updateVis = (playing) => {
+    const vis = document.getElementById('wa-visualizer');
+    if (vis) vis.classList.toggle('animating', playing);
+  };
+
+  winampAudio.onplay  = () => updateVis(true);
+  winampAudio.onpause = () => updateVis(false);
+  winampAudio.onended = () => { updateVis(false); nextWinamp(); };
 
   winampAudio.ontimeupdate = () => {
     const cur = document.getElementById('wa-time-cur');
     const bar = document.getElementById('wa-progress-bar');
     if (cur && !isNaN(winampAudio.duration)) {
       cur.textContent = formatTime(winampAudio.currentTime);
+      if (!document.getElementById('janela-winamp')) return;
       const pct = (winampAudio.currentTime / winampAudio.duration) * 100;
       bar.style.width = pct + '%';
     }
@@ -1608,8 +1621,6 @@ async function abrirWinamp() {
     const tot = document.getElementById('wa-time-total');
     if (tot) tot.textContent = formatTime(winampAudio.duration);
   };
-
-  winampAudio.onended = () => nextWinamp();
 }
 
 function formatTime(s) {
