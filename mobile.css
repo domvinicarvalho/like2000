@@ -55,7 +55,6 @@
     border-radius: 0 !important;
     overflow-x: auto !important; /* Scroll horizontal interno se a janela for larga */
     background: #ece9d8 !important;
-    z-index: 50 !important;
     margin-bottom: 15px !important;
   }
 
@@ -66,7 +65,7 @@
   }
 
   /* IE, WINAMP e PERFIS — Centralizados na tela (fixed) */
-  #janela-ie, #janela-winamp, [id^="janela-perfil-"], #janela-complemento {
+  #janela-ie, [id^="janela-perfil-"], #janela-complemento {
     position: fixed !important;
     top: 50% !important;
     left: 50% !important;
@@ -74,6 +73,18 @@
     width: 90vw !important;
     height: auto !important;
     max-height: 80vh !important;
+    border: 2px solid #0831a0 !important;
+    border-radius: 8px !important;
+  }
+
+  /* Ajuste específico para o Winamp no Mobile para evitar janela em branco */
+  #janela-winamp {
+    position: fixed !important;
+    top: 45% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 285px !important; /* Largura exata do Webamp + bordas */
+    height: 385px !important;
     border: 2px solid #0831a0 !important;
     border-radius: 8px !important;
   }
