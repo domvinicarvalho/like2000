@@ -68,10 +68,12 @@
   /* TASKBAR — Fixa no rodapé */
   #taskbar {
     position: fixed !important;
-    bottom: 0 !important;
-    top: auto !important;
+    bottom: 0 !important; /* Fixa no fundo da tela */
+    top: auto !important;    /* Garante que não suba para o topo */
     left: 0 !important;
-    padding-bottom: env(safe-area-inset-bottom) !important;
+    display: flex !important;
+    align-items: flex-start !important; /* Mantém os botões no topo da barra */
+    padding-bottom: env(safe-area-inset-bottom) !important; /* Reserva espaço para a barra do iPhone */
     height: calc(38px + env(safe-area-inset-bottom)) !important;
     width: 100% !important;
     z-index: 9999 !important;
