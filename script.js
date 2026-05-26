@@ -1516,24 +1516,28 @@ async function trocarAvatar(event) {
 
 async function abrirWinamp() {
   fecharMenu();
+  if (webampInstance) return;
 
-  if (webampInstance) {
-    // Se já estiver aberto, não faz nada (ou você pode implementar um foco)
-    return;
+  // Criamos um host invisível dentro do desktop para o Webamp
+  let host = document.getElementById('webamp-host');
+  if (!host) {
+    host = document.createElement('div');
+    host.id = 'webamp-host';
+    document.querySelector('.desktop').appendChild(host);
   }
 
   // Carregamos a biblioteca Webamp dinamicamente se necessário
   if (typeof Webamp === 'undefined') {
     const script = document.createElement('script');
     script.src = "https://unpkg.com/webamp@1.5.0/built/webamp.bundle.min.js";
-    script.onload = () => iniciarWebamp();
+    script.onload = () => iniciarWebamp(host);
     document.head.appendChild(script);
   } else {
-    iniciarWebamp();
+    iniciarWebamp(host);
   }
 }
 
-async function iniciarWebamp() {
+async function iniciarWebamp(host) {
   const { data: tracks, error } = await supabaseClient
     .from('winamp_playlist')
     .select('*')
@@ -1563,25 +1567,17 @@ async function iniciarWebamp() {
     availableSkins: [
       { url: "https://unpkg.com/webamp@1.5.0/skins/base-2.91.wsz", name: "Winamp Classic" }
     ],
+    zIndex: 2000 // Define a camada diretamente no construtor
   });
 
-  // Renderizar o Webamp diretamente no desktop
-  const target = document.querySelector('.desktop');
-  await webampInstance.renderWhenReady(target);
+  // Renderizar o Webamp dentro do nosso host
+  await webampInstance.renderWhenReady(host);
   
-  // Ajuste de posição inicial e profundidade
-  const waElement = document.getElementById('webamp');
-  if (waElement) {
-    waElement.style.zIndex = "2000"; // Garante que fique acima das janelas comuns
-    waElement.style.position = "absolute";
-    waElement.style.top = "50px";
-    waElement.style.left = "50px";
-  }
-
   // Quando o usuário fechar o Winamp pelo próprio botão "X" dele
   webampInstance.onClose(() => {
     webampInstance.dispose();
     webampInstance = null;
+    if (host) host.remove();
   });
 }
 
