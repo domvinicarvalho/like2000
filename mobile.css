@@ -59,13 +59,10 @@
     min-width: 100% !important;
     max-width: 100% !important;
     display: flex !important;
-    flex-direction: row !important;
-    justify-content: center !important;
+    flex-direction: column !important;
+    align-items: center !important;
     padding: 6px !important;
-    gap: 6px !important;
-  }
-  #janela-msn .msn-right-panel {
-    gap: 40px !important; /* Aumenta o espaço entre o banner e o seu avatar */
+    gap: 20px !important; /* Espaço vertical entre banner e foto */
   }
 
   /* MOLDURAS — Quadradas e responsivas */
