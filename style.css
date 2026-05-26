@@ -717,3 +717,99 @@ body { width:100vw; height:100vh; overflow:hidden; }
   overflow: auto;
   background: white;
 }
+
+/* ══════════════════════════════════════════
+   WINAMP CLASSIC SKIN
+══════════════════════════════════════════ */
+.winamp-container {
+  background: #101010;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  color: #00FF00;
+  font-family: Arial, sans-serif;
+  border: 1px solid #333;
+}
+.winamp-top {
+  padding: 10px;
+  background: #262626;
+  border-bottom: 2px solid #000;
+  box-shadow: inset 1px 1px 0 #444;
+}
+.winamp-lcd {
+  background: #001100;
+  padding: 6px;
+  border: 1px solid #444;
+  box-shadow: inset 2px 2px 5px #000;
+  margin-bottom: 10px;
+  font-family: 'Courier New', Courier, monospace;
+}
+.winamp-marquee-container {
+  overflow: hidden;
+  white-space: nowrap;
+  height: 1.2em;
+  background: #000;
+  border: 1px solid #1a331a;
+  margin-bottom: 4px;
+}
+.winamp-marquee {
+  display: inline-block;
+  padding-left: 100%;
+  animation: wa-marquee 15s linear infinite;
+  font-weight: bold;
+  font-size: 13px;
+  color: #00FF00;
+  text-transform: uppercase;
+}
+@keyframes wa-marquee {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(-200%, 0); }
+}
+.winamp-timer {
+  font-size: 12px;
+  text-align: center;
+  color: #00BB00;
+}
+.winamp-progress-container {
+  width: 100%;
+  height: 8px;
+  background: #050505;
+  border: 1px solid #333;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+.winamp-progress-fill {
+  height: 100%;
+  background: linear-gradient(to bottom, #00FF00, #008800);
+  width: 0%;
+}
+.winamp-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.winamp-buttons button {
+  background: linear-gradient(to bottom, #444, #222);
+  border: 1px solid #555;
+  border-bottom-color: #000;
+  border-right-color: #000;
+  color: #ddd;
+  cursor: pointer;
+  width: 42px;
+  height: 24px;
+  font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+}
+.winamp-buttons button:active { background: #111; padding-top: 2px; }
+.winamp-volume-container { display: flex; align-items: center; gap: 8px; color: #888; font-weight: bold; }
+.winamp-playlist {
+  flex: 1;
+  background: #000;
+  overflow-y: auto;
+  font-size: 11px;
+  padding: 4px;
+  border-top: 1px solid #333;
+}
+.wa-track { padding: 4px; cursor: pointer; color: #00AA00; border-bottom: 1px solid #111; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wa-track:hover { background: #002200; color: #00FF00; }
+.wa-track.active { background: #004400; color: #fff; font-weight: bold; }

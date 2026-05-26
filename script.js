@@ -22,6 +22,11 @@ let friendshipRealtime = null;
 let configRealtime = null;
 let onlineUsersRealtime = null;
 
+// ── WINAMP STATE ───────────────────────────────────────────
+let winampAudio = null;
+let winampPlaylist = [];
+let currentTrackIndex = -1;
+
 // ── NÍVEIS ───────────────────────────────────────────────────
 const LEVELS = [
   { name:'Rookie',         min:0    },
@@ -1512,24 +1517,142 @@ async function trocarAvatar(event) {
 }
 
 
-function abrirWinamp(){
+async function abrirWinamp() {
   fecharMenu();
-  criarJanela('janela-ie','Internet Explorer','ie',500,200,220,200,`
-    <div style="padding:15px; font-size:12px; color:#333;">
-      <div style="background:#f0f0f0; padding:10px; border:1px solid #ccc; margin-bottom:10px;">
-        <strong>Bad Idea Events</strong> - Compre seu ingresso antecipado!
-      </div>
-      <div style="display:flex; flex-direction:column; gap:8px;">
-        <label>Código do Cupom:</label>
-        <div style="display:flex; gap:5px;">
-          <input type="text" id="ie-coupon" placeholder="CUPOM10" style="flex:1; padding:4px; border:1px solid #7f9db9;">
-          <button onclick="comprarIngresso()" style="padding:4px 10px; cursor:pointer;">Comprar (+200 XP)</button>
+  if (document.getElementById('janela-winamp')) {
+    trazerFrente('janela-winamp');
+    return;
+  }
+
+  const { data, error } = await supabaseClient
+    .from('winamp_playlist')
+    .select('*')
+    .eq('ativo', true)
+    .order('ordem', { ascending: true });
+
+  if (error) {
+    mostrarNotificacao("Erro ao carregar rádio.");
+    return;
+  }
+  winampPlaylist = data || [];
+
+  const content = `
+    <div class="winamp-container">
+      <div class="winamp-top">
+        <div class="winamp-display">
+          <div class="winamp-lcd">
+            <div class="winamp-marquee-container">
+              <div id="wa-title" class="winamp-marquee">LIKE 2000 - Selecione uma faixa</div>
+            </div>
+            <div class="winamp-timer">
+              <span id="wa-time-cur">00:00</span> / <span id="wa-time-total">00:00</span>
+            </div>
+          </div>
         </div>
-        <div id="ie-msg" style="font-weight:bold; margin-top:5px;"></div>
+        <div class="winamp-controls">
+          <div class="winamp-progress-container" onclick="seekWinamp(event)">
+             <div id="wa-progress-bar" class="winamp-progress-fill"></div>
+          </div>
+          <div class="winamp-buttons">
+            <button onclick="prevWinamp()" title="Anterior">⏮</button>
+            <button onclick="playWinamp()" title="Reproduzir">▶</button>
+            <button onclick="pauseWinamp()" title="Pausar">⏸</button>
+            <button onclick="stopWinamp()" title="Parar">⏹</button>
+            <button onclick="nextWinamp()" title="Próxima">⏭</button>
+          </div>
+          <div class="winamp-volume-container">
+            <span style="font-size:9px">VOL</span>
+            <input type="range" min="0" max="1" step="0.05" value="0.8" oninput="changeVolumeWinamp(this.value)" style="flex:1; height:4px; cursor:pointer;">
+          </div>
+        </div>
       </div>
-    </div>
-  `);
+      <div class="winamp-playlist" id="wa-playlist">
+        ${winampPlaylist.map((t, i) => `
+          <div class="wa-track" id="wa-track-${i}" onclick="selectTrack(${i})">
+            <span class="wa-track-num">${i + 1}.</span>
+            <span class="wa-track-name">${escapeHtml(t.titulo)} - ${escapeHtml(t.artista || 'Unknown')}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>`;
+
+  criarJanela('janela-winamp', 'Winamp', 'winamp', 280, 420, 50, 200, content);
+  
+  if (!winampAudio) {
+    winampAudio = new Audio();
+    winampAudio.volume = 0.8;
+  }
+
+  winampAudio.ontimeupdate = () => {
+    const cur = document.getElementById('wa-time-cur');
+    const bar = document.getElementById('wa-progress-bar');
+    if (cur && !isNaN(winampAudio.duration)) {
+      cur.textContent = formatTime(winampAudio.currentTime);
+      const pct = (winampAudio.currentTime / winampAudio.duration) * 100;
+      bar.style.width = pct + '%';
+    }
+  };
+
+  winampAudio.onloadedmetadata = () => {
+    const tot = document.getElementById('wa-time-total');
+    if (tot) tot.textContent = formatTime(winampAudio.duration);
+  };
+
+  winampAudio.onended = () => nextWinamp();
 }
+
+function formatTime(s) {
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60);
+  return String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
+}
+
+function playWinamp() {
+  if ((!winampAudio.src || winampAudio.src === "") && winampPlaylist.length > 0) {
+    selectTrack(0);
+  } else {
+    winampAudio.play().catch(e => mostrarNotificacao("Clique em uma música primeiro!"));
+  }
+}
+
+function pauseWinamp() { if (winampAudio) winampAudio.pause(); }
+function stopWinamp() { if (winampAudio) { winampAudio.pause(); winampAudio.currentTime = 0; } }
+
+function selectTrack(index) {
+  if (index < 0 || index >= winampPlaylist.length) return;
+  currentTrackIndex = index;
+  const track = winampPlaylist[index];
+  winampAudio.src = track.url;
+  winampAudio.play();
+
+  document.querySelectorAll('.wa-track').forEach(el => el.classList.remove('active'));
+  const row = document.getElementById(`wa-track-${index}`);
+  if (row) row.classList.add('active');
+  const titleEl = document.getElementById('wa-title');
+  if (titleEl) titleEl.textContent = `${track.titulo} - ${track.artista}`;
+}
+
+function prevWinamp() {
+  let idx = currentTrackIndex - 1;
+  if (idx < 0) idx = winampPlaylist.length - 1;
+  selectTrack(idx);
+}
+
+function nextWinamp() {
+  let idx = currentTrackIndex + 1;
+  if (idx >= winampPlaylist.length) idx = 0;
+  selectTrack(idx);
+}
+
+function seekWinamp(e) {
+  const container = e.currentTarget;
+  const rect = container.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const pct = x / rect.width;
+  if (winampAudio && winampAudio.duration) winampAudio.currentTime = pct * winampAudio.duration;
+}
+
+function changeVolumeWinamp(v) { if (winampAudio) winampAudio.volume = v; }
 
 async function comprarIngresso() {
   const input = document.getElementById('ie-coupon');
