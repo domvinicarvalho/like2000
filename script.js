@@ -1566,38 +1566,40 @@ async function abrirWinamp() {
             </div>
             <div class="wa-slider-wrap">
               <span class="wa-label">BALANCE</span>
-              <input type="range" min="0" max="1" step="0.1" value="0.5" class="wa-slider-input pan">
+              <input type="range" min="0" max="1" step="0.1" value="0.5" class="wa-slider-input">
             </div>
           </div>
-          <div class="wa-seek-row">
-             <div class="winamp-progress-container" onclick="seekWinamp(event)">
-                <div id="wa-progress-bar" class="winamp-progress-fill"><div class="wa-handle"></div></div>
-             </div>
+          <div class="winamp-progress-container" onclick="seekWinamp(event)">
+            <div id="wa-progress-bar" class="winamp-progress-fill"><div class="wa-handle"></div></div>
           </div>
           <div class="winamp-buttons">
-            <button onclick="prevWinamp()" title="Anterior">⏮</button>
-            <button onclick="playWinamp()" title="Reproduzir">▶</button>
-            <button onclick="pauseWinamp()" title="Pausar">⏸</button>
-            <button onclick="stopWinamp()" title="Parar">⏹</button>
-            <button onclick="nextWinamp()" title="Próxima">⏭</button>
-          </div>
-          <div class="winamp-volume-container">
-            <div class="wa-vol-label">VOL</div>
-            <input type="range" min="0" max="1" step="0.05" value="0.8" oninput="changeVolumeWinamp(this.value)" style="flex:1; height:4px; cursor:pointer;">
+            <button onclick="prevWinamp()">⏮</button>
+            <button onclick="playWinamp()">▶</button>
+            <button onclick="pauseWinamp()">⏸</button>
+            <button onclick="stopWinamp()">⏹</button>
+            <button onclick="nextWinamp()">⏭</button>
+            <button class="wa-btn-open" onclick="mostrarNotificacao('Eject')">⏏</button>
           </div>
         </div>
       </div>
-      <div class="winamp-playlist" id="wa-playlist">
-        ${winampPlaylist.map((t, i) => `
-          <div class="wa-track" id="wa-track-${i}" onclick="selectTrack(${i})">
-            <span class="wa-track-num">${i + 1}.</span>
-            <span class="wa-track-name">${escapeHtml(t.titulo)} - ${escapeHtml(t.artista || 'Unknown')}</span>
-          </div>
-        `).join('')}
+      <div class="wa-playlist-window">
+        <div class="wa-playlist-top">WINAMP PLAYLIST</div>
+        <div class="wa-playlist-list" id="wa-playlist">
+          ${winampPlaylist.map((t, i) => `
+            <div class="wa-track" id="wa-track-${i}" onclick="selectTrack(${i})">
+              <span class="wa-track-num">${i + 1}. ${escapeHtml(t.titulo)}</span>
+              <span class="wa-track-time">--:--</span>
+            </div>
+          `).join('')}
+        </div>
+        <div class="wa-playlist-btns">
+          <button>ADD</button><button>REM</button><button>SEL</button><button>MISC</button>
+          <div class="wa-playlist-time" id="wa-time-total">00:00</div>
+        </div>
       </div>
     </div>`;
 
-  criarJanela('janela-winamp', 'Winamp', 'winamp', 280, 420, 50, 200, content);
+  criarJanela('janela-winamp', 'Winamp', 'winamp', 285, 460, 50, 200, content);
   
   if (!winampAudio) {
     winampAudio = new Audio();
@@ -1697,8 +1699,22 @@ async function comprarIngresso() {
 }
 function abrirIE(){
   fecharMenu();
-  tocarSomErro();
-  criarJanela('janela-ie','Internet Explorer','ie',500,80,220,200,`<div style="padding:20px;text-align:center;font-size:13px;color:#555">🌐 Ingressos — em breve!</div>`);
+  criarJanela('janela-ie','Internet Explorer','ie',500,240,220,200,`
+    <div style="padding:15px; font-size:12px; color:#333; background:#f0f0e8; height:100%;">
+      <div style="background:#fff; padding:12px; border:1px solid #7f9db9; margin-bottom:10px; box-shadow:inset 1px 1px 2px rgba(0,0,0,0.1);">
+        <div style="color:#003399; font-weight:bold; font-size:14px; margin-bottom:5px;">Bad Idea Events</div>
+        Compre seu ingresso antecipado e ganhe XP bônus na plataforma!
+      </div>
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <label style="font-weight:bold; font-size:11px;">Código do Cupom de Desconto:</label>
+        <div style="display:flex; gap:5px;">
+          <input type="text" id="ie-coupon" placeholder="EX: ANOS2000" style="flex:1; padding:6px; border:1px solid #7f9db9; font-family:monospace;">
+          <button onclick="comprarIngresso()" style="padding:6px 12px; cursor:pointer; background:linear-gradient(to bottom, #eee, #ccc); border:1px solid #777; font-weight:bold;">Comprar (+200 XP)</button>
+        </div>
+        <div id="ie-msg" style="font-weight:bold; margin-top:5px; text-align:center;"></div>
+      </div>
+    </div>
+  `);
 }
 
 // ── UTILS ────────────────────────────────────────────────────
