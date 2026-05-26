@@ -19,8 +19,8 @@
     z-index: 1 !important;
   }
 
-  /* JANELA MSN — No fluxo da página (relative) para permitir scroll geral */
-  #janela-msn {
+  /* JANELAS — No fluxo da página (relative) para permitir scroll geral e largura total */
+  .xp-window {
     position: relative !important;
     top: auto !important;
     left: auto !important;
