@@ -1,6 +1,6 @@
 @media (max-width: 600px) {
 
-  /* BODY E DESKTOP — Liberar scroll vertical */
+  /* BODY E DESKTOP — Liberar scroll vertical e área segura iOS */
   body, #desktop, .desktop {
     height: auto !important;
     min-height: 100vh !important;
@@ -9,88 +9,105 @@
     padding-bottom: calc(48px + env(safe-area-inset-bottom)) !important;
   }
 
-  /* ICONES — Grid de 4 colunas */
+  /* ICONES — Colunas verticais (estilo XP), menores e atrás das janelas */
   #desktop-icons {
-    display: grid !important;
-    grid-template-columns: repeat(4, 1fr) !important;
-    gap: 10px !important;
-    padding: 10px !important;
-    position: relative !important;
+    display: flex !important;
+    flex-direction: column !important;
+    flex-wrap: wrap !important;
+    height: 80vh !important;
+    align-content: flex-start !important;
+    padding: 10px 5px !important;
+    gap: 5px !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
     z-index: 1 !important;
   }
 
-  /* JANELAS — No fluxo da página (relative) para permitir scroll geral e largura total */
+  #desktop-icons .icon {
+    width: 65px !important;
+    padding: 4px !important;
+  }
+
+  #desktop-icons .icon img {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  #desktop-icons .icon span {
+    font-size: 10px !important;
+    text-shadow: 1px 1px 2px #000 !important;
+  }
+
+  /* JANELAS — Cobrem o desktop e respeitam largura da tela */
   .xp-window {
     position: relative !important;
-    top: auto !important;
-    left: auto !important;
+    top: 0 !important;
+    left: 0 !important;
     width: 100vw !important;
     max-width: 100vw !important;
     height: auto !important;
     transform: none !important;
     display: flex !important;
     flex-direction: column !important;
-    margin-bottom: 20px !important;
     border-left: none !important;
     border-right: none !important;
     border-radius: 0 !important;
+    overflow-x: auto !important; /* Scroll horizontal interno se a janela for larga */
+    background: #ece9d8 !important;
+    z-index: 50 !important;
+    margin-bottom: 15px !important;
   }
 
-  /* MSN: Empilhar colunas para ganhar espaço horizontal */
-  #janela-msn .msn-main-container {
-    flex-direction: column !important;
+  /* MSN e FOTOLOG — Do topo até a barra de tarefas com altura fixa */
+  #janela-msn, #janela-fotolog {
+    height: calc(100vh - 38px - env(safe-area-inset-bottom)) !important;
+    margin-bottom: 0 !important;
+  }
+
+  /* IE, WINAMP e PERFIS — Centralizados na tela (fixed) */
+  #janela-ie, #janela-winamp, [id^="janela-perfil-"], #janela-complemento {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 90vw !important;
     height: auto !important;
+    max-height: 80vh !important;
+    z-index: 10000 !important;
+    border: 2px solid #0831a0 !important;
+    border-radius: 8px !important;
   }
 
-  /* AREA DE MENSAGENS — Altura fixa com scroll interno */
+  /* AREA DE MENSAGENS — Scroll interno no MSN */
   #janela-msn .messages {
-    height: 260px !important;
+    flex: 1 !important;
+    min-height: 260px !important;
     overflow-y: auto !important;
-    flex: none !important;
   }
 
-  #janela-msn .msn-left-col {
-    width: 100% !important;
+  /* FOTOLOG — Ajuste de colunas e scroll interno */
+  #janela-fotolog .fotolog-sidebar {
+    width: 35% !important;
+    min-width: 35% !important;
+  }
+  #janela-fotolog .fotolog-feed {
+    flex: 1 !important;
+    overflow-y: auto !important;
   }
 
-  /* COLUNA DIREITA — Agora aparece abaixo do chat */
-  #janela-msn .msn-right-col {
-    width: 100% !important;
-    min-width: 100% !important;
-    max-width: 100% !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    padding: 6px !important;
-    gap: 20px !important; /* Espaço vertical entre banner e foto */
-  }
-
-  /* MOLDURAS — Quadradas e responsivas */
-  #janela-msn .msn-frame {
-    width: 100% !important;
-    height: auto !important;
-    aspect-ratio: 1 / 1 !important;
-    padding: 3px !important;
-  }
-
-  #janela-msn .msn-frame img {
-    width: 100% !important;
-    height: 100% !important;
-    object-fit: cover !important;
-    display: block !important;
-  }
-
-  /* TASKBAR — Fixa no rodapé */
+  /* TASKBAR — Fixa no rodapé respeitando a safe area */
   #taskbar {
     position: fixed !important;
-    bottom: 0 !important; /* Fixa no fundo da tela */
-    top: auto !important;    /* Garante que não suba para o topo */
+    bottom: 0 !important;
+    top: auto !important;
     left: 0 !important;
     display: flex !important;
-    align-items: flex-start !important; /* Mantém os botões no topo da barra */
-    padding-bottom: env(safe-area-inset-bottom) !important; /* Reserva espaço para a barra do iPhone */
+    align-items: flex-start !important;
+    padding-bottom: env(safe-area-inset-bottom) !important;
     height: calc(38px + env(safe-area-inset-bottom)) !important;
     width: 100% !important;
     z-index: 9999 !important;
   }
+
 }
