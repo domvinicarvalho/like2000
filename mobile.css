@@ -9,32 +9,54 @@
     padding-bottom: calc(48px + env(safe-area-inset-bottom)) !important;
   }
 
-  /* ICONES — Grid de 4 colunas */
+  /* ICONES — Colunas verticais (estilo XP) e menores */
   #desktop-icons {
-    display: grid !important;
-    grid-template-columns: repeat(4, 1fr) !important;
-    gap: 10px !important;
-    padding: 10px !important;
-    position: relative !important;
+    display: flex !important;
+    flex-direction: column !important;
+    flex-wrap: wrap !important;
+    height: 80vh !important; /* Limite de altura para forçar a criação de novas colunas à direita */
+    align-content: flex-start !important;
+    padding: 10px 5px !important;
+    gap: 5px !important;
+    position: absolute !important; /* Fica atrás das janelas para ser "coberto" */
+    top: 0 !important;
+    left: 0 !important;
     z-index: 1 !important;
   }
 
-  /* JANELAS — Respeitam o limite da tela sem mudar a composição interna */
+  #desktop-icons .icon {
+    width: 65px !important;
+    padding: 4px !important;
+  }
+
+  #desktop-icons .icon img {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  #desktop-icons .icon span {
+    font-size: 10px !important;
+    text-shadow: 1px 1px 2px #000 !important;
+  }
+
+  /* JANELAS — Agora cobrem o desktop (posicionamento no topo do fluxo) */
   .xp-window {
-    position: relative !important;
-    top: auto !important;
-    left: auto !important;
+    position: relative !important; /* Mantido relative para alimentar o scroll do body */
+    top: 0 !important;
+    left: 0 !important;
     width: 100vw !important;
     max-width: 100vw !important;
     height: auto !important;
     transform: none !important;
     display: flex !important;
     flex-direction: column !important;
-    margin-bottom: 20px !important;
     border-left: none !important;
     border-right: none !important;
     border-radius: 0 !important;
     overflow-x: auto !important; /* Permite scroll horizontal interno se a composição original for muito larga */
+    background: #ece9d8 !important; /* Cor sólida para cobrir os ícones que estão atrás */
+    z-index: 50 !important;
+    margin-bottom: 15px !important;
   }
 
   /* AREA DE MENSAGENS — Altura fixa com scroll interno */
@@ -42,6 +64,16 @@
     height: 260px !important;
     overflow-y: auto !important;
     flex: none !important;
+  }
+
+  /* FOTOLOG — Prioridade para as fotos e scroll interno */
+  #janela-fotolog .fotolog-sidebar {
+    width: 35% !important;
+    min-width: 35% !important;
+  }
+  #janela-fotolog .fotolog-feed {
+    height: 450px !important; /* Altura fixa para permitir scroll apenas nas fotos */
+    overflow-y: auto !important;
   }
 
   /* MOLDURAS — Quadradas e responsivas */
