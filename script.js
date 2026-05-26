@@ -1516,28 +1516,24 @@ async function trocarAvatar(event) {
 
 async function abrirWinamp() {
   fecharMenu();
-  
-  if (document.getElementById('janela-winamp')) {
-    trazerFrente('janela-winamp');
+
+  if (webampInstance) {
+    // Se já estiver aberto, não faz nada (ou você pode implementar um foco)
     return;
   }
-
-  // Criamos a janela primeiro
-  const containerId = 'webamp-container';
-  criarJanela('janela-winamp', 'Winamp 2.91', 'winamp', 285, 385, 50, 200, `<div id="${containerId}" style="position:relative; width:100%; height:100%; background:#000;"></div>`);
 
   // Carregamos a biblioteca Webamp dinamicamente se necessário
   if (typeof Webamp === 'undefined') {
     const script = document.createElement('script');
     script.src = "https://unpkg.com/webamp@1.5.0/built/webamp.bundle.min.js";
-    script.onload = () => iniciarWebamp(containerId);
+    script.onload = () => iniciarWebamp();
     document.head.appendChild(script);
   } else {
-    iniciarWebamp(containerId);
+    iniciarWebamp();
   }
 }
 
-async function iniciarWebamp(containerId) {
+async function iniciarWebamp() {
   const { data: tracks, error } = await supabaseClient
     .from('winamp_playlist')
     .select('*')
@@ -1569,30 +1565,24 @@ async function iniciarWebamp(containerId) {
     ],
   });
 
-  // Renderizar o Webamp dentro da nossa janela XP
-  const target = document.getElementById(containerId);
+  // Renderizar o Webamp diretamente no desktop
+  const target = document.querySelector('.desktop');
   await webampInstance.renderWhenReady(target);
   
-  // Ajuste para o Webamp não flutuar fora da janela
+  // Ajuste de posição inicial e profundidade
   const waElement = document.getElementById('webamp');
   if (waElement) {
-    waElement.style.position = 'relative';
-    waElement.style.top = '0';
-    waElement.style.left = '0';
+    waElement.style.zIndex = "2000"; // Garante que fique acima das janelas comuns
+    waElement.style.position = "absolute";
+    waElement.style.top = "50px";
+    waElement.style.left = "50px";
   }
 
-  // Quando fechar a nossa janela XP, destruímos a instância do Webamp
-  const closeBtn = document.querySelector('#janela-winamp .tbtn.fechar');
-  if (closeBtn) {
-    const originalOnClick = closeBtn.onclick;
-    closeBtn.onclick = () => {
-      if (webampInstance) {
-        webampInstance.dispose();
-        webampInstance = null;
-      }
-      fecharJanela('janela-winamp');
-    };
-  }
+  // Quando o usuário fechar o Winamp pelo próprio botão "X" dele
+  webampInstance.onClose(() => {
+    webampInstance.dispose();
+    webampInstance = null;
+  });
 }
 
 async function comprarIngresso() {

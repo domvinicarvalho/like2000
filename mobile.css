@@ -77,18 +77,6 @@
     border-radius: 8px !important;
   }
 
-  /* Ajuste específico para o Winamp no Mobile para evitar janela em branco */
-  #janela-winamp {
-    position: fixed !important;
-    top: 45% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) !important;
-    width: 285px !important; /* Largura exata do Webamp + bordas */
-    height: 385px !important;
-    border: 2px solid #0831a0 !important;
-    border-radius: 8px !important;
-  }
-
   /* AREA DE MENSAGENS — Scroll interno no MSN */
   #janela-msn .messages {
     flex: 1 !important;

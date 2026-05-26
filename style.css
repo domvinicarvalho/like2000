@@ -717,12 +717,6 @@ body { width:100vw; height:100vh; overflow:hidden; }
   overflow: auto;
   background: white;
 }
-
-#webamp-container {
-  width: 100%;
-  height: 100%;
-}
-
 #webamp {
-  z-index: 1 !important;
+  z-index: 2000 !important;
 }
