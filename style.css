@@ -109,7 +109,7 @@ body { width:100vw; height:100vh; overflow:hidden; }
 
 /* taskbar */
 .taskbar {
-  position:absolute; bottom:0; width:100%; height:38px;
+  position:fixed; bottom:0; width:100%; height:38px;
   background:linear-gradient(to bottom,#3a6ec8 0%,#2f5db7 4%,#2459b3 8%,#235ab5 50%,#1e4fa0 94%,#1a4396 100%);
   display:flex; align-items:center; box-shadow:0 -1px 0 #0c2d7e; z-index:10000;
 }
@@ -144,7 +144,7 @@ body { width:100vw; height:100vh; overflow:hidden; }
   position:absolute; display:flex; flex-direction:column;
   border:2px solid #0831a0; border-top-color:#6b9de8; border-left-color:#6b9de8;
   box-shadow:2px 2px 8px rgba(0,0,0,.6),inset 1px 1px 0 rgba(255,255,255,.4);
-  border-radius:8px 8px 4px 4px; overflow:hidden; z-index:50;
+  border-radius:8px 8px 4px 4px; overflow:hidden; z-index:100;
 }
 .xp-titlebar {
   height:30px;
@@ -724,5 +724,10 @@ body { width:100vw; height:100vh; overflow:hidden; }
 }
 
 #webamp {
-  z-index: 1 !important;
+  z-index: 500 !important;
+  position: absolute !important;
+}
+
+.xp-body {
+  position: relative;
 }

@@ -1525,7 +1525,7 @@ async function abrirWinamp() {
 
   // Criamos a janela primeiro
   const containerId = 'webamp-container';
-  criarJanela('janela-winamp', 'Winamp 2.91', 'winamp', 285, 385, 50, 200, `<div id="${containerId}" style="background:#000; height:100%; display:flex; justify-content:center;"></div>`);
+  criarJanela('janela-winamp', 'Winamp 2.91', 'winamp', 285, 385, 50, 200, `<div id="${containerId}" style="position:relative; width:100%; height:100%; background:#000;"></div>`);
 
   // Carregamos a biblioteca Webamp dinamicamente se necessário
   if (typeof Webamp === 'undefined') {
