@@ -11,7 +11,7 @@ let fotologRealtime = null;
 let corSelecionada  = '#0000cc';
 let fotoFile        = null;
 let menuAberto      = false;
-let zTop            = 100;
+let zTop            = 10001;
 let unreadMessages  = 0;
 let docTitleBase    = 'LIKE 2000';
 let titleFlashInterval = null;
@@ -1525,7 +1525,7 @@ async function abrirWinamp() {
 
   // Criamos a janela primeiro
   const containerId = 'webamp-container';
-  criarJanela('janela-winamp', 'Winamp 2.91', 'winamp', 275, 348, 50, 200, `<div id="${containerId}"></div>`);
+  criarJanela('janela-winamp', 'Winamp 2.91', 'winamp', 275, 380, 50, 200, `<div id="${containerId}"></div>`);
 
   // Carregamos a biblioteca Webamp dinamicamente se necessário
   if (typeof Webamp === 'undefined') {

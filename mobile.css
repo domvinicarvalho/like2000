@@ -60,13 +60,13 @@
   }
 
   /* MSN, FOTOLOG e WINAMP — Do topo até a barra de tarefas com altura fixa */
-  #janela-msn, #janela-fotolog, #janela-winamp {
+  #janela-msn, #janela-fotolog {
     height: calc(100vh - 38px - env(safe-area-inset-bottom)) !important;
     margin-bottom: 0 !important;
   }
 
   /* IE, WINAMP e PERFIS — Centralizados na tela (fixed) */
-  #janela-ie, [id^="janela-perfil-"], #janela-complemento {
+  #janela-ie, #janela-winamp, [id^="janela-perfil-"], #janela-complemento {
     position: fixed !important;
     top: 50% !important;
     left: 50% !important;
@@ -74,7 +74,6 @@
     width: 90vw !important;
     height: auto !important;
     max-height: 80vh !important;
-    z-index: 10000 !important;
     border: 2px solid #0831a0 !important;
     border-radius: 8px !important;
   }
@@ -118,7 +117,7 @@
     padding-bottom: env(safe-area-inset-bottom) !important;
     height: calc(38px + env(safe-area-inset-bottom)) !important;
     width: 100% !important;
-    z-index: 9999 !important;
+    z-index: 10000 !important;
   }
 
 }
