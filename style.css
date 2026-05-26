@@ -719,101 +719,109 @@ body { width:100vw; height:100vh; overflow:hidden; }
 }
 
 .winamp-container {
-  background: #2a334d; /* Cor metálica Winamp 5 */
+  background: #333333; /* Cinza clássico */
   display: flex;
   flex-direction: column;
   height: 100% !important;
-  color: #00e000;
-  font-family: 'Courier New', Courier, monospace;
+  color: #00FF00;
+  font-family: Arial, sans-serif;
   border: 1px solid #000;
-  box-shadow: inset 1px 1px 1px #555, 2px 2px 5px rgba(0,0,0,0.5);
+  padding: 1px;
 }
+.winamp-main-window { border-bottom: 2px solid #000; padding-bottom: 5px; }
+.winamp-title-bar {
+  background: #000080;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  padding: 0 5px;
+  margin-bottom: 2px;
+}
+.wa-title-logo { color: #ccc; font-size: 9px; font-weight: bold; letter-spacing: 1px; }
+
 .winamp-top {
-  padding: 8px;
-  background: linear-gradient(to bottom, #3d496e, #20283d);
-  border-bottom: 1px solid #111;
+  padding: 5px;
+  background: #333;
 }
 .winamp-display {
   background: #000;
-  padding: 6px;
-  border: 1px solid #4a5475;
-  box-shadow: inset 2px 2px 4px #000;
-  margin-bottom: 8px;
-  border-radius: 2px;
+  padding: 4px;
+  border: 1px solid #555;
+  display: flex;
+  gap: 10px;
+  height: 50px;
+  margin-bottom: 5px;
 }
 .winamp-lcd {
-  display: flex; flex-direction: column; gap: 4px;
+  flex: 1;
+  display: flex;
+  gap: 10px;
 }
-.winamp-lcd-top { display: flex; justify-content: space-between; align-items: flex-end; }
-
-.winamp-marquee-container {
+.winamp-timer {
+  font-family: 'Courier New', monospace;
+  font-size: 28px;
+  color: #00FF00;
+  font-weight: bold;
+  line-height: 1;
+  width: 80px;
+}
+.winamp-info-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   overflow: hidden;
-  white-space: nowrap;
-  background: #001a00;
-  border: 1px solid #003300;
-  height: 16px;
 }
 .winamp-marquee {
-  display: inline-block;
-  padding-left: 100%;
-  animation: wa-marquee 15s linear infinite;
+  color: #00FF00;
+  font-size: 10px;
+  white-space: nowrap;
   font-weight: bold;
-  font-size: 11px;
-  color: #00e000;
-  text-transform: uppercase;
 }
-@keyframes wa-marquee {
-  0% { transform: translate(0, 0); }
-  100% { transform: translate(-200%, 0); }
+.winamp-kbps-info {
+  font-size: 9px;
+  color: #008800;
 }
+.wa-active { color: #00FF00; }
+
 .winamp-visualizer {
-  display: flex; align-items: flex-end; gap: 1px; height: 18px; width: 60px;
+  width: 40px;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  gap: 1px;
 }
-.winamp-visualizer .bar {
-  flex: 1; background: #00e000; height: 2px; transition: height 0.1s;
-}
-.winamp-visualizer.animating .bar {
-  animation: wa-vis 0.3s ease-in-out infinite alternate;
-}
-.winamp-visualizer.animating .bar:nth-child(even) { animation-delay: 0.1s; }
-@keyframes wa-vis { from { height: 2px; } to { height: 100%; } }
+.winamp-visualizer .bar { flex: 1; background: #00FF00; height: 2px; }
+.winamp-visualizer.animating .bar { animation: wa-vis 0.4s infinite alternate; }
 
-.winamp-kbps-info { font-size: 8px; color: #007700; line-height: 1; }
-.wa-active { color: #00e000; font-weight: bold; }
-
-.winamp-timer {
-  font-size: 16px; font-weight: bold; text-align: right; letter-spacing: 1px; color: #00ff00;
-}
 .winamp-progress-container {
-  width: 100%; height: 6px; background: #000; border: 1px solid #4a5475; cursor: pointer; margin-bottom: 10px; position: relative;
+  width: 100%; height: 8px; background: #000; border: 1px solid #555; position: relative; cursor: pointer; margin: 5px 0;
 }
-.winamp-progress-fill {
-  height: 100%; background: #00a000; width: 0%; position: relative;
-}
+.winamp-progress-fill { height: 100%; width: 0%; position: relative; }
 .wa-handle {
-  position: absolute; right: -4px; top: -3px; width: 8px; height: 10px; background: #ccc; border: 1px solid #666; border-radius: 1px;
+  position: absolute; right: -3px; top: -2px; width: 6px; height: 10px; background: #888; border: 1px solid #fff; border-right-color: #000; border-bottom-color: #000;
 }
 .winamp-buttons {
-  display: flex; justify-content: space-between; margin-bottom: 10px;
+  display: flex; gap: 2px; margin-bottom: 8px;
 }
 .winamp-buttons button {
-  background: linear-gradient(to bottom, #4a5475, #2a334d);
-  border: 1px solid #6c7996; border-bottom-color: #111; border-right-color: #111;
-  color: #ddd;
-  width: 38px; height: 20px; font-size: 12px;
-  display: flex; align-items: center; justify-content: center;
-  border-radius: 2px; cursor: pointer;
+  background: #333;
+  border: 1px solid;
+  border-top-color: #888; border-left-color: #888; border-right-color: #000; border-bottom-color: #000;
+  color: #ccc; width: 30px; height: 18px; font-size: 10px; cursor: pointer; border-radius: 0;
 }
-.winamp-buttons button:active { background: #1a1f2e; padding-top: 2px; }
+.winamp-buttons button:active { border-top-color: #000; border-left-color: #000; border-right-color: #888; border-bottom-color: #888; padding: 1px 0 0 1px; }
 
-.winamp-volume-container { display: flex; align-items: center; gap: 5px; }
-.wa-vol-label { font-size: 8px; color: #8ab0e0; font-weight: bold; }
-.wa-vol-slider { flex: 1; height: 4px; background: #000; position: relative; border: 1px solid #4a5475; }
-.wa-vol-slider input { width: 100%; height: 100%; cursor: pointer; opacity: 0.8; }
+.winamp-volume-container { display: flex; align-items: center; gap: 5px; padding: 0 5px; }
+.wa-vol-label { font-size: 9px; font-weight: bold; color: #ccc; }
+.wa-vol-slider { flex: 1; height: 4px; background: #000; border: 1px solid #555; position: relative; }
+.wa-vol-slider input { width: 100%; height: 100%; cursor: pointer; appearance: none; background: transparent; }
 
 .winamp-playlist {
-  flex: 1; background: #000; overflow-y: auto; font-size: 11px; padding: 4px; border-top: 2px solid #20283d;
+.winamp-playlist {
+  flex: 1; background: #000; overflow-y: auto; font-size: 11px; border: 1px solid #333;
 }
-.wa-track { padding: 3px 5px; cursor: pointer; color: #00a000; display: flex; gap: 5px; border-bottom: 1px solid #111; }
-.wa-track:hover { background: #111; color: #00ff00; }
-.wa-track.active { background: #003300; color: #fff; }
+.wa-playlist-title { background: #000080; color: #fff; font-size: 9px; padding: 2px 5px; font-weight: bold; text-align: center; }
+.wa-track { padding: 2px 5px; cursor: pointer; color: #00FF00; display: flex; gap: 5px; font-family: 'Courier New', monospace; }
+.wa-track:hover { background: #002200; }
+.wa-track.active { background: #000080; color: #fff; }

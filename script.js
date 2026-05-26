@@ -1538,34 +1538,35 @@ async function abrirWinamp() {
 
   const content = `
     <div class="winamp-container">
+      <div class="winamp-main-window">
+        <div class="winamp-title-bar">
+          <span class="wa-title-logo">WINAMP</span>
+        </div>
       <div class="winamp-top">
         <div class="winamp-display">
+          <div class="winamp-visualizer" id="wa-visualizer">
+            <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+            <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+            <div class="bar"></div><div class="bar"></div>
+          </div>
           <div class="winamp-lcd">
-            <div class="winamp-lcd-top">
-              <div class="winamp-kbps-info">
-                <div class="wa-info-line">128 <small>kbps</small></div>
-                <div class="wa-info-line">44 <small>khz</small></div>
-                <div class="wa-info-stereo">
-                  <span class="wa-active">mono</span> <span class="wa-active">stereo</span>
-                </div>
-              </div>
-              <div id="wa-visualizer" class="winamp-visualizer">
-                <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
-                <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
-                <div class="bar"></div><div class="bar"></div>
-              </div>
-            </div>
-            <div class="winamp-marquee-container">
-              <div id="wa-title" class="winamp-marquee">LIKE 2000 - Selecione uma faixa</div>
-            </div>
             <div class="winamp-timer">
-              <span id="wa-time-cur">00:00</span> / <span id="wa-time-total">00:00</span>
+              <span id="wa-time-cur">00:00</span>
+            </div>
+            <div class="winamp-info-right">
+              <div id="wa-title" class="winamp-marquee">LIKE 2000 - SELECIONE UMA FAIXA</div>
+              <div class="winamp-kbps-info">
+                <span class="wa-active">128</span> kbps <span class="wa-active">44</span> khz
+                <span class="wa-active" style="margin-left:5px">stereo</span>
+              </div>
             </div>
           </div>
         </div>
         <div class="winamp-controls">
-          <div class="winamp-progress-container" onclick="seekWinamp(event)">
-             <div id="wa-progress-bar" class="winamp-progress-fill"><div class="wa-handle"></div></div>
+          <div class="winamp-sliders">
+             <div class="winamp-progress-container" onclick="seekWinamp(event)">
+                <div id="wa-progress-bar" class="winamp-progress-fill"><div class="wa-handle"></div></div>
+             </div>
           </div>
           <div class="winamp-buttons">
             <button onclick="prevWinamp()" title="Anterior">⏮</button>
