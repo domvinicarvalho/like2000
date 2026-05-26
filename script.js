@@ -1537,33 +1537,39 @@ async function abrirWinamp() {
   winampPlaylist = data || [];
 
   const content = `
-    <div class="winamp-container">
-      <div class="winamp-main-window">
-        <div class="winamp-title-bar">
-          <span class="wa-title-logo">WINAMP</span>
+    <div class="winamp-shell">
+      <div class="wa-main-panel">
+        <div class="wa-title-bar">
+          <span class="wa-title-text">WINAMP</span>
         </div>
-      <div class="winamp-top">
-        <div class="winamp-display">
-          <div class="winamp-visualizer" id="wa-visualizer">
-            <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
-            <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
-            <div class="bar"></div><div class="bar"></div>
+        <div class="wa-display-container">
+          <div class="wa-timer" id="wa-time-cur">00:00</div>
+          <div class="wa-viz-box" id="wa-visualizer">
+            <div class="vbar"></div><div class="vbar"></div><div class="vbar"></div><div class="vbar"></div><div class="vbar"></div>
+            <div class="vbar"></div><div class="vbar"></div><div class="vbar"></div><div class="vbar"></div><div class="vbar"></div>
           </div>
-          <div class="winamp-lcd">
-            <div class="winamp-timer">
-              <span id="wa-time-cur">00:00</span>
+          <div class="wa-info-area">
+            <div class="wa-marquee-holder">
+              <div id="wa-title" class="wa-marquee-text">WINAMP 2.81: SELECIONE UMA FAIXA</div>
             </div>
-            <div class="winamp-info-right">
-              <div id="wa-title" class="winamp-marquee">LIKE 2000 - SELECIONE UMA FAIXA</div>
-              <div class="winamp-kbps-info">
-                <span class="wa-active">128</span> kbps <span class="wa-active">44</span> khz
-                <span class="wa-active" style="margin-left:5px">stereo</span>
-              </div>
+            <div class="wa-technical">
+              <span class="wa-green">128</span> kbps <span class="wa-green">44</span> khz
+              <span class="wa-bolt">⚡</span>
             </div>
           </div>
         </div>
-        <div class="winamp-controls">
-          <div class="winamp-sliders">
+        <div class="wa-interaction-grid">
+          <div class="wa-sliders-col">
+            <div class="wa-slider-wrap">
+              <span class="wa-label">VOLUME</span>
+              <input type="range" min="0" max="1" step="0.05" value="0.8" oninput="changeVolumeWinamp(this.value)" class="wa-slider-input">
+            </div>
+            <div class="wa-slider-wrap">
+              <span class="wa-label">BALANCE</span>
+              <input type="range" min="0" max="1" step="0.1" value="0.5" class="wa-slider-input pan">
+            </div>
+          </div>
+          <div class="wa-seek-row">
              <div class="winamp-progress-container" onclick="seekWinamp(event)">
                 <div id="wa-progress-bar" class="winamp-progress-fill"><div class="wa-handle"></div></div>
              </div>
