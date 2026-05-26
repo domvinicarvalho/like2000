@@ -46,7 +46,7 @@
     left: 0 !important;
     width: 100vw !important;
     max-width: 100vw !important;
-    height: auto !important;
+    height: auto !important; /* Outras janelas seguem auto */
     transform: none !important;
     display: flex !important;
     flex-direction: column !important;
@@ -59,20 +59,38 @@
     margin-bottom: 15px !important;
   }
 
-  /* AREA DE MENSAGENS — Altura fixa com scroll interno */
-  #janela-msn .messages {
-    height: 260px !important;
-    overflow-y: auto !important;
-    flex: none !important;
+  /* MSN e FOTOLOG — Do topo até a barra de tarefas */
+  #janela-msn, #janela-fotolog {
+    min-height: calc(100vh - 38px - env(safe-area-inset-bottom)) !important;
+    margin-bottom: 0 !important;
   }
 
-  /* FOTOLOG — Prioridade para as fotos e scroll interno */
+  /* IE, WINAMP e PERFIS — Centralizados na tela */
+  #janela-ie, #janela-winamp, [id^="janela-perfil-"], #janela-complemento {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 90vw !important;
+    height: auto !important;
+    max-height: 80vh !important;
+    z-index: 10000 !important;
+    border: 2px solid #0831a0 !important;
+    border-radius: 8px !important;
+  }
+
+  /* Ajuste de conteúdo para preencher o novo tamanho das janelas altas */
+  #janela-msn .messages {
+    flex: 1 !important; /* Ocupa o espaço disponível na janela alta */
+    min-height: 260px !important;
+    overflow-y: auto !important;
+  }
   #janela-fotolog .fotolog-sidebar {
     width: 35% !important;
     min-width: 35% !important;
   }
   #janela-fotolog .fotolog-feed {
-    height: 450px !important; /* Altura fixa para permitir scroll apenas nas fotos */
+    flex: 1 !important; /* Ocupa o espaço disponível na janela alta */
     overflow-y: auto !important;
   }
 
