@@ -61,7 +61,7 @@
 
   /* MSN e FOTOLOG — Do topo até a barra de tarefas */
   #janela-msn, #janela-fotolog {
-    min-height: calc(100vh - 38px - env(safe-area-inset-bottom)) !important;
+    height: calc(100vh - 38px - env(safe-area-inset-bottom)) !important;
     margin-bottom: 0 !important;
   }
 
