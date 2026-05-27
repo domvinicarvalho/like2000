@@ -1107,11 +1107,54 @@ function iniciarRealtimeFotolog(){
 function iniciarRealtimeAmizades() {
   if (friendshipRealtime) supabaseClient.removeChannel(friendshipRealtime);
   friendshipRealtime = supabaseClient.channel('friendship-updates')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'friendships' }, async () => {
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'friendships' }, async (payload) => {
       await carregarCacheAmizades();
       if (document.getElementById('janela-amigos')) carregarAmigos();
+
+      const { eventType, new: newData } = payload;
+
+      // 1. Notificação de Solicitação Recebida
+      if (eventType === 'INSERT' && newData && newData.friend_id === currentUser.id) {
+        const { data: p } = await supabaseClient.from('profiles').select('nickname, avatar_url').eq('id', newData.user_id).single();
+        if (p) {
+          mostrarMSNPopup('Solicitação de Amizade', `<b>${escapeHtml(p.nickname)}</b> quer te adicionar à lista de contatos.`, p.avatar_url);
+        }
+      } 
+      // 2. Notificação de Solicitação Aceita
+      else if (eventType === 'UPDATE' && newData.user_id === currentUser.id && newData.status === 'accepted') {
+        const { data: p } = await supabaseClient.from('profiles').select('nickname, avatar_url').eq('id', newData.friend_id).single();
+        if (p) {
+          mostrarMSNPopup('Convite Aceito', `<b>${escapeHtml(p.nickname)}</b> aceitou seu convite de amizade!`, p.avatar_url);
+        }
+      }
     })
     .subscribe();
+}
+
+function mostrarMSNPopup(titulo, msg, avatarUrl) {
+  tocarSomOnline(); // Som clássico de entrada do MSN
+  const popup = document.createElement('div');
+  popup.className = 'msn-popup';
+  
+  const av = avatarUrl 
+    ? `<img src="${avatarUrl}" style="width:34px; height:34px; border-radius:3px; object-fit:cover; border:1px solid #716f64;">`
+    : `<div style="width:34px; height:34px; border-radius:3px; background:#3a6ec8; color:white; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:bold; border:1px solid #716f64;">?</div>`;
+
+  popup.innerHTML = `
+    <div class="msn-popup-header">${iconTag('msn', 12)} ${titulo}</div>
+    <div style="display:flex; align-items:center; gap:10px; padding:2px 0;">
+      ${av}
+      <div class="msn-popup-body">${msg}</div>
+    </div>
+  `;
+  
+  document.body.appendChild(popup);
+  
+  // Sobe, fica 3 segundos, e desce
+  setTimeout(() => {
+    popup.classList.add('saindo');
+    setTimeout(() => popup.remove(), 600);
+  }, 3500);
 }
 
 // ══════════════════════════════════════════
