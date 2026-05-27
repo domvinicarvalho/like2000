@@ -918,6 +918,9 @@ function abrirFotolog() {
         <div class="tbtn fechar" onclick="fecharJanela('janela-fotolog')">✕</div>
       </div>
     </div>
+    <div class="fl-header">
+      <span class="fl-logo-text">fotolog</span>
+    </div>
     <div class="fotolog-body">
       <div class="fotolog-sidebar">
         <div class="fotolog-meu-perfil">
@@ -933,7 +936,7 @@ function abrirFotolog() {
           </div>
           <input type="file" id="fl-foto-input" accept="image/*" style="display:none" onchange="previewFotolog(event)">
           <textarea id="fl-caption" placeholder="escreva algo..." maxlength="200" rows="3"></textarea>
-          <button onclick="publicarPost()" class="fl-btn-postar">Publicar (+20 XP)</button>
+          <button onclick="publicarPost()" class="fl-btn-postar">Publicar (Gold Camera)</button>
         </div>
       </div>
       <div class="fotolog-feed" id="fotolog-feed">
@@ -1005,7 +1008,7 @@ async function publicarPost() {
     document.getElementById('fl-caption').value='';
     document.getElementById('fl-foto-input').value='';
   }
-  btn.textContent='Publicar (+20 XP)'; btn.disabled=false;
+  btn.textContent='Publicar (Gold Camera)'; btn.disabled=false;
 }
 
 async function carregarFeed() {
