@@ -987,7 +987,7 @@ async function publicarPost() {
       imageUrl = await uploadToCloudinary(compressedFile);
     } catch (e) {
       mostrarNotificacao('Erro ao fazer upload da foto do post.');
-      btn.textContent='Publicar (Gold Camera)'; // Texto do botão corrigido
+      btn.textContent='Publicar (Gold Camera)';
       btn.disabled = false;
       return;
     }
@@ -1002,7 +1002,7 @@ async function publicarPost() {
     const feed=document.getElementById('fotolog-feed');
     if(feed){
       const semPosts=feed.querySelector('.fl-loading'); if(semPosts)semPosts.remove();
-      feed.insertBefore(criarCardPost(postData,[]),feed.firstChild); // Assinatura de criarCardPost corrigida
+      feed.insertBefore(criarCardPost(postData, []), feed.firstChild);
     }
     fotologPostFile=null;
     document.getElementById('fl-foto-preview').style.display='none';
@@ -1123,13 +1123,27 @@ async function removerPost(postId) {
 
 function iniciarRealtimeFotolog(){
   if(fotologRealtime)supabaseClient.removeChannel(fotologRealtime);
-  fotologRealtime=supabaseClient.channel('fotolog-posts')
+  fotologRealtime=supabaseClient.channel('fotolog-updates')
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'posts'},async p=>{
       const feed=document.getElementById('fotolog-feed'); if(!feed)return;
       if(p.new.user_id===currentUser.id)return;
       const semPosts=feed.querySelector('.fl-loading'); if(semPosts)semPosts.remove();
-      feed.insertBefore(criarCardPost(p.new,[]),feed.firstChild);
-    }).subscribe();
+      feed.insertBefore(criarCardPost(p.new, []), feed.firstChild);
+    })
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'comments' }, p => {
+      if (p.new.user_id === currentUser.id) return;
+      const lista = document.getElementById('comments-list-' + p.new.post_id);
+      if (lista) {
+        const d = document.createElement('div'); d.className = 'fl-comment';
+        d.innerHTML = `<span class="fl-comment-nick" style="color:${p.new.color || '#0000cc'}">${escapeHtml(p.new.nickname)}:</span> <span>${escapeHtml(p.new.content)}</span>`;
+        lista.appendChild(d);
+        lista.scrollTop = lista.scrollHeight;
+
+        const btn = document.querySelector(`#post-${p.new.post_id} .fl-comment-btn`);
+        if (btn) btn.textContent = `💬 ${lista.children.length}`;
+      }
+    })
+    .subscribe();
 }
 
 function iniciarRealtimeAmizades() {
