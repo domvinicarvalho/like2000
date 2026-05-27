@@ -962,6 +962,18 @@ async function publicarPost() {
   const caption=document.getElementById('fl-caption').value.trim();
   const btn=document.querySelector('.fl-btn-postar');
   if(!fotologPostFile&&!caption){mostrarNotificacao('Adicione uma foto ou texto!');return;}
+
+  // Verifica se o usuário já postou hoje
+  const hoje = new Date().toISOString().split('T')[0]; // Data atual no formato YYYY-MM-DD (UTC)
+  const { count, error: countError } = await supabaseClient
+    .from('posts')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', currentUser.id)
+    .gte('created_at', hoje); // Verifica posts criados a partir do início do dia
+
+  if (countError) { mostrarNotificacao('Erro ao verificar posts diários.'); return; }
+  if (count > 0) { mostrarNotificacao('Você já fez seu post diário! Volte amanhã.'); return; }
+
   btn.textContent='Publicando...'; btn.disabled=true;
   let imageUrl=null;
   if(fotologPostFile){
