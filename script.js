@@ -134,100 +134,39 @@ document.addEventListener('visibilitychange', () => {
 // ── ÍCONES SVG FIÉIS AOS ORIGINAIS ───────────────────────────
 const ICONS_SVG = {
 
-  // MSN Messenger 7.5 — borboleta laranja fiel, bolinha verde
+  // MSN Messenger — A borboleta clássica de 4 cores com o check de online
   msn: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-    <ellipse cx="24" cy="44" rx="12" ry="2.5" fill="rgba(0,0,0,0.12)"/>
-    <path d="M24,25 C22,22 8,14 7,8 C6,3 12,1 17,4 C20,6 23,14 24,25 Z" fill="#D94F00"/>
-    <path d="M24,25 C26,22 40,14 41,8 C42,3 36,1 31,4 C28,6 25,14 24,25 Z" fill="#FF6A00"/>
-    <path d="M24,27 C22,28 10,30 8,38 C7,43 13,46 18,42 C21,39 23,31 24,27 Z" fill="#FF8C1A"/>
-    <path d="M24,27 C26,28 38,30 40,38 C41,43 35,46 30,42 C27,39 25,31 24,27 Z" fill="#FFAA00"/>
-    <ellipse cx="24" cy="26" rx="3" ry="5" fill="#C44000"/>
-    <ellipse cx="24" cy="25" rx="2" ry="4" fill="#E05500"/>
-    <circle cx="37" cy="11" r="9" fill="#1A7A1A"/>
-    <circle cx="37" cy="11" r="7.5" fill="#22AA22"/>
-    <circle cx="37" cy="11" r="5.5" fill="#33CC33"/>
-    <circle cx="34.5" cy="8.5" r="2" fill="rgba(255,255,255,0.55)"/>
+    <path d="M24,25 C22,22 8,14 7,8 C6,3 12,1 17,4 C20,6 23,14 24,25 Z" fill="#3498db"/>
+    <path d="M24,25 C26,22 40,14 41,8 C42,3 36,1 31,4 C28,6 25,14 24,25 Z" fill="#e74c3c"/>
+    <path d="M24,27 C22,28 10,30 8,38 C7,43 13,46 18,42 C21,39 23,31 24,27 Z" fill="#f1c40f"/>
+    <path d="M24,27 C26,28 38,30 40,38 C41,43 35,46 30,42 C27,39 25,31 24,27 Z" fill="#2ecc71"/>
+    <circle cx="37" cy="11" r="8" fill="#22AA22"/><circle cx="37" cy="11" r="4" fill="#fff" opacity="0.3"/>
   </svg>`,
 
-  // Fotolog — logo original laranja com "f" branco estilo blog de fotos
+  // Fotolog — Câmera fotográfica clássica dos anos 2000
   fotolog: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-    <rect width="48" height="48" rx="8" fill="#FF6600"/>
-    <rect x="1" y="1" width="46" height="23" rx="8" fill="#FF7A1A"/>
-    <rect x="8" y="13" width="32" height="22" rx="3" fill="white" opacity="0.95"/>
-    <rect x="8" y="13" width="32" height="8" rx="3" fill="#FFE0CC"/>
-    <circle cx="24" cy="28" r="7.5" fill="#FF6600"/>
-    <circle cx="24" cy="28" r="5.5" fill="#CC4400"/>
-    <circle cx="24" cy="28" r="3.5" fill="#111"/>
-    <circle cx="22" cy="26" r="1.2" fill="rgba(255,255,255,0.5)"/>
-    <rect x="11" y="9" width="9" height="5" rx="2" fill="white"/>
-    <rect x="32" y="10" width="6" height="4" rx="1" fill="#FFE566"/>
-    <rect x="21" y="14" width="6" height="1.5" rx="0.75" fill="#FF8844"/>
+    <rect x="4" y="12" width="40" height="28" rx="3" fill="#FF6600"/>
+    <rect x="16" y="8" width="16" height="4" rx="1" fill="#CC5500"/>
+    <circle cx="24" cy="26" r="8" fill="#fff"/><circle cx="24" cy="26" r="5" fill="#333"/>
+    <rect x="36" y="15" width="4" height="4" fill="#fff" opacity="0.5"/>
   </svg>`,
 
-  // Winamp 2.x — skin clássica preta com logo WINAMP e equalizador verde
+  // Winamp — O icônico raio dourado
   winamp: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-    <rect width="48" height="48" rx="3" fill="#111111"/>
-    <rect x="0" y="0" width="48" height="48" rx="3" fill="none" stroke="#444" stroke-width="1"/>
-    <rect x="2" y="2" width="44" height="12" rx="2" fill="#1a1a1a"/>
-    <text x="24" y="11" text-anchor="middle" font-size="7.5" fill="#AAAAAA"
-      font-family="Arial, sans-serif" font-weight="bold" letter-spacing="1">WINAMP</text>
-    <rect x="4" y="16" width="40" height="18" rx="1" fill="#0a0a0a"/>
-    <rect x="6" y="18" width="3" height="5"  fill="#00FF00"/>
-    <rect x="11" y="16" width="3" height="7"  fill="#00FF00"/>
-    <rect x="16" y="19" width="3" height="4"  fill="#00FF00"/>
-    <rect x="21" y="15" width="3" height="8"  fill="#00EE00"/>
-    <rect x="26" y="17" width="3" height="6"  fill="#00FF00"/>
-    <rect x="31" y="20" width="3" height="3"  fill="#00DD00"/>
-    <rect x="36" y="16" width="3" height="7"  fill="#00FF00"/>
-    <rect x="6"  y="24" width="3" height="2"  fill="#005500" opacity="0.6"/>
-    <rect x="11" y="24" width="3" height="2"  fill="#005500" opacity="0.6"/>
-    <rect x="21" y="24" width="3" height="2"  fill="#005500" opacity="0.6"/>
-    <rect x="36" y="24" width="3" height="2"  fill="#005500" opacity="0.6"/>
-    <rect x="4" y="36" width="9" height="9" rx="1" fill="#222"/>
-    <polygon points="7,38 7,43 12,40.5" fill="#00FF00"/>
-    <rect x="15" y="36" width="9" height="9" rx="1" fill="#222"/>
-    <rect x="17" y="38" width="2" height="5" fill="#00FF00"/>
-    <rect x="20" y="38" width="2" height="5" fill="#00FF00"/>
-    <rect x="26" y="36" width="18" height="9" rx="1" fill="#1a1a1a"/>
-    <rect x="28" y="39" width="6" height="1.5" rx="0.75" fill="#555"/>
-    <rect x="28" y="42" width="10" height="1.5" rx="0.75" fill="#555"/>
+    <path d="M30,4 L10,26 L22,26 L16,44 L38,18 L26,18 L30,4 Z" fill="#ffcc00" stroke="#000" stroke-width="2"/>
   </svg>`,
 
-  // Internet Explorer 6 — "e" azul estilo XP com anel dourado inclinado
+  // Internet Explorer — O "e" azul com o anel orbital
   ie: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <radialGradient id="ieGlobe" cx="40%" cy="35%" r="60%">
-        <stop offset="0%" stop-color="#5AABFF"/>
-        <stop offset="100%" stop-color="#0050CC"/>
-      </radialGradient>
-    </defs>
-    <ellipse cx="24" cy="24" rx="23" ry="9.5" fill="none"
-      stroke="#D4920A" stroke-width="4"
-      transform="rotate(-38 24 24)"/>
-    <ellipse cx="24" cy="24" rx="23" ry="9.5" fill="none"
-      stroke="#F5C842" stroke-width="2"
-      transform="rotate(-38 24 24)" opacity="0.6"/>
-    <circle cx="24" cy="24" r="17" fill="url(#ieGlobe)"/>
-    <ellipse cx="24" cy="24" rx="8" ry="17" fill="none"
-      stroke="rgba(255,255,255,0.4)" stroke-width="1.2"/>
-    <ellipse cx="24" cy="24" rx="17" ry="6" fill="none"
-      stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
-    <line x1="7" y1="24" x2="41" y2="24"
-      stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
-    <ellipse cx="19" cy="17" rx="6" ry="3.5"
-      fill="rgba(255,255,255,0.25)" transform="rotate(-20 19 17)"/>
+    <path d="M40,24 C40,15 33,8 24,8 C15,8 8,15 8,24 C8,33 15,40 24,40 C33,40 40,33 40,24" fill="none" stroke="#0066cc" stroke-width="5"/>
+    <path d="M8,24 L38,24" stroke="#0066cc" stroke-width="5"/>
+    <ellipse cx="24" cy="24" rx="22" ry="8" fill="none" stroke="#ffcc00" stroke-width="2" transform="rotate(-30 24 24)"/>
   </svg>`,
 
-  // Amigos — Ícone estilo "Contatos" do XP
+  // Amigos — Ícone de usuários clássico
   amigos: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="18" cy="16" r="7" fill="#4A90E8"/>
-    <path d="M6,38 C6,28 30,28 30,38 L30,44 L6,44 Z" fill="#1464D8"/>
-    <circle cx="34" cy="19" r="5" fill="#5C8FD6"/>
-    <path d="M26,35 C26,30 42,30 42,35 L42,40 L26,40 Z" fill="#3A6EC8"/>
-    <rect x="32" y="8" width="10" height="2" fill="#FFCC00"/>
-    <rect x="36" y="4" width="2" height="10" fill="#FFCC00"/>
-    <ellipse cx="15" cy="13" rx="2" ry="1.5"
-      fill="rgba(255,255,255,0.25)" transform="rotate(-20 15 13)"/>
+    <circle cx="18" cy="16" r="6" fill="#3498db"/><path d="M8,38 C8,30 28,30 28,38 L28,42 L8,42 Z" fill="#2980b9"/>
+    <circle cx="34" cy="24" r="5" fill="#2ecc71"/><path d="M26,40 C26,34 42,34 42,40 L42,44 L26,44 Z" fill="#27ae60"/>
   </svg>`,
 };
 
