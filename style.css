@@ -94,7 +94,9 @@ body { width:100vw; height:100vh; overflow:hidden; }
 ══════════════════════════════════════════ */
 .desktop {
   width:100vw; height:100vh;
-  background:url('bliss.jpg') center/cover;
+  background-color: #3a6ec8;
+  background-size: cover;
+  background-position: center;
   position:relative; overflow:hidden;
 }
 .icons { padding:14px 10px; display:flex; flex-direction:column; gap:8px; }
