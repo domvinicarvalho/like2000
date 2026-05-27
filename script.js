@@ -495,7 +495,6 @@ function getBotaoAmizade(targetUserId) {
 async function mostrarDesktop() {
   tocarSomStartup();
   await checarLoginDiario();
-  carregarWallpaper();
   await carregarTemporada();
   await carregarCacheAmizades();
   iniciarRealtimeAmizades();
@@ -825,13 +824,6 @@ function iniciarRealtime() {
   supabaseClient.channel('msn-system')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'app_config' }, carregarBannerMSN)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, carregarUsuariosOnlineMSN)
-    .subscribe();
-    
-  // Realtime para Wallpaper
-  supabaseClient.channel('wallpaper-sync')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'app_config' }, (payload) => {
-      if (payload.new && payload.new.key === 'desktop_wallpaper_url') carregarWallpaper();
-    })
     .subscribe();
 
   realtimeChannel=supabaseClient.channel('chat-room')
