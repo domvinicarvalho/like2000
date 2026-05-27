@@ -18,6 +18,7 @@ let titleFlashInterval = null;
 let temporadaAtiva  = null;
 let fotologPostFile = null;
 let cacheAmizades   = new Map(); // target_id -> status
+let wallpaperCache  = { desktop: null, mobile: null };
 let friendshipRealtime = null;
 let configRealtime = null;
 let onlineUsersRealtime = null;
@@ -503,7 +504,10 @@ async function mostrarDesktop() {
 
   document.body.innerHTML = `
     <div class="desktop" onclick="fecharMenuSeAberto(event)">
-      ${currentUser.id === '6ddf2883-da69-4a8f-8525-6d7a1b45869d' ? `<button class="btn-admin-banner" style="position:fixed; bottom:42px; right:10px; z-index:10002; opacity:0.3;" onclick="trocarWallpaperAdmin()">🖼️ Wallpaper</button>` : ''}
+      ${currentUser.id === '6ddf2883-da69-4a8f-8525-6d7a1b45869d' ? `
+        <button class="btn-admin-banner" style="position:fixed; bottom:70px; right:10px; z-index:10002; opacity:0.3;" onclick="trocarWallpaperAdmin('desktop')">🖥️ Wall PC</button>
+        <button class="btn-admin-banner" style="position:fixed; bottom:42px; right:10px; z-index:10002; opacity:0.3;" onclick="trocarWallpaperAdmin('mobile')">📱 Wall Mobile</button>
+      ` : ''}
       <div class="icons" id="desktop-icons" style="${isSetup ? 'filter:blur(2px); pointer-events:none;' : ''}">
         <div class="icon" onclick="trazerFrente('janela-msn');abrirMSN()">${iconTag('msn')}<span>MSN Messenger</span></div>
         <div class="icon" onclick="trazerFrente('janela-fotolog');abrirFotolog()">${iconTag('fotolog')}<span>Fotolog</span></div>
@@ -574,7 +578,7 @@ async function mostrarDesktop() {
   // Realtime para Wallpaper
   supabaseClient.channel('wallpaper-sync')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'app_config' }, (p) => {
-      if (p.new && p.new.key === 'desktop_wallpaper_url') carregarWallpaper();
+      if (p.new && (p.new.key === 'desktop_wallpaper_url' || p.new.key === 'mobile_wallpaper_url')) carregarWallpaper();
     })
     .subscribe();
 
@@ -772,8 +776,14 @@ async function carregarWallpaper() {
   const fallback = 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Microsoft_bliss_wallpaper.jpg/1280px-Van_Microsoft_bliss_wallpaper.jpg';
   const { data } = await supabaseClient.from('app_config').select('value').eq('key', 'desktop_wallpaper_url').maybeSingle();
   const url = data?.value || fallback;
+  
+  // Adiciona um timestamp para forçar o recarregamento se for um link externo
+  const finalUrl = url.startsWith('http') 
+    ? `${url}${url.includes('?') ? '&' : '?'}t=${Date.now()}` 
+    : url;
+
   const desktop = document.querySelector('.desktop');
-  if (desktop) desktop.style.backgroundImage = `url('${url}')`;
+  if (desktop) desktop.style.backgroundImage = `url("${finalUrl}")`;
 }
 
 async function trocarWallpaperAdmin() {
@@ -797,7 +807,7 @@ async function trocarWallpaperAdmin() {
 async function trocarBannerAdmin() {
   const url = prompt("Cole a URL da nova imagem para o banner:");
   if (!url) return;
-  const { error } = await supabaseClient.from('app_config').upsert({ key: 'msn_banner_url', value: url });
+  const { error } = await supabaseClient.from('app_config').upsert({ key: 'msn_banner_url', value: url }, { onConflict: 'key' });
   if (!error) {
     mostrarNotificacao("Banner atualizado!");
     carregarBannerMSN();
