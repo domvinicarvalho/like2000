@@ -1095,13 +1095,28 @@ async function enviarComentario(postId){
 
 function iniciarRealtimeFotolog(){
   if(fotologRealtime)supabaseClient.removeChannel(fotologRealtime);
-  fotologRealtime=supabaseClient.channel('fotolog-posts')
+  fotologRealtime=supabaseClient.channel('fotolog-updates')
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'posts'},async p=>{
       const feed=document.getElementById('fotolog-feed'); if(!feed)return;
       if(p.new.user_id===currentUser.id)return;
       const semPosts=feed.querySelector('.fl-loading'); if(semPosts)semPosts.remove();
       feed.insertBefore(criarCardPost(p.new,0,false,[]),feed.firstChild);
-    }).subscribe();
+    })
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'comments'},p=>{
+      if(p.new.user_id===currentUser.id)return;
+      const lista=document.getElementById('comments-list-'+p.new.post_id);
+      if(lista){
+        const d=document.createElement('div'); d.className='fl-comment';
+        d.innerHTML=`<span class="fl-comment-nick" style="color:${p.new.color||'#0000cc'}">${escapeHtml(p.new.nickname)}:</span> <span>${escapeHtml(p.new.content)}</span>`;
+        lista.appendChild(d);
+        lista.scrollTop=lista.scrollHeight;
+        
+        // Atualiza o contador de comentários no botão do card
+        const btn=document.querySelector(`#post-${p.new.post_id} .fl-comment-btn`);
+        if(btn)btn.textContent=`💬 ${lista.children.length}`;
+      }
+    })
+    .subscribe();
 }
 
 function iniciarRealtimeAmizades() {
