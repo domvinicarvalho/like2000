@@ -1003,14 +1003,12 @@ async function carregarFeed() {
   feed.innerHTML='';
   if(!data.length){feed.innerHTML='<div class="fl-loading">Nenhum post ainda. Seja o primeiro! 📸</div>';return;}
   for(const post of data){
-    const {count}=await supabaseClient.from('likes').select('*',{count:'exact',head:true}).eq('post_id',post.id);
-    const {data:jg}=await supabaseClient.from('likes').select('id').eq('post_id',post.id).eq('user_id',currentUser.id).maybeSingle();
     const {data:comms}=await supabaseClient.from('comments').select('*').eq('post_id',post.id).order('created_at',{ascending:true});
-    feed.appendChild(criarCardPost(post,count||0,!!jg,comms||[]));
+    feed.appendChild(criarCardPost(post,comms||[]));
   }
 }
 
-function criarCardPost(post,likes,jaGostei,comments){
+function criarCardPost(post,comments){
   const card=document.createElement('div');
   card.className='fl-card'; card.id='post-'+post.id;
   const av=post.avatar_url
@@ -1023,7 +1021,6 @@ function criarCardPost(post,likes,jaGostei,comments){
     ${post.image_url?`<img src="${post.image_url}" class="fl-card-img" alt="">`:''}
     ${post.caption?`<div class="fl-card-caption">${escapeHtml(post.caption)}</div>`:''}
     <div class="fl-card-actions">
-      <button class="fl-like-btn ${jaGostei?'liked':''}" onclick="toggleLike(${post.id},this)">${jaGostei?'❤️':'🤍'} <span class="like-count">${likes}</span></button>
       <button class="fl-comment-btn" onclick="toggleComentarios(${post.id})">💬 ${comments.length}</button>
     </div>
     <div class="fl-comments-area" id="comments-${post.id}">
@@ -1037,18 +1034,6 @@ function criarCardPost(post,likes,jaGostei,comments){
   return card;
 }
 
-async function toggleLike(postId,btn){
-  const {data:jg}=await supabaseClient.from('likes').select('id').eq('post_id',postId).eq('user_id',currentUser.id).maybeSingle();
-  const cnt=parseInt(btn.querySelector('.like-count').textContent);
-  if(jg){
-    await supabaseClient.from('likes').delete().eq('post_id',postId).eq('user_id',currentUser.id);
-    btn.classList.remove('liked'); btn.innerHTML=`🤍 <span class="like-count">${cnt-1}</span>`;
-  }else{
-    await supabaseClient.from('likes').insert([{post_id:postId,user_id:currentUser.id}]);
-    btn.classList.add('liked'); btn.innerHTML=`❤️ <span class="like-count">${cnt+1}</span>`;
-    // O Fotolog não tinha curtida originalmente, XP removido.
-  }
-}
 function toggleComentarios(postId){
   const a=document.getElementById('comments-'+postId); if(!a)return;
   a.classList.toggle('aberto');
@@ -1095,28 +1080,13 @@ async function enviarComentario(postId){
 
 function iniciarRealtimeFotolog(){
   if(fotologRealtime)supabaseClient.removeChannel(fotologRealtime);
-  fotologRealtime=supabaseClient.channel('fotolog-updates')
+  fotologRealtime=supabaseClient.channel('fotolog-posts')
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'posts'},async p=>{
       const feed=document.getElementById('fotolog-feed'); if(!feed)return;
       if(p.new.user_id===currentUser.id)return;
       const semPosts=feed.querySelector('.fl-loading'); if(semPosts)semPosts.remove();
-      feed.insertBefore(criarCardPost(p.new,0,false,[]),feed.firstChild);
-    })
-    .on('postgres_changes',{event:'INSERT',schema:'public',table:'comments'},p=>{
-      if(p.new.user_id===currentUser.id)return;
-      const lista=document.getElementById('comments-list-'+p.new.post_id);
-      if(lista){
-        const d=document.createElement('div'); d.className='fl-comment';
-        d.innerHTML=`<span class="fl-comment-nick" style="color:${p.new.color||'#0000cc'}">${escapeHtml(p.new.nickname)}:</span> <span>${escapeHtml(p.new.content)}</span>`;
-        lista.appendChild(d);
-        lista.scrollTop=lista.scrollHeight;
-        
-        // Atualiza o contador de comentários no botão do card
-        const btn=document.querySelector(`#post-${p.new.post_id} .fl-comment-btn`);
-        if(btn)btn.textContent=`💬 ${lista.children.length}`;
-      }
-    })
-    .subscribe();
+      feed.insertBefore(criarCardPost(p.new,[]),feed.firstChild);
+    }).subscribe();
 }
 
 function iniciarRealtimeAmizades() {
