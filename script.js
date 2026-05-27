@@ -51,7 +51,62 @@ function tocarSom(src, volume) {
 function tocarSomMSN()     { tocarSom(SOM_MSN_NOTIFY, 0.7); }
 function tocarSomOnline()  { tocarSom(SOM_MSN_ONLINE, 0.6); }
 function tocarSomErro()    { tocarSom(SOM_XP_ERRO,    0.8); }
-function tocarSomStartup() { tocarSom(SOM_XP_STARTUP, 0.8); }
+function tocarSomStartup() { tocarSom(SOM_XP_STARTUP, 0.8); } 
+
+// ── CLOUDINARY CONFIG ────────────────────────────────────────
+const CLOUDINARY_CLOUD_NAME = 'dhqnjfxny';
+const CLOUDINARY_UPLOAD_PRESET = 'like2000_uploads'; 
+
+async function uploadToCloudinary(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+  try {
+    const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+      method: 'POST',
+      body: formData,
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error.message || 'Cloudinary upload failed');
+    }
+    const data = await response.json();
+    return data.secure_url;
+  } catch (error) {
+    console.error('Error uploading to Cloudinary:', error);
+    throw error;
+  }
+}
+
+// ── CLOUDINARY CONFIG ────────────────────────────────────────
+const CLOUDINARY_CLOUD_NAME = 'dhqnjfxny';
+// IMPORTANT: Replace 'YOUR_UPLOAD_PRESET' with your actual Cloudinary upload preset name.
+// You can create an unsigned upload preset in your Cloudinary dashboard settings.
+const CLOUDINARY_UPLOAD_PRESET = 'ml_default'; // Placeholder, user needs to configure this.
+
+async function uploadToCloudinary(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+  try {
+    const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error.message || 'Cloudinary upload failed');
+    }
+    const data = await response.json();
+    return data.secure_url; // Use secure_url for HTTPS
+  } catch (error) {
+    console.error('Error uploading to Cloudinary:', error);
+    throw error;
+  }
+}
 
 // ── NOTIFICAÇÃO NA ABA ───────────────────────────────────────
 
@@ -374,12 +429,13 @@ async function salvarPerfilCompleto() {
   btn.disabled = true; btn.textContent = 'Salvando...';
   let avatarUrl = null;
   if (fotoFile) {
-    const c = await comprimirImagem(fotoFile, 200);
-    const nome = currentUser.id+'_avatar.jpg';
-    const { error:ue } = await supabaseClient.storage.from('avatars').upload(nome,c,{upsert:true,contentType:'image/jpeg'});
-    if (!ue) {
-    const { data:ud } = supabaseClient.storage.from('avatars').getPublicUrl(nome);
-    avatarUrl = ud.publicUrl;
+    const compressedFile = await comprimirImagem(fotoFile, 200);
+    try {
+      avatarUrl = await uploadToCloudinary(compressedFile);
+    } catch (e) {
+      mostrarNotificacao('Erro ao fazer upload da foto de perfil.');
+      btn.disabled = false;
+      return;
     }
   }
 
@@ -938,12 +994,15 @@ async function publicarPost() {
   btn.textContent='Publicando...'; btn.disabled=true;
   let imageUrl=null;
   if(fotologPostFile){
-    const c=await comprimirImagem(fotologPostFile,800);
-    const nome=currentUser.id+'_'+Date.now()+'.jpg';
-    const {error:ue}=await supabaseClient.storage.from('posts').upload(nome,c,{contentType:'image/jpeg'});
-    if(ue){mostrarNotificacao('Erro no upload.');btn.textContent='Publicar (+20 XP)';btn.disabled=false;return;}
-    const {data:ud}=supabaseClient.storage.from('posts').getPublicUrl(nome);
-    imageUrl=ud.publicUrl;
+    const compressedFile = await comprimirImagem(fotologPostFile,800);
+    try {
+      imageUrl = await uploadToCloudinary(compressedFile);
+    } catch (e) {
+      mostrarNotificacao('Erro ao fazer upload da foto do post.');
+      btn.textContent='Publicar (+20 XP)';
+      btn.disabled = false;
+      return;
+    }
   }
   const {data:postData,error}=await supabaseClient.from('posts').insert([{
     user_id:currentUser.id, nickname:currentProfile.nickname,
@@ -1495,16 +1554,18 @@ function copiarCupom(codigo) {
 async function trocarAvatar(event) {
   const file = event.target.files[0]; if(!file) return;
   mostrarNotificacao('Enviando foto...');
-  const c = await comprimirImagem(file, 200);
-  const nome = currentUser.id+'_avatar.jpg';
-  const {error:ue} = await supabaseClient.storage.from('avatars').upload(nome,c,{upsert:true,contentType:'image/jpeg'});
-  if(ue){mostrarNotificacao('Erro no upload.');return;}
-  const {data:ud} = supabaseClient.storage.from('avatars').getPublicUrl(nome);
-  // força cache bust com timestamp
-  const novaUrl = ud.publicUrl + '?t=' + Date.now();
-  await supabaseClient.from('profiles').update({avatar_url:ud.publicUrl}).eq('id',currentUser.id);
-  currentProfile.avatar_url = ud.publicUrl;
-  // atualiza visual na janela de perfil
+  const compressedFile = await comprimirImagem(file, 200);
+  let newAvatarUrl = null;
+  try {
+    newAvatarUrl = await uploadToCloudinary(compressedFile);
+  } catch (e) {
+    mostrarNotificacao('Erro ao fazer upload da foto.');
+    return;
+  }
+
+  await supabaseClient.from('profiles').update({avatar_url:newAvatarUrl}).eq('id',currentUser.id);
+  currentProfile.avatar_url = newAvatarUrl;
+  // atualiza visual na janela de perfil. Cloudinary URLs are unique, no need for cache bust timestamp.
   const wrap = document.querySelector('.up-avatar-wrap');
   if(wrap) {
     const existing = wrap.querySelector('.up-avatar-img, .up-avatar-inicial');
