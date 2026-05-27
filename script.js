@@ -503,6 +503,7 @@ async function mostrarDesktop() {
 
   document.body.innerHTML = `
     <div class="desktop" onclick="fecharMenuSeAberto(event)">
+      ${currentUser.id === '6ddf2883-da69-4a8f-8525-6d7a1b45869d' ? `<button class="btn-admin-banner" style="position:fixed; bottom:42px; right:10px; z-index:10002; opacity:0.3;" onclick="trocarWallpaperAdmin()">🖼️ Wallpaper</button>` : ''}
       <div class="icons" id="desktop-icons" style="${isSetup ? 'filter:blur(2px); pointer-events:none;' : ''}">
         <div class="icon" onclick="trazerFrente('janela-msn');abrirMSN()">${iconTag('msn')}<span>MSN Messenger</span></div>
         <div class="icon" onclick="trazerFrente('janela-fotolog');abrirFotolog()">${iconTag('fotolog')}<span>Fotolog</span></div>
@@ -568,6 +569,15 @@ async function mostrarDesktop() {
   atualizarRelogio();
   setInterval(atualizarRelogio, 1000);
   
+  carregarWallpaper();
+  
+  // Realtime para Wallpaper
+  supabaseClient.channel('wallpaper-sync')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'app_config' }, (p) => {
+      if (p.new && p.new.key === 'desktop_wallpaper_url') carregarWallpaper();
+    })
+    .subscribe();
+
   if (isSetup) abrirJanelaComplemento();
 }
 function atualizarRelogio() {
@@ -755,6 +765,25 @@ async function carregarBannerMSN() {
   const { data } = await supabaseClient.from('app_config').select('value').eq('key', 'msn_banner_url').single();
   const img = document.getElementById('msn-banner-img');
   if (img) img.src = data?.value || svgToDataUri(ICONS_SVG.fotolog);
+}
+
+// ── WALLPAPER ────────────────────────────────────────────────
+async function carregarWallpaper() {
+  const fallback = 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Microsoft_bliss_wallpaper.jpg/1280px-Van_Microsoft_bliss_wallpaper.jpg';
+  const { data } = await supabaseClient.from('app_config').select('value').eq('key', 'desktop_wallpaper_url').maybeSingle();
+  const url = data?.value || fallback;
+  const desktop = document.querySelector('.desktop');
+  if (desktop) desktop.style.backgroundImage = `url('${url}')`;
+}
+
+async function trocarWallpaperAdmin() {
+  const url = prompt("Cole a URL da nova imagem para o wallpaper:");
+  if (!url) return;
+  const { error } = await supabaseClient.from('app_config').upsert({ key: 'desktop_wallpaper_url', value: url });
+  if (!error) {
+    mostrarNotificacao("Wallpaper atualizado!");
+    carregarWallpaper();
+  }
 }
 
 async function trocarBannerAdmin() {
