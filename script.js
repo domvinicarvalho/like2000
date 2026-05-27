@@ -134,33 +134,36 @@ document.addEventListener('visibilitychange', () => {
 // ── ÍCONES SVG FIÉIS AOS ORIGINAIS ───────────────────────────
 const ICONS_SVG = {
 
-  // MSN Messenger — A borboleta clássica de 4 cores com o check de online
+  // MSN Messenger — Borboleta laranja clássica (MSN 7.5)
   msn: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-    <path d="M24,25 C22,22 8,14 7,8 C6,3 12,1 17,4 C20,6 23,14 24,25 Z" fill="#3498db"/>
-    <path d="M24,25 C26,22 40,14 41,8 C42,3 36,1 31,4 C28,6 25,14 24,25 Z" fill="#e74c3c"/>
-    <path d="M24,27 C22,28 10,30 8,38 C7,43 13,46 18,42 C21,39 23,31 24,27 Z" fill="#f1c40f"/>
-    <path d="M24,27 C26,28 38,30 40,38 C41,43 35,46 30,42 C27,39 25,31 24,27 Z" fill="#2ecc71"/>
-    <circle cx="37" cy="11" r="8" fill="#22AA22"/><circle cx="37" cy="11" r="4" fill="#fff" opacity="0.3"/>
+    <path d="M24,25 C22,22 8,14 7,8 C6,3 12,1 17,4 C20,6 23,14 24,25 Z" fill="#D94F00"/>
+    <path d="M24,25 C26,22 40,14 41,8 C42,3 36,1 31,4 C28,6 25,14 24,25 Z" fill="#FF6A00"/>
+    <path d="M24,27 C22,28 10,30 8,38 C7,43 13,46 18,42 C21,39 23,31 24,27 Z" fill="#FF8C1A"/>
+    <path d="M24,27 C26,28 38,30 40,38 C41,43 35,46 30,42 C27,39 25,31 24,27 Z" fill="#FFAA00"/>
+    <ellipse cx="24" cy="26" rx="3" ry="5" fill="#C44000"/>
+    <circle cx="37" cy="11" r="8" fill="#22AA22"/>
+    <path d="M34,11 L36,13 L40,9" fill="none" stroke="white" stroke-width="2"/>
   </svg>`,
 
-  // Fotolog — Câmera fotográfica clássica dos anos 2000
+  // Fotolog — Logo quadrado laranja com lente estilizada
   fotolog: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-    <rect x="4" y="12" width="40" height="28" rx="3" fill="#FF6600"/>
-    <rect x="16" y="8" width="16" height="4" rx="1" fill="#CC5500"/>
-    <circle cx="24" cy="26" r="8" fill="#fff"/><circle cx="24" cy="26" r="5" fill="#333"/>
-    <rect x="36" y="15" width="4" height="4" fill="#fff" opacity="0.5"/>
+    <rect width="48" height="48" rx="10" fill="#FF6600"/>
+    <path d="M24,12 C17.37,12 12,17.37 12,24 C12,30.63 17.37,36 24,36 C30.63,36 36,30.63 36,24" fill="none" stroke="white" stroke-width="4"/>
+    <circle cx="24" cy="24" r="4" fill="white"/>
+    <path d="M34,12 L34,24" stroke="white" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="34" cy="12" r="3" fill="white"/>
   </svg>`,
 
-  // Winamp — O icônico raio dourado
+  // Winamp — O icônico raio dourado (mantido conforme solicitado)
   winamp: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
     <path d="M30,4 L10,26 L22,26 L16,44 L38,18 L26,18 L30,4 Z" fill="#ffcc00" stroke="#000" stroke-width="2"/>
   </svg>`,
 
-  // Internet Explorer — O "e" azul com o anel orbital
+  // Internet Explorer — O "e" azul clássico com o anel orbital dourado
   ie: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-    <path d="M40,24 C40,15 33,8 24,8 C15,8 8,15 8,24 C8,33 15,40 24,40 C33,40 40,33 40,24" fill="none" stroke="#0066cc" stroke-width="5"/>
-    <path d="M8,24 L38,24" stroke="#0066cc" stroke-width="5"/>
-    <ellipse cx="24" cy="24" rx="22" ry="8" fill="none" stroke="#ffcc00" stroke-width="2" transform="rotate(-30 24 24)"/>
+    <path d="M42,24 C42,14 34,6 24,6 C14,6 6,14 6,24 C6,34 14,42 24,42 C34,42 42,34 42,24" fill="none" stroke="#0066cc" stroke-width="6"/>
+    <path d="M6,24 L38,24 M24,6 L24,18" fill="none" stroke="#0066cc" stroke-width="6" stroke-linecap="round"/>
+    <ellipse cx="24" cy="24" rx="23" ry="9" fill="none" stroke="#ffcc00" stroke-width="3" transform="rotate(-35 24 24)"/>
   </svg>`,
 
   // Amigos — Ícone de usuários clássico
