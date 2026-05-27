@@ -361,11 +361,11 @@ body { width:100vw; height:100vh; overflow:hidden; }
 
 /* sidebar esquerda */
 .fotolog-sidebar {
-  width:200px; flex-shrink:0; background:#e8e0d0; border-right:2px solid #c0b090;
+  width:200px; flex-shrink:0; background:#222; border-right:2px solid #111; /* Fundo escuro */
   display:flex; flex-direction:column; gap:0; overflow-y:auto;
 }
 .fotolog-meu-perfil {
-  background:linear-gradient(to bottom,#ff6600,#cc4400);
+  background:#000; /* Fundo preto para o perfil */
   padding:12px; display:flex; flex-direction:column; align-items:center; gap:6px;
 }
 .fl-avatar { width:64px; height:64px; border-radius:4px; object-fit:cover; border:2px solid rgba(255,255,255,.5); }
@@ -381,6 +381,11 @@ body { width:100vw; height:100vh; overflow:hidden; }
 .fl-post-box {
   padding:10px; display:flex; flex-direction:column; gap:6px;
   border-bottom:1px solid #c0b090;
+}
+.fl-post-title-input {
+  width:100%; padding:6px; border:1px solid #c0b090; border-radius:3px;
+  font-size:12px; font-family:Tahoma,sans-serif; background:#fffdf8;
+  font-weight:bold;
 }
 .fl-post-foto {
   width:100%; height:100px; background:#fff;
@@ -432,6 +437,14 @@ body { width:100vw; height:100vh; overflow:hidden; }
 }
 .fl-card-nick { font-size:12px; font-weight:bold; }
 .fl-card-data { font-size:10px; color:#888; }
+.fl-card-title { 
+  padding:10px 10px 5px; 
+  font-size:16px; 
+  font-weight:bold; 
+  color:#000; 
+  text-align:center;
+  font-family: Arial, Helvetica, sans-serif;
+}
 .fl-card-img  { width:100%; display:block; max-height:400px; object-fit:contain; }
 .fl-card-caption { padding:8px 10px; font-size:12px; color:#333; line-height:1.5; border-top:1px solid #f0e8d8; }
 .fl-card-actions { display:flex; gap:8px; padding:6px 10px; border-top:1px solid #f0e8d8; background:#fffdf5; }

@@ -935,6 +935,7 @@ function abrirFotolog() {
             <span id="fl-foto-placeholder">📷<br><small>clique para escolher foto</small></span>
           </div>
           <input type="file" id="fl-foto-input" accept="image/*" style="display:none" onchange="previewFotolog(event)">
+          <input type="text" id="fl-title" placeholder="título (max 50)" maxlength="50" class="fl-post-title-input">
           <textarea id="fl-caption" placeholder="escreva algo..." maxlength="200" rows="3"></textarea>
           <button onclick="publicarPost()" class="fl-btn-postar">Publicar (Gold Camera)</button>
         </div>
@@ -962,9 +963,10 @@ function previewFotolog(e) {
 }
 
 async function publicarPost() {
+  const title=document.getElementById('fl-title').value.trim();
   const caption=document.getElementById('fl-caption').value.trim();
   const btn=document.querySelector('.fl-btn-postar');
-  if(!fotologPostFile&&!caption){mostrarNotificacao('Adicione uma foto ou texto!');return;}
+  if(!fotologPostFile&&!caption&&!title){mostrarNotificacao('Adicione uma foto, título ou texto!');return;}
 
   // Verifica se o usuário já postou hoje
   const hoje = new Date().toISOString().split('T')[0]; // Data atual no formato YYYY-MM-DD (UTC)
@@ -993,7 +995,7 @@ async function publicarPost() {
   const {data:postData,error}=await supabaseClient.from('posts').insert([{
     user_id:currentUser.id, nickname:currentProfile.nickname,
     avatar_url:currentProfile.avatar_url, color:currentProfile.color,
-    image_url:imageUrl, caption:caption, xp_awarded:true
+    image_url:imageUrl, caption:caption, title:title, xp_awarded:true
   }]).select().single();
   if(!error&&postData){
     await adicionarXP(10,'post no Fotolog');
@@ -1005,6 +1007,7 @@ async function publicarPost() {
     fotologPostFile=null;
     document.getElementById('fl-foto-preview').style.display='none';
     document.getElementById('fl-foto-placeholder').style.display='block';
+    document.getElementById('fl-title').value='';
     document.getElementById('fl-caption').value='';
     document.getElementById('fl-foto-input').value='';
   }
@@ -1033,10 +1036,12 @@ function criarCardPost(post,comments){
   const comHtml=comments.map(c=>`<div class="fl-comment"><span class="fl-comment-nick" style="color:${c.color||'#0000cc'}">${escapeHtml(c.nickname)}:</span> <span>${escapeHtml(c.content)}</span></div>`).join('');
   card.innerHTML=`
     <div class="fl-card-header">${av}<div><div class="fl-card-nick" style="color:${post.color||'#0000cc'}">${escapeHtml(post.nickname)}${getBotaoAmizade(post.user_id)}</div><div class="fl-card-data">${dt}</div></div></div>
+    ${post.title?`<div class="fl-card-title">${escapeHtml(post.title)}</div>`:''}
     ${post.image_url?`<img src="${post.image_url}" class="fl-card-img" alt="">`:''}
     ${post.caption?`<div class="fl-card-caption">${escapeHtml(post.caption)}</div>`:''}
     <div class="fl-card-actions">
       <button class="fl-comment-btn" onclick="toggleComentarios(${post.id})">💬 ${comments.length}</button>
+      ${post.user_id === currentUser.id ? `<button class="fl-delete-btn" onclick="removerPost('${post.id}')">✕ Remover</button>` : ''}
     </div>
     <div class="fl-comments-area" id="comments-${post.id}">
       <div class="fl-comments-list" id="comments-list-${post.id}">${comHtml}</div>
@@ -1090,6 +1095,29 @@ async function enviarComentario(postId){
       const btn=document.querySelector(`#post-${postId} .fl-comment-btn`);
       if(btn)btn.textContent=`💬 ${lista.children.length}`;
     }
+  }
+}
+
+async function removerPost(postId) {
+  if (!confirm('Tem certeza que deseja remover este post? Esta ação é irreversível e removerá também todos os comentários associados.')) {
+    return;
+  }
+
+  // Primeiro, remove os comentários associados ao post
+  const { error: commentsError } = await supabaseClient.from('comments').delete().eq('post_id', postId);
+  if (commentsError) {
+    console.error('Erro ao remover comentários:', commentsError);
+    mostrarNotificacao('Erro ao remover comentários do post.');
+    return;
+  }
+
+  const { error: postError } = await supabaseClient.from('posts').delete().eq('id', postId);
+  if (postError) {
+    mostrarNotificacao('Erro ao remover post: ' + postError.message);
+  } else {
+    mostrarNotificacao('✅ Post removido com sucesso!');
+    const postElement = document.getElementById('post-' + postId);
+    if (postElement) postElement.remove();
   }
 }
 
