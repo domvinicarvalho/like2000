@@ -987,7 +987,7 @@ async function publicarPost() {
       imageUrl = await uploadToCloudinary(compressedFile);
     } catch (e) {
       mostrarNotificacao('Erro ao fazer upload da foto do post.');
-      btn.textContent='Publicar (+20 XP)';
+      btn.textContent='Publicar (Gold Camera)'; // Texto do botão corrigido
       btn.disabled = false;
       return;
     }
@@ -1002,7 +1002,7 @@ async function publicarPost() {
     const feed=document.getElementById('fotolog-feed');
     if(feed){
       const semPosts=feed.querySelector('.fl-loading'); if(semPosts)semPosts.remove();
-      feed.insertBefore(criarCardPost(postData,0,false,[]),feed.firstChild);
+      feed.insertBefore(criarCardPost(postData,[]),feed.firstChild); // Assinatura de criarCardPost corrigida
     }
     fotologPostFile=null;
     document.getElementById('fl-foto-preview').style.display='none';
