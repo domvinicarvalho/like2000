@@ -495,7 +495,6 @@ function getBotaoAmizade(targetUserId) {
 
 // ── DESKTOP ───────────────────────────────────────────────────
 async function mostrarDesktop() {
-  tocarSomStartup();
   await checarLoginDiario();
   await carregarTemporada();
   await carregarCacheAmizades();
@@ -574,6 +573,9 @@ async function mostrarDesktop() {
   atualizarRelogio();
   setInterval(atualizarRelogio, 1000);
   
+  // Toca o som após injetar o HTML, garantindo maior compatibilidade
+  tocarSomStartup();
+
   carregarWallpaper();
   
   // Realtime para Wallpaper
