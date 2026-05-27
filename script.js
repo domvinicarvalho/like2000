@@ -19,6 +19,7 @@ let temporadaAtiva  = null;
 let fotologPostFile = null;
 let cacheAmizades   = new Map(); // target_id -> status
 let wallpaperCache  = { desktop: null, mobile: null };
+let lastAppliedUrl  = null;
 let friendshipRealtime = null;
 let configRealtime = null;
 let onlineUsersRealtime = null;
@@ -774,26 +775,59 @@ async function carregarBannerMSN() {
 // ── WALLPAPER ────────────────────────────────────────────────
 async function carregarWallpaper() {
   const fallback = 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Microsoft_bliss_wallpaper.jpg/1280px-Van_Microsoft_bliss_wallpaper.jpg';
-  const { data } = await supabaseClient.from('app_config').select('value').eq('key', 'desktop_wallpaper_url').maybeSingle();
-  const url = data?.value || fallback;
   
+  // Busca as duas chaves no banco
+  const { data } = await supabaseClient.from('app_config').select('key, value').in('key', ['desktop_wallpaper_url', 'mobile_wallpaper_url']);
+  
+  if (data) {
+    const d = data.find(i => i.key === 'desktop_wallpaper_url');
+    const m = data.find(i => i.key === 'mobile_wallpaper_url');
+    wallpaperCache.desktop = d?.value || fallback;
+    wallpaperCache.mobile = m?.value || d?.value || fallback;
+  }
+  
+  aplicarWallpaperEstilo();
+}
+
+function aplicarWallpaperEstilo() {
+  const isMobile = window.innerWidth <= 600;
+  const url = isMobile ? wallpaperCache.mobile : wallpaperCache.desktop;
+  
+  if (!url || url === lastAppliedUrl) return;
+  lastAppliedUrl = url;
+
   // Adiciona um timestamp para forçar o recarregamento se for um link externo
   const finalUrl = url.startsWith('http') 
     ? `${url}${url.includes('?') ? '&' : '?'}t=${Date.now()}` 
     : url;
 
   const desktop = document.querySelector('.desktop');
-  if (desktop) desktop.style.backgroundImage = `url("${finalUrl}")`;
+  if (desktop) {
+    desktop.style.backgroundImage = `url("${finalUrl}")`;
+  }
 }
 
-async function trocarWallpaperAdmin() {
-  const url = prompt("Cole a URL da nova imagem para o wallpaper:");
+// Troca o wallpaper se redimensionar (ou virar o celular)
+window.addEventListener('resize', () => {
+  if (document.querySelector('.desktop')) aplicarWallpaperEstilo();
+});
+
+async function trocarWallpaperAdmin(tipo) {
+  const key = tipo === 'mobile' ? 'mobile_wallpaper_url' : 'desktop_wallpaper_url';
+  const url = prompt(`Cole a URL da nova imagem para o wallpaper ${tipo.toUpperCase()}:`);
   if (!url) return;
-  
-  // Especificamos 'key' no onConflict para que o Supabase saiba o que atualizar
+
   const { error } = await supabaseClient
     .from('app_config')
-    .upsert({ key: 'desktop_wallpaper_url', value: url }, { onConflict: 'key' });
+    .upsert({ key: key, value: url }, { onConflict: 'key' });
+
+  if (error) {
+    mostrarNotificacao("Erro ao salvar wallpaper.");
+  } else {
+    mostrarNotificacao("Wallpaper atualizado!");
+    carregarWallpaper();
+  }
+}
 
   if (error) {
     console.error("Erro ao salvar wallpaper:", error);
