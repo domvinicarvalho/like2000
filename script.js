@@ -1108,20 +1108,21 @@ function iniciarRealtimeAmizades() {
   if (friendshipRealtime) supabaseClient.removeChannel(friendshipRealtime);
   friendshipRealtime = supabaseClient.channel('friendship-updates')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'friendships' }, async (payload) => {
+      console.log('Evento de Amizade recebido:', payload);
       await carregarCacheAmizades();
       if (document.getElementById('janela-amigos')) carregarAmigos();
 
       const { eventType, new: newData } = payload;
 
       // 1. Notificação de Solicitação Recebida
-      if (eventType === 'INSERT' && newData && newData.friend_id === currentUser.id) {
+      if (eventType === 'INSERT' && newData?.friend_id === currentUser.id) {
         const { data: p } = await supabaseClient.from('profiles').select('nickname, avatar_url').eq('id', newData.user_id).single();
         if (p) {
           mostrarMSNPopup('Solicitação de Amizade', `<b>${escapeHtml(p.nickname)}</b> quer te adicionar à lista de contatos.`, p.avatar_url);
         }
-      } 
+      }
       // 2. Notificação de Solicitação Aceita
-      else if (eventType === 'UPDATE' && newData.user_id === currentUser.id && newData.status === 'accepted') {
+      else if (eventType === 'UPDATE' && newData?.user_id === currentUser.id && newData?.status === 'accepted') {
         const { data: p } = await supabaseClient.from('profiles').select('nickname, avatar_url').eq('id', newData.friend_id).single();
         if (p) {
           mostrarMSNPopup('Convite Aceito', `<b>${escapeHtml(p.nickname)}</b> aceitou seu convite de amizade!`, p.avatar_url);
