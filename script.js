@@ -79,35 +79,6 @@ async function uploadToCloudinary(file) {
   }
 }
 
-// ── CLOUDINARY CONFIG ────────────────────────────────────────
-const CLOUDINARY_CLOUD_NAME = 'dhqnjfxny';
-// IMPORTANT: Replace 'YOUR_UPLOAD_PRESET' with your actual Cloudinary upload preset name.
-// You can create an unsigned upload preset in your Cloudinary dashboard settings.
-const CLOUDINARY_UPLOAD_PRESET = 'ml_default'; // Placeholder, user needs to configure this.
-
-async function uploadToCloudinary(file) {
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-
-  try {
-    const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
-      method: 'POST',
-      body: formData,
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error.message || 'Cloudinary upload failed');
-    }
-    const data = await response.json();
-    return data.secure_url; // Use secure_url for HTTPS
-  } catch (error) {
-    console.error('Error uploading to Cloudinary:', error);
-    throw error;
-  }
-}
-
 // ── NOTIFICAÇÃO NA ABA ───────────────────────────────────────
 
 // ── TEMPORADA ────────────────────────────────────────────────
@@ -1569,7 +1540,7 @@ async function trocarAvatar(event) {
   const wrap = document.querySelector('.up-avatar-wrap');
   if(wrap) {
     const existing = wrap.querySelector('.up-avatar-img, .up-avatar-inicial');
-    if(existing) existing.outerHTML = `<img src="${novaUrl}" class="up-avatar-img" alt="">`;
+    if(existing) existing.outerHTML = `<img src="${newAvatarUrl}" class="up-avatar-img" alt="">`;
   }
   mostrarNotificacao('✅ Foto atualizada!');
 }
