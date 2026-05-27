@@ -98,6 +98,7 @@ body { width:100vw; height:100vh; overflow:hidden; }
   background-size: cover;
   background-position: center;
   position:relative; overflow:hidden;
+  transition: background-image 0.5s ease-in-out; /* Adicionado para uma transição suave */
 }
 .icons { padding:14px 10px; display:flex; flex-direction:column; gap:8px; }
 .icon {

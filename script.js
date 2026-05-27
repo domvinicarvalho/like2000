@@ -569,10 +569,11 @@ async function mostrarDesktop() {
   atualizarRelogio();
   setInterval(atualizarRelogio, 1000);
   
-  // Carrega e inicia sincronização do Wallpaper
-  await carregarWallpaper();
+  carregarWallpaper();
+  
+  // Realtime para Wallpaper
   supabaseClient.channel('wallpaper-sync')
-    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'app_config' }, (p) => {
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'app_config' }, (p) => {
       if (p.new && p.new.key === 'desktop_wallpaper_url') carregarWallpaper();
     })
     .subscribe();
@@ -758,6 +759,39 @@ function atualizarMolduraStatusMSN(status) {
   const frame = document.getElementById('msn-my-avatar-frame');
   if (!frame) return;
   frame.className = `msn-frame avatar-frame status-${status || 'online'}`;
+}
+
+async function carregarBannerMSN() {
+  const { data } = await supabaseClient.from('app_config').select('value').eq('key', 'msn_banner_url').single();
+  const img = document.getElementById('msn-banner-img');
+  if (img) img.src = data?.value || svgToDataUri(ICONS_SVG.fotolog);
+}
+
+// ── WALLPAPER ────────────────────────────────────────────────
+async function carregarWallpaper() {
+  const fallback = 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Microsoft_bliss_wallpaper.jpg/1280px-Van_Microsoft_bliss_wallpaper.jpg';
+  const { data } = await supabaseClient.from('app_config').select('value').eq('key', 'desktop_wallpaper_url').maybeSingle();
+  const url = data?.value || fallback;
+  const desktop = document.querySelector('.desktop');
+  if (desktop) desktop.style.backgroundImage = `url('${url}')`;
+}
+
+async function trocarWallpaperAdmin() {
+  const url = prompt("Cole a URL da nova imagem para o wallpaper:");
+  if (!url) return;
+  
+  // Especificamos 'key' no onConflict para que o Supabase saiba o que atualizar
+  const { error } = await supabaseClient
+    .from('app_config')
+    .upsert({ key: 'desktop_wallpaper_url', value: url }, { onConflict: 'key' });
+
+  if (error) {
+    console.error("Erro ao salvar wallpaper:", error);
+    mostrarNotificacao("Erro ao salvar wallpaper.");
+  } else {
+    mostrarNotificacao("Wallpaper atualizado!");
+    carregarWallpaper();
+  }
 }
 
 async function trocarBannerAdmin() {
