@@ -6,6 +6,7 @@
     min-height: 100vh !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
+    background-attachment: fixed !important;
     padding-bottom: calc(48px + env(safe-area-inset-bottom)) !important;
   }
 

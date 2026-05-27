@@ -775,7 +775,7 @@ async function carregarBannerMSN() {
 // ── WALLPAPER ────────────────────────────────────────────────
 async function carregarWallpaper() {
   const fallback = 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Microsoft_bliss_wallpaper.jpg/1280px-Van_Microsoft_bliss_wallpaper.jpg';
-  
+
   // Busca as duas chaves no banco
   const { data } = await supabaseClient.from('app_config').select('key, value').in('key', ['desktop_wallpaper_url', 'mobile_wallpaper_url']);
   
@@ -828,16 +828,6 @@ async function trocarWallpaperAdmin(tipo) {
     carregarWallpaper();
   }
 }
-
-  if (error) {
-    console.error("Erro ao salvar wallpaper:", error);
-    mostrarNotificacao("Erro ao salvar wallpaper.");
-  } else {
-    mostrarNotificacao("Wallpaper atualizado!");
-    carregarWallpaper();
-  }
-}
-
 async function trocarBannerAdmin() {
   const url = prompt("Cole a URL da nova imagem para o banner:");
   if (!url) return;
