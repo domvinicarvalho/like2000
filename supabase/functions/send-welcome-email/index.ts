@@ -7,6 +7,17 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    // Validação de Segurança: Garante que apenas o sistema (via service_role) dispare o e-mail
+    const authHeader = req.headers.get("Authorization");
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+    if (!authHeader || !authHeader.includes(serviceRoleKey!)) {
+      return new Response(JSON.stringify({ error: "Não autorizado" }), { 
+        status: 401, 
+        headers: { "Content-Type": "application/json" } 
+      });
+    }
+
     if (!BREVO_API_KEY) {
       return new Response(JSON.stringify({ error: "Configuração BREVO_API_KEY ausente" }), { 
         status: 500, 
