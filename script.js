@@ -650,9 +650,11 @@ function tornarArrastavel(janela) {
 function criarJanela(id,titulo,iconKey,largura,altura,top,left,conteudo) {
   if(document.getElementById(id)){trazerFrente(id);return null;}
   zTop++;
+  // Define o z-index inicial respeitando a prioridade
+  const z = (id.startsWith('tutorial-') || id === 'janela-complemento') ? zTop + 5000 : zTop;
   const j=document.createElement('div');
   j.className='xp-window'; j.id=id;
-  j.style.cssText=`width:${largura}px;height:${altura}px;top:${top}px;left:${left}px;z-index:${zTop}`;
+  j.style.cssText=`width:${largura}px;height:${altura}px;top:${top}px;left:${left}px;z-index:${z}`;
   j.innerHTML=`
     <div class="xp-titlebar">
       <div class="xp-title-left">${iconTag(iconKey,16)} ${titulo}</div>
@@ -693,6 +695,10 @@ function mostrarAlerta(id, titulo, iconKey, texto, storageKey) {
   criarJanela(id, titulo, iconKey, largura, 0, top, left, conteudo);
   const jan = document.getElementById(id);
   if (jan) jan.style.height = 'auto';
+  if (jan) {
+    jan.style.height = 'auto';
+    trazerFrente(id); // Força a aplicação do z-index de prioridade
+  }
 }
 
 function fecharJanela(id) {
