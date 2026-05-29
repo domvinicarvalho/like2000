@@ -275,10 +275,88 @@ function selecionarCor(cor, el) {
   el.classList.add('selected');
 }
 
+// ── TERMOS E PRIVACIDADE ─────────────────────────────────────
+function abrirTermos() {
+  const content = `
+    <div style="padding:15px; font-size:11px; line-height:1.5; color:#000; background:#fff; height:100%; overflow-y:auto; border:1px solid #7f9db9; white-space:pre-wrap; font-family: Tahoma, sans-serif;">TERMOS DE USO — LIKE 2000
+Última atualização: maio de 2026
+
+1. Aceitação
+Ao se cadastrar na Like 2000, você declara ter 18 anos ou mais e concorda integralmente com estes Termos. O acesso à plataforma é condicionado à aceitação.
+
+2. A plataforma
+A Like 2000 é uma rede social temática operada pela Bad Idea. O acesso é gratuito e pode ser encerrado ou modificado a qualquer momento sem aviso prévio.
+
+3. Sua conta
+Você é responsável por manter a confidencialidade da sua senha e por todas as atividades realizadas na sua conta. É proibido criar contas falsas ou compartilhar credenciais.
+
+4. Conteúdo publicado
+Ao publicar fotos, textos ou qualquer conteúdo na plataforma, você concede à Bad Idea licença gratuita, irrevogável e sem limitação geográfica para usar, reproduzir, distribuir e divulgar esse conteúdo em qualquer meio, incluindo redes sociais, materiais de marketing e comunicações com parceiros.
+Você declara que possui os direitos sobre o conteúdo publicado e que ele não viola direitos de terceiros.
+
+5. Conduta
+É proibido publicar conteúdo ofensivo, discriminatório, ilegal ou que viole direitos de terceiros. A Bad Idea pode remover conteúdo e suspender contas sem aviso prévio.
+
+6. Gamificação
+O sistema de XP, rankings e prêmios pode ser alterado, suspenso ou encerrado a qualquer momento. Pontos e posições no ranking não têm valor monetário e não são transferíveis.
+
+7. Responsabilidade
+A plataforma é fornecida "como está". A Bad Idea não se responsabiliza por interrupções, perdas de dados ou danos decorrentes do uso da plataforma.
+
+8. Alterações
+Estes Termos podem ser atualizados a qualquer momento. O uso continuado da plataforma após alterações implica aceitação dos novos termos.
+
+9. Foro
+Fica eleito o foro da comarca de São Paulo/SP para dirimir quaisquer disputas.</div>`;
+  criarJanela('janela-termos', 'Termos de Uso', 'ie', 450, 400, 50, 50, content);
+}
+
+function abrirPrivacidade() {
+  const content = `
+    <div style="padding:15px; font-size:11px; line-height:1.5; color:#000; background:#fff; height:100%; overflow-y:auto; border:1px solid #7f9db9; white-space:pre-wrap; font-family: Tahoma, sans-serif;">POLÍTICA DE PRIVACIDADE — LIKE 2000
+Última atualização: maio de 2026
+
+1. Responsável pelo tratamento
+Bad Idea Produções — contato: timemachine@like2000.com.br
+
+2. Dados coletados
+- Nome de usuário (nickname)
+- Endereço de e-mail
+- Data de nascimento
+- Cidade
+- Foto de perfil
+- Conteúdo publicado (fotos e textos)
+- Dados de uso da plataforma (login, XP, interações)
+
+3. Como usamos seus dados
+Seus dados são utilizados para:
+- Operação e melhoria da plataforma
+- Comunicação sobre eventos e novidades da Bad Idea
+- Divulgação de fotos e conteúdo nas redes sociais da Bad Idea
+- Envio de ofertas, promoções e informações de parceiros e patrocinadores
+- Análise de público para fins de marketing e desenvolvimento do projeto
+
+4. Compartilhamento
+Seus dados, incluindo nome, cidade e conteúdo publicado, podem ser compartilhados com parceiros e patrocinadores da Bad Idea para fins de comunicação e ofertas. Não vendemos dados a terceiros fora do ecossistema Bad Idea.
+
+5. Seus direitos (LGPD)
+Você tem direito a acessar, corrigir ou solicitar a exclusão dos seus dados a qualquer momento. Para exercer esses direitos, entre em contato via timemachine@like2000.com.br.
+
+6. Cookies
+A plataforma utiliza armazenamento local (localStorage) para manter sua sessão ativa e registrar preferências de uso.
+
+7. Menores de idade
+A plataforma é destinada exclusivamente a maiores de 18 anos. Cadastros de menores são bloqueados automaticamente.
+
+8. Alterações
+Esta política pode ser atualizada a qualquer momento. Alterações relevantes serão comunicadas na plataforma.</div>`;
+  criarJanela('janela-privacidade', 'Política de Privacidade', 'ie', 450, 400, 70, 70, content);
+}
+
 // ── JANELA DE COMPLEMENTO DE PERFIL ──────────────────────────
 function abrirJanelaComplemento() {
   const content = `
-    <div class="up-field-group">
+    <div class="up-field-group" style="max-height: 550px; overflow-y: auto;">
       <div style="text-align:center; margin-bottom:10px;">
         <div class="avatar-upload" style="margin:0 auto;" onclick="document.getElementById('foto-comp-input').click()">
           <img id="comp-avatar-preview" src="" style="display:none">
@@ -300,10 +378,14 @@ function abrirJanelaComplemento() {
         <div class="cor" style="background:#800080" onclick="selecionarCor('#800080',this)"></div>
         <div class="cor" style="background:#cc6600" onclick="selecionarCor('#cc6600',this)"></div>
       </div>
-      <button class="up-btn-save" id="btn-save-comp" onclick="salvarPerfilCompleto()">CONCLUIR INSTALAÇÃO</button>
+      <button class="up-btn-save" id="btn-save-comp" disabled onclick="salvarPerfilCompleto()" style="opacity: 0.6; cursor: not-allowed;">CONCLUIR INSTALAÇÃO</button>
+      <div style="margin-top:10px; font-size:10px; display:flex; gap:8px; align-items:flex-start; color:#333; line-height: 1.3;">
+        <input type="checkbox" id="aceite-termos" onchange="const btn=document.getElementById('btn-save-comp'); btn.disabled=!this.checked; btn.style.opacity=this.checked?1:0.6; btn.style.cursor=this.checked?'pointer':'not-allowed';">
+        <label for="aceite-termos">Eu li e concordo com os <a href="javascript:void(0)" onclick="abrirTermos()" style="color:#0000ee; text-decoration:underline;">Termos de Uso</a> e a <a href="javascript:void(0)" onclick="abrirPrivacidade()" style="color:#0000ee; text-decoration:underline;">Política de Privacidade</a></label>
+      </div>
     </div>`;
 
-  const j = criarJanela('janela-complemento', 'Configuração de Usuário', 'ie', 360, 520, 40, 0, content);
+  const j = criarJanela('janela-complemento', 'Configuração de Usuário', 'ie', 360, 560, 20, 0, content);
   if (j) {
     j.style.left = (window.innerWidth / 2 - 180) + 'px';
     const closeBtn = j.querySelector('.tbtn.fechar');
@@ -354,11 +436,12 @@ async function salvarPerfilCompleto() {
     }
   }
 
+  const agora = new Date().toISOString();
   const ref = nick.toUpperCase().replace(/\s+/g,'').slice(0,8)+Math.floor(Math.random()*900+100);
   const { error } = await supabaseClient.from('profiles').upsert({
     id:currentUser.id, nickname:nick, color:corSelecionada,
     avatar_url:avatarUrl, xp:0, level:'Rookie', referral_code:ref,
-    birth_date: nasc, city: cidade
+    birth_date: nasc, city: cidade, terms_accepted_at: agora
   });
   if (error) { mostrarNotificacao('Erro ao salvar.'); btn.disabled = false; return; }
   location.reload();
