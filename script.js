@@ -615,7 +615,16 @@ async function fazerLogout() {
 
 // ── DRAG MOUSE + TOUCH ────────────────────────────────────────
 function trazerFrente(id) {
-  const el=document.getElementById(id); if(el){zTop++;el.style.zIndex=zTop;}
+  const el = document.getElementById(id);
+  if (el) {
+    zTop++;
+    // Se for uma janela de tutorial ou de setup, aplica um offset de prioridade
+    if (id.startsWith('tutorial-') || id === 'janela-complemento') {
+      el.style.zIndex = zTop + 5000;
+    } else {
+      el.style.zIndex = zTop;
+    }
+  }
 }
 function tornarArrastavel(janela) {
   const titlebar=janela.querySelector('.xp-titlebar'); if(!titlebar)return;
@@ -694,7 +703,6 @@ function mostrarAlerta(id, titulo, iconKey, texto, storageKey) {
   
   criarJanela(id, titulo, iconKey, largura, 0, top, left, conteudo);
   const jan = document.getElementById(id);
-  if (jan) jan.style.height = 'auto';
   if (jan) {
     jan.style.height = 'auto';
     trazerFrente(id); // Força a aplicação do z-index de prioridade
