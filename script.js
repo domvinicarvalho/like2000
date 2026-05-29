@@ -501,6 +501,14 @@ async function mostrarDesktop() {
   iniciarRealtimeAmizades();
   
   const isSetup = primeiroAcesso;
+  
+  // Tutorial de XP (Onboarding Geral)
+  if (!isSetup) {
+    setTimeout(() => {
+      const txtXP = `Bem-vinde à Like 2000!\n\nAqui você acumula XP e compete pelo ranking da temporada, com prêmios reais para os campeões!\n\nComo ganhar XP:\n- Adicionar amigos → +10 XP (mútuo)\n- Compartilhar evento da Bad Idea no Instagram → +50 XP\n- Postar no Fotolog → +10 XP\n- Comentar em posts → +5 XP\n- Login diário → +3 XP (dobra a cada 10 dias consecutivos)\n- Comprar ingresso para os eventos da Bad Idea → +200 XP\n- Fazer check-in em eventos da Bad Idea → +100 XP\n- Indicar pessoas para comprar ingresso com o seu cupom → +200 XP\n\nAo final de cada temporada de 45 dias, o top 10 ganha prêmios reais.\nSeu cupom de indicação está no "Meu Perfil", compartilhe!`;
+      mostrarAlerta('tutorial-xp', 'Bem-vinde à Like 2000', 'ie', txtXP, 'tutorial_xp_visto');
+    }, 1500);
+  }
 
   document.body.innerHTML = `
     <div class="desktop" onclick="fecharMenuSeAberto(event)">
@@ -658,6 +666,35 @@ function criarJanela(id,titulo,iconKey,largura,altura,top,left,conteudo) {
   tornarArrastavel(j);
   return j;
 }
+
+function mostrarAlerta(id, titulo, iconKey, texto, storageKey) {
+  if (localStorage.getItem(storageKey)) return;
+  
+  tocarSom(SOM_XP_ERRO, 0.8);
+  
+  const conteudo = `
+    <div style="padding: 15px; background: #ece9d8; display: flex; flex-direction: column; gap: 15px; height: 100%;">
+      <div style="display: flex; align-items: flex-start; gap: 15px;">
+        ${iconTag(iconKey, 32)}
+        <div style="font-size: 11px; line-height: 1.4; color: #000; white-space: pre-wrap; flex: 1;">${texto}</div>
+      </div>
+      <div style="text-align: center; margin-top: auto;">
+        <button onclick="fecharJanela('${id}'); localStorage.setItem('${storageKey}', 'true');" 
+                style="padding: 4px 24px; cursor: pointer; background: #ece9d8; border: 1px solid #003c74; border-radius: 3px; font-size: 11px; box-shadow: inset -1px -1px 1px #808080, inset 1px 1px 1px #ffffff;">
+          OK
+        </button>
+      </div>
+    </div>`;
+  
+  const largura = 420;
+  const top = (window.innerHeight / 2) - 150;
+  const left = (window.innerWidth / 2) - (largura / 2);
+  
+  criarJanela(id, titulo, iconKey, largura, 0, top, left, conteudo);
+  const jan = document.getElementById(id);
+  if (jan) jan.style.height = 'auto';
+}
+
 function fecharJanela(id) {
   const j=document.getElementById(id); if(j)j.remove();
   if(id==='janela-fotolog'&&fotologRealtime){supabaseClient.removeChannel(fotologRealtime);fotologRealtime=null;}
@@ -670,6 +707,14 @@ function fecharJanela(id) {
 function abrirMSN() {
   fecharMenu();
   if(document.getElementById('janela-msn')){trazerFrente('janela-msn');return;}
+
+  mostrarAlerta('tutorial-msn', 'MSN Messenger', 'msn', 
+    `O chat da plataforma, todo mundo que está online aparece aqui.\n\n` +
+    `Mude seu status no topo da janela: Online, Ausente, Ocupado ou Offline.\n\n` +
+    `Adicione amigos clicando no ícone '+' ao lado do nickname de qualquer usuário.\n\n` +
+    `Quando a amizade for aceita, vocês dois ganham +10 XP.`, 
+    'tutorial_msn_visto');
+
   const statusClass = `status-${currentProfile.status || 'online'}`;
   const frameStatusClass = `status-${currentProfile.status || 'online'}`;
   const avatarHtml=currentProfile.avatar_url
@@ -918,6 +963,13 @@ function inserirEmote(e){const i=document.getElementById('messageInput');if(!i)r
 function abrirFotolog() {
   fecharMenu();
   if(document.getElementById('janela-fotolog')){trazerFrente('janela-fotolog');return;}
+
+  mostrarAlerta('tutorial-fotolog', 'Fotolog', 'fotolog', 
+    `Poste uma foto por dia com título e legenda, comente nos posts dos seus amigos.\n\n` +
+    `Cada post vale +10 XP. Cada comentário vale +5 XP, até 50 XP por dia.\n\n` +
+    `Limite de 1 post por dia — igual aos bons e velhos tempos!`, 
+    'tutorial_fotolog_visto');
+
   zTop++;
   const j=document.createElement('div');
   j.className='xp-window'; j.id='janela-fotolog';
@@ -1651,6 +1703,11 @@ async function abrirWinamp() {
   fecharMenu();
   if (webampInstance) return;
 
+  mostrarAlerta('tutorial-winamp', 'Winamp', 'winamp', 
+    `Sets gravados ao vivo nos eventos da Bad Idea, playlists dedicadas de cada festa, direto aqui.\n\n` +
+    `Deixa tocando enquanto você navega pela plataforma.`, 
+    'tutorial_winamp_visto');
+
   // Criamos um host invisível dentro do desktop para o Webamp
   let host = document.getElementById('webamp-host');
   if (!host) {
@@ -1728,6 +1785,12 @@ async function comprarIngresso() {
 }
 function abrirIE(){
   fecharMenu();
+
+  mostrarAlerta('tutorial-ie', 'Internet Explorer', 'ie', 
+    `Acesse os ingressos dos próximos eventos da Bad Idea.\n\n` +
+    `Comprar ingresso pelo IE vale +200 XP e ainda entra no sistema de indicação do seu cupom.`, 
+    'tutorial_ie_visto');
+
   criarJanela('janela-ie','Internet Explorer','ie',500,240,220,200,`
     <div style="padding:15px; font-size:12px; color:#333; background:#f0f0e8; height:100%;">
       <div style="background:#fff; padding:12px; border:1px solid #7f9db9; margin-bottom:10px; box-shadow:inset 1px 1px 2px rgba(0,0,0,0.1);">
