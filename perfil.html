@@ -6,48 +6,66 @@
   <title>orkut - perfil</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body { background-color: #8FAACC; margin: 0; padding: 0; font-family: Tahoma, Arial, sans-serif; font-size: 11px; color: #333; }
-    a { color: #1F4E89; text-decoration: none; font-weight: bold; }
+    body { background-color: #D0DAE8; margin: 0; padding: 0; font-family: Tahoma, Arial, sans-serif; font-size: 11px; color: #333; }
+    a { color: #3B5998; text-decoration: none; font-weight: normal; }
     a:hover { text-decoration: underline; }
 
-    .navbar { background-color: #3B5998; padding: 0 15px; display: flex; justify-content: space-between; align-items: center; height: 35px; }
-    .logo { color: #FFF; font-family: Georgia, serif; font-style: italic; font-size: 24px; font-weight: bold; cursor: default; }
-    .nav-links { color: #BFD0EA; font-size: 11px; }
-    .nav-links span { margin-left: 10px; opacity: 0.6; }
+    .navbar { background-color: #6D84B4; padding: 0 15px; display: flex; justify-content: space-between; align-items: center; height: 35px; border-bottom: 1px solid #3B5998; }
+    .logo { color: #FFF; font-family: Georgia, serif; font-style: italic; font-size: 26px; font-weight: bold; cursor: default; }
+    .nav-links { color: #D0DAE8; font-size: 11px; }
+    .nav-links span { margin-left: 10px; opacity: 0.8; cursor: default; }
 
-    .container { width: 850px; margin: 20px auto; display: flex; gap: 15px; }
-    .col-left { width: 200px; display: flex; flex-direction: column; gap: 15px; }
-    .col-right { flex: 1; display: flex; flex-direction: column; gap: 15px; }
+    .container { width: 800px; margin: 15px auto; display: flex; gap: 12px; align-items: flex-start; }
+    .col-esquerda { width: 150px; display: flex; flex-direction: column; }
+    .col-centro { flex: 1; display: flex; flex-direction: column; gap: 12px; }
+    .col-direita { width: 200px; display: flex; flex-direction: column; gap: 12px; }
 
-    .box { background: #FFFFFF; border: 1px solid #C5D5E8; }
-    .box-header { background: #6B90C0; color: #FFFFFF; padding: 4px 8px; font-weight: bold; font-size: 11px; }
+    /* Coluna Esquerda */
+    .profile-pic-container { text-align: center; margin-bottom: 8px; }
+    .profile-pic { width: 90px; height: 90px; object-fit: cover; background: #eee; }
+    .side-name { font-weight: bold; margin-top: 4px; display: block; }
+    .side-meta { font-size: 10px; color: #666; margin-top: 2px; }
+    .side-menu { margin-top: 10px; border-top: 1px solid #C5D5E8; padding-top: 8px; }
+    .menu-item { display: flex; align-items: center; gap: 6px; padding: 3px 0; font-size: 11px; color: #3B5998; }
+    .menu-item.disabled { color: #999; cursor: default; }
+    .add-friend-btn { background: #5aad5a; color: white !important; padding: 2px 6px; border-radius: 2px; font-weight: bold; font-size: 10px; display: inline-block; margin-bottom: 5px; }
+
+    /* Coluna Centro */
+    .main-name { font-size: 22px; color: #6D84B4; font-weight: normal; margin-bottom: 4px; }
+    .stats-line { font-size: 10px; color: #666; margin-bottom: 15px; border-bottom: 1px solid #C5D5E8; padding-bottom: 5px; }
+    .stats-line span { color: #3B5998; margin: 0 5px; }
+    
+    .tabs { display: flex; border-bottom: 1px solid #6D84B4; }
+    .tab { background: #EEF3F8; border: 1px solid #6D84B4; border-bottom: none; padding: 4px 12px; font-weight: bold; color: #6D84B4; border-radius: 4px 4px 0 0; position: relative; top: 1px; }
+    .tab.active { background: #6D84B4; color: #FFF; }
+
+    .info-table { width: 100%; border-collapse: collapse; background: #FFF; border: 1px solid #6D84B4; border-top: none; }
+    .info-table tr:nth-child(even) { background-color: #EEF3F8; }
+    .info-table tr:nth-child(odd) { background-color: #FFFFFF; }
+    .info-table td { padding: 5px 8px; vertical-align: top; }
+    .info-table .label { color: #6D84B4; font-weight: bold; width: 130px; text-align: right; }
+
+    /* Coluna Direita & Boxes */
+    .box { background: #FFFFFF; border: 1px solid #6D84B4; }
+    .box-header { background: #6D84B4; color: #FFFFFF; padding: 3px 6px; font-weight: bold; font-size: 11px; display: flex; justify-content: space-between; }
     .box-content { padding: 10px; }
+    .box-footer { background: #EEF3F8; padding: 3px 6px; text-align: right; border-top: 1px solid #6D84B4; }
 
-    .profile-pic { width: 120px; height: 120px; border: 1px solid #C5D5E8; margin: 0 auto 10px; display: block; object-fit: cover; background: #eee; }
-    .user-name { font-size: 16px; font-weight: bold; text-align: center; margin-bottom: 10px; color: #000; }
-    .profile-info { line-height: 1.6; margin-bottom: 5px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center; }
+    .grid-item img { width: 60px; height: 60px; object-fit: cover; border: 1px solid #C5D5E8; background: #f0f0f0; }
+    .grid-item span { display: block; font-size: 9px; margin-top: 2px; height: 24px; overflow: hidden; color: #3B5998; }
 
-    .xp-container { font-size: 10px; margin-top: 5px; }
-    .xp-bar-bg { background: #EEE; height: 10px; border: 1px solid #CCC; border-radius: 2px; overflow: hidden; margin-top: 2px; }
-    .xp-bar-fill { background: linear-gradient(to bottom, #94b2d6, #6B90C0); height: 100%; transition: width 0.5s; }
-
-    .info-table { width: 100%; border-collapse: collapse; }
-    .info-table td { padding: 6px 4px; vertical-align: top; border-bottom: 1px solid #F0F4F8; }
-    .info-table .label { color: #666; font-weight: bold; width: 120px; text-align: right; padding-right: 15px !important; }
-
-    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; text-align: center; }
-    .grid-amigos { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; text-align: center; }
-    .item img { width: 80px; height: 80px; object-fit: cover; border: 1px solid #C5D5E8; background: #f0f0f0; }
-    .item-amigo img { width: 50px; height: 50px; }
-    .item-name { margin-top: 4px; display: block; font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #1F4E89; }
-
-    .btn-add { background: #E8EFF4; border: 1px solid #C5D5E8; padding: 6px; text-align: center; cursor: pointer; font-weight: bold; margin-top: 10px; border-radius: 3px; color: #1F4E89; }
-    .btn-add:hover { background: #D6E0E9; }
-    .report-link { font-size: 9px; color: #789; cursor: pointer; text-align: center; margin-top: 15px; opacity: 0.7; }
+    .level-text { font-size: 10px; color: #333; margin-top: 5px; }
+    .coupon-box { margin-top: 5px; font-size: 10px; color: #666; font-style: italic; }
+    .report-link { font-size: 9px; color: #666; cursor: pointer; margin-top: 20px; opacity: 0.5; }
     .error-msg { text-align: center; padding: 50px; font-size: 18px; color: #FFF; font-weight: bold; }
 
-    .badge-cupom { background: #FFF8E1; border: 1px dashed #FFB300; padding: 8px; text-align: center; }
-    .cupom-code { font-family: monospace; font-size: 14px; font-weight: bold; color: #D32F2F; display: block; margin-top: 4px; }
+    @media (max-width: 600px) {
+      .container { width: 95vw; flex-direction: column; }
+      .col-esquerda, .col-centro, .col-direita { width: 100% !important; }
+      .logo { font-size: 20px; }
+      .nav-links { display: none; }
+    }
   </style>
 </head>
 <body>
@@ -55,7 +73,7 @@
   <div class="navbar">
     <div class="logo">orkut</div>
     <div class="nav-links">
-      <span>início</span> | <span>perfil</span> | <span>recados</span> | <span>amigos</span>
+      <span>Início</span> | <span>Página de recados</span> | <span>Amigos</span> | <span>Comunidades</span>
     </div>
   </div>
 
@@ -109,69 +127,88 @@
 
       document.getElementById('main-content').innerHTML = `
         <div class="container">
-          <div class="col-left">
-            <div class="box">
-              <div class="box-content">
-                <img src="${p.avatar_url || 'https://www.gravatar.com/avatar/000?d=mp'}" class="profile-pic">
-                <div class="user-name" style="color:${p.color}">${p.nickname}</div>
-                <div class="profile-info">📍 ${p.city || 'Não informado'}</div>
-                <div class="profile-info">🗓️ Membro desde ${date}</div>
-                ${!isMe && currentUser && !isFriend ? `<div class="btn-add" onclick="adicionarAmigo('${p.id}')">adicionar amigo</div>` : ''}
-                ${!currentUser ? `<div class="btn-add" onclick="window.location.href='index.html'">adicionar amigo</div>` : ''}
-              </div>
+          <!-- COLUNA ESQUERDA -->
+          <div class="col-esquerda">
+            <div class="profile-pic-container">
+              <img src="${p.avatar_url || 'https://www.gravatar.com/avatar/000?d=mp'}" class="profile-pic">
+              <span class="side-name">${p.nickname}</span>
+              <div class="side-meta">${p.city || 'não informado'}<br>${p.identidade_sexual || ''}</div>
             </div>
-
-            <div class="box">
-              <div class="box-header">nível</div>
-              <div class="box-content xp-container">
-                <b>${p.level}</b> (${p.xp} XP)
-                <div class="xp-bar-bg"><div class="xp-bar-fill" style="width:${xpPct}%"></div></div>
-              </div>
-            </div>
-
-            <div class="box">
-              <div class="box-content badge-cupom">
-                <div style="font-size:10px; color:#666;">Compartilhe e ganhe XP!</div>
-                <span class="cupom-code">${p.referral_code || '---'}</span>
-              </div>
+            
+            <div class="side-menu">
+              ${!isMe && currentUser && !isFriend ? `<a href="javascript:void(0)" class="menu-item" onclick="adicionarAmigo('${p.id}')"><span class="add-friend-btn">🟢 + amigo</span></a>` : ''}
+              <a href="#" class="menu-item">👤 perfil</a>
+              <div class="menu-item disabled">✉️ recados</div>
+              <div class="menu-item disabled">📷 fotos</div>
+              <div class="menu-item disabled">🎥 vídeos</div>
+              <div class="menu-item disabled">💬 depoimentos</div>
             </div>
 
             <div class="report-link" onclick="denunciar('${p.nickname}')">denunciar conteúdo impróprio</div>
           </div>
 
-          <div class="col-right">
-            <div class="box">
-              <div class="box-header">sobre mim</div>
-              <div class="box-content" style="white-space:pre-wrap;">${p.bio || 'Este usuário ainda não escreveu nada sobre ele.'}</div>
+          <!-- COLUNA CENTRO -->
+          <div class="col-centro">
+            <div class="main-name">${p.nickname}</div>
+            <div class="stats-line">
+              recados <span>0</span> | fotos <span>0</span> | vídeos <span>0</span> | fãs <span>0</span>
             </div>
 
+            <div class="tabs">
+              <div class="tab active">social</div>
+            </div>
+
+            <table class="info-table">
+              <tr><td class="label">relacionamento:</td><td>${p.relacionamento || 'não informado'}</td></tr>
+              <tr><td class="label">aniversário:</td><td>não informado</td></tr>
+              <tr><td class="label">identidade sexual:</td><td>${p.identidade_sexual || 'não informado'}</td></tr>
+              <tr><td class="label">músicas:</td><td>${p.musicas || 'não informado'}</td></tr>
+              <tr><td class="label">filmes:</td><td>${p.filmes || 'não informado'}</td></tr>
+              <tr><td class="label">livros:</td><td>${p.livros || 'não informado'}</td></tr>
+              <tr><td class="label">esportes:</td><td>${p.esportes || 'não informado'}</td></tr>
+              <tr><td class="label">sobre mim:</td><td style="white-space:pre-wrap;">${p.bio || 'não informado'}</td></tr>
+              <tr><td class="label">cidade natal:</td><td>${p.city || 'não informado'}</td></tr>
+              <tr><td class="label">membro desde:</td><td>${date}</td></tr>
+            </table>
+          </div>
+
+          <!-- COLUNA DIREITA -->
+          <div class="col-direita">
+            <!-- AMIGOS BOX -->
+            <div class="box" id="box-amigos">
+              <div class="box-header">amigos <span id="count-amigos">(0)</span></div>
+              <div class="box-content grid-3" id="grid-amigos">
+                <div style="grid-column: span 3; color: #999; font-style: italic; padding: 10px 0;">carregando...</div>
+              </div>
+              <div class="box-footer"><a href="#">ver todos</a></div>
+            </div>
+
+            <!-- COMUNIDADES BOX -->
             <div class="box">
-              <div class="box-header">quem sou eu</div>
+              <div class="box-header">comunidades <span>(2)</span></div>
               <div class="box-content">
-                <table class="info-table">
-                  <tr><td class="label">relacionamento:</td><td>${p.relacionamento || 'não informado'}</td></tr>
-                  <tr><td class="label">identidade sexual:</td><td>${p.identidade_sexual || 'não informado'}</td></tr>
-                  <tr><td class="label">músicas:</td><td>${p.musicas || 'não informado'}</td></tr>
-                  <tr><td class="label">filmes:</td><td>${p.filmes || 'não informado'}</td></tr>
-                  <tr><td class="label">livros:</td><td>${p.livros || 'não informado'}</td></tr>
-                  <tr><td class="label">esportes:</td><td>${p.esportes || 'não informado'}</td></tr>
-                </table>
+                <div class="grid-3">
+                  <div class="grid-item">
+                    <img src="https://hjglujffcjbrmugoprjh.supabase.co/storage/v1/object/public/system/badidea_logo.png" onerror="this.src='data:image/svg+xml;charset=utf-8,%3Csvg%20viewBox%3D%220%200%2048%2048%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Crect%20width%3D%2248%22%20height%3D%2248%22%20fill%3D%22%233B5998%22%2F%3E%3C%2Fsvg%3E'">
+                    <span>Bad Idea</span>
+                  </div>
+                  <div class="grid-item">
+                    <img src="data:image/svg+xml;charset=utf-8,%3Csvg%20viewBox%3D%220%200%2048%2048%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Crect%20width%3D%2248%22%20height%3D%2248%22%20rx%3D%2210%22%20fill%3D%22%23FF6600%22%2F%3E%3Cpath%20d%3D%22M24%2C12%20C17.37%2C12%2012%2C17.37%2012%2C24%20C12%2C30.63%2017.37%2C36%2024%2C36%20C30.63%2C36%2036%2C30.63%2036%2C24%22%20fill%3D%22none%22%20stroke%3D%22white%22%20stroke-width%3D%224%22%2F%3E%3Ccircle%20cx%3D%2224%22%20cy%3D%2224%22%20r%3D%224%22%20fill%3D%22white%22%2F%3E%3C%2Fsvg%3E">
+                    <span>Like 2000</span>
+                  </div>
+                  <div class="grid-item" style="opacity:0.5">
+                    <div style="width:60px;height:60px;background:#ddd;display:flex;align-items:center;justify-content:center;margin:0 auto;border:1px solid #ccc">🔒</div>
+                    <span>Em breve</span>
+                  </div>
+                </div>
               </div>
+              <div class="box-footer"><a href="#">ver todas</a></div>
             </div>
 
-            <div class="box">
-              <div class="box-header">comunidades</div>
-              <div class="box-content grid">
-                <div class="item">
-                  <img src="https://hjglujffcjbrmugoprjh.supabase.co/storage/v1/object/public/system/badidea_logo.png" onerror="this.src='data:image/svg+xml;charset=utf-8,%3Csvg%20viewBox%3D%220%200%2048%2048%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Crect%20width%3D%2248%22%20height%3D%2248%22%20fill%3D%22%233B5998%22%2F%3E%3C%2Fsvg%3E'">
-                  <span class="item-name">Bad Idea</span>
-                </div>
-                <div class="item">
-                  <img src="data:image/svg+xml;charset=utf-8,%3Csvg%20viewBox%3D%220%200%2048%2048%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Crect%20width%3D%2248%22%20height%3D%2248%22%20rx%3D%2210%22%20fill%3D%22%23FF6600%22%2F%3E%3Cpath%20d%3D%22M24%2C12%20C17.37%2C12%2012%2C17.37%2012%2C24%20C12%2C30.63%2017.37%2C36%2024%2C36%20C30.63%2C36%2036%2C30.63%2036%2C24%22%20fill%3D%22none%22%20stroke%3D%22white%22%20stroke-width%3D%224%22%2F%3E%3Ccircle%20cx%3D%2224%22%20cy%3D%2224%22%20r%3D%224%22%20fill%3D%22white%22%2F%3E%3C%2Fsvg%3E">
-                  <span class="item-name">Like 2000</span>
-                </div>
-                <div class="item" style="opacity:0.4"><div style="width:80px;height:80px;background:#ddd;display:flex;align-items:center;justify-content:center;margin:0 auto;border:1px solid #ccc">🔒</div><span class="item-name">Em breve</span></div>
-              </div>
+            <!-- INFO ADICIONAL (XP E CUPOM) -->
+            <div style="padding: 10px; background: #FFF; border: 1px solid #6D84B4; border-radius: 4px;">
+              <div class="level-text"><b>nível:</b> ${p.level} (${p.xp} XP)</div>
+              <div class="coupon-box"><b>cupom:</b> ${p.referral_code || '---'}</div>
             </div>
           </div>
         </div>`;
@@ -180,25 +217,24 @@
 
     async function carregarAmigosPublicos(userId) {
       const { data } = await supabaseClient.from('friendships')
-        .select('profiles_user:user_id(nickname,avatar_url,color), profiles_friend:friend_id(nickname,avatar_url,color)')
+        .select('profiles_user:user_id(nickname,avatar_url,color,id), profiles_friend:friend_id(nickname,avatar_url,color,id)')
         .or(`user_id.eq.${userId},friend_id.eq.${userId}`)
-        .eq('status', 'accepted').limit(12);
+        .eq('status', 'accepted').limit(9);
       
       if (!data || data.length === 0) return;
 
-      const amigos = data.map(f => f.profiles_user.nickname === undefined ? f.profiles_friend : (f.profiles_user.nickname ? f.profiles_user : f.profiles_friend));
+      const amigos = data.map(f => f.profiles_user.id === userId ? f.profiles_friend : f.profiles_user);
       
-      const amigosHtml = amigos.map(a => `
-        <div class="item item-amigo" onclick="window.location.href='?u=${a.nickname}'" style="cursor:pointer">
+      const amigosHtml = amigos.map(a => {
+        return `
+        <div class="grid-item" onclick="window.location.href='?u=${a.nickname}'" style="cursor:pointer">
           <img src="${a.avatar_url || 'https://www.gravatar.com/avatar/000?d=mp'}">
-          <span class="item-name" style="color:${a.color}">${a.nickname}</span>
-        </div>
-      `).join('');
+          <span>${a.nickname}</span>
+        </div>`;
+      }).join('');
 
-      const box = document.createElement('div');
-      box.className = 'box';
-      box.innerHTML = `<div class="box-header">amigos</div><div class="box-content grid-amigos">${amigosHtml}</div>`;
-      document.querySelector('.col-right').appendChild(box);
+      document.getElementById('grid-amigos').innerHTML = amigosHtml;
+      document.getElementById('count-amigos').innerText = `(${amigos.length})`;
     }
 
     async function adicionarAmigo(targetId) {
