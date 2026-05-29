@@ -6,7 +6,7 @@
   <title>orkut - perfil</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body { background-color: #D0DAE8; margin: 0; padding: 0; font-family: Tahoma, Arial, sans-serif; font-size: 11px; color: #333; }
+    body { background-color: #C9D6E8; margin: 0; padding: 0; font-family: Tahoma, Arial, sans-serif; font-size: 11px; color: #333; }
     a { color: #3B5998; text-decoration: none; font-weight: normal; }
     a:hover { text-decoration: underline; }
 
@@ -15,20 +15,20 @@
     .nav-links { color: #D0DAE8; font-size: 11px; }
     .nav-links span { margin-left: 10px; opacity: 0.8; cursor: default; }
 
-    .container { width: 800px; margin: 15px auto; display: flex; gap: 12px; align-items: flex-start; }
-    .col-esquerda { width: 150px; display: flex; flex-direction: column; }
+    .container { width: 960px; margin: 15px auto; display: flex; gap: 12px; align-items: flex-start; }
+    .col-esquerda { width: 170px; display: flex; flex-direction: column; }
     .col-centro { flex: 1; display: flex; flex-direction: column; gap: 12px; }
-    .col-direita { width: 200px; display: flex; flex-direction: column; gap: 12px; }
+    .col-direita { width: 230px; display: flex; flex-direction: column; gap: 12px; }
 
     /* Coluna Esquerda */
-    .profile-pic-container { text-align: center; margin-bottom: 8px; }
-    .profile-pic { width: 90px; height: 90px; object-fit: cover; background: #eee; }
+    .profile-pic-container { text-align: center; margin-bottom: 12px; }
+    .profile-pic { width: 100px; height: 100px; object-fit: cover; background: #eee; border: 1px solid #C5D5E8; }
     .side-name { font-weight: bold; margin-top: 4px; display: block; }
     .side-meta { font-size: 10px; color: #666; margin-top: 2px; }
     .side-menu { margin-top: 10px; border-top: 1px solid #C5D5E8; padding-top: 8px; }
-    .menu-item { display: flex; align-items: center; gap: 6px; padding: 3px 0; font-size: 11px; color: #3B5998; }
+    .menu-item { display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 11px; color: #3B5998; opacity: 1.0; }
     .menu-item.disabled { color: #999; cursor: default; }
-    .add-friend-btn { background: #5aad5a; color: white !important; padding: 2px 6px; border-radius: 2px; font-weight: bold; font-size: 10px; display: inline-block; margin-bottom: 5px; }
+    .add-friend-btn { background: #4A7C2F; color: white !important; padding: 6px 10px; border-radius: 2px; font-weight: bold; font-size: 11px; display: flex; align-items: center; justify-content: center; gap: 5px; margin-bottom: 10px; width: 100%; border: 1px solid #355e22; }
 
     /* Coluna Centro */
     .main-name { font-size: 22px; color: #6D84B4; font-weight: normal; margin-bottom: 4px; }
@@ -43,7 +43,7 @@
     .info-table tr:nth-child(even) { background-color: #EEF3F8; }
     .info-table tr:nth-child(odd) { background-color: #FFFFFF; }
     .info-table td { padding: 5px 8px; vertical-align: top; }
-    .info-table .label { color: #6D84B4; font-weight: bold; width: 130px; text-align: right; }
+    .info-table .label { color: #6D84B4; font-weight: bold; width: 150px; text-align: right; }
 
     /* Coluna Direita & Boxes */
     .box { background: #FFFFFF; border: 1px solid #6D84B4; }
@@ -205,10 +205,13 @@
               <div class="box-footer"><a href="#">ver todas</a></div>
             </div>
 
-            <!-- INFO ADICIONAL (XP E CUPOM) -->
-            <div style="padding: 10px; background: #FFF; border: 1px solid #6D84B4; border-radius: 4px;">
-              <div class="level-text"><b>nível:</b> ${p.level} (${p.xp} XP)</div>
-              <div class="coupon-box"><b>cupom:</b> ${p.referral_code || '---'}</div>
+            <!-- BOX LIKE 2000 -->
+            <div class="box">
+              <div class="box-header">like 2000</div>
+              <div class="box-content">
+                <div class="level-text"><b>nível:</b> ${p.level} (${p.xp} XP)</div>
+                <div class="coupon-box" style="word-break: break-all;"><b>cupom:</b> ${p.referral_code || '---'}</div>
+              </div>
             </div>
           </div>
         </div>`;
