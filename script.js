@@ -696,7 +696,17 @@ function mostrarAlerta(id, titulo, iconKey, texto, storageKey) {
 }
 
 function fecharJanela(id) {
-  const j=document.getElementById(id); if(j)j.remove();
+  const j=document.getElementById(id); 
+  if(j) {
+    // Se for uma janela de tutorial, marca como visto ao fechar
+    if (id === 'tutorial-xp') localStorage.setItem('tutorial_xp_visto', 'true');
+    if (id === 'tutorial-msn') localStorage.setItem('tutorial_msn_visto', 'true');
+    if (id === 'tutorial-fotolog') localStorage.setItem('tutorial_fotolog_visto', 'true');
+    if (id === 'tutorial-winamp') localStorage.setItem('tutorial_winamp_visto', 'true');
+    if (id === 'tutorial-ie') localStorage.setItem('tutorial_ie_visto', 'true');
+    
+    j.remove();
+  }
   if(id==='janela-fotolog'&&fotologRealtime){supabaseClient.removeChannel(fotologRealtime);fotologRealtime=null;}
   if(id==='janela-msn'&&realtimeChannel){supabaseClient.removeChannel(realtimeChannel);realtimeChannel=null;}
 }
