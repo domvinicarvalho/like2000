@@ -1639,6 +1639,7 @@ async function abrirPerfil() {
   const xp   = currentProfile.xp   || 0;
   const level= currentProfile.level || 'Rookie';
   const ref  = currentProfile.referral_code || '';
+  const nick = currentProfile.nickname || '';
 
   // barra de progresso até próximo nível
   const levels = [{name:'Rookie',min:0},{name:'Insider',min:100},{name:'Cult Member',min:300},{name:'Legend',min:700},{name:'Bad Idea Elite',min:1500}];
@@ -1651,7 +1652,7 @@ async function abrirPerfil() {
 
   j.innerHTML=`
     <div class="xp-titlebar">
-      <div class="xp-title-left">👤 Meu Perfil</div>
+      <div class="xp-title-left">👤 Meu Perfil / Configurações Orkut</div>
       <div class="title-btns">
         <div class="tbtn">_</div><div class="tbtn">□</div>
         <div class="tbtn fechar" onclick="fecharJanela('janela-perfil-user')">✕</div>
@@ -1680,12 +1681,49 @@ async function abrirPerfil() {
         </div>
       </div>
 
-      <!-- cupom -->
-      <div class="up-cupom-box">
-        <div class="up-cupom-label">🎟️ Seu cupom de indicação</div>
-        <div class="up-cupom-code">${escapeHtml(ref)}</div>
-        <div class="up-cupom-sub">10% de desconto em ingressos Bad Idea</div>
-        <button class="up-cupom-copy" onclick="copiarCupom('${escapeHtml(ref)}')">📋 Copiar cupom</button>
+      <!-- Link do Perfil e Cupom -->
+      <div style="display:flex; gap:10px; padding:0 12px;">
+        <div class="up-cupom-box" style="flex:1; margin:12px 0;">
+          <div class="up-cupom-label">🔗 Seu Perfil Público</div>
+          <div style="font-size:10px; font-family:monospace; background:#f0f0e8; padding:4px; margin:4px 0; border:1px solid #ccc; word-break:break-all;">like2000.vercel.app/perfil.html?u=${nick}</div>
+          <button class="up-cupom-copy" onclick="copiarCupom('https://like2000.vercel.app/perfil.html?u=${nick}')">📋 Copiar Link</button>
+        </div>
+        <div class="up-cupom-box" style="flex:1; margin:12px 0;">
+          <div class="up-cupom-label">🎟️ Seu cupom de indicação</div>
+          <div class="up-cupom-code" style="font-size:16px;">${escapeHtml(ref)}</div>
+          <button class="up-cupom-copy" onclick="copiarCupom('${escapeHtml(ref)}')">📋 Copiar Cupom</button>
+        </div>
+      </div>
+
+      <!-- Campos Orkut -->
+      <div class="up-ranking-box" style="padding:10px; background:#fffdf5; border-color:#6B90C0;">
+        <div style="font-weight:bold; color:#1F4E89; margin-bottom:10px; border-bottom:1px solid #C5D5E8;">Dados do Perfil Orkut</div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+           <div>
+             <label style="font-size:10px; font-weight:bold;">Bio / Sobre mim:</label>
+             <textarea id="up-edit-bio" style="width:100%; height:60px; font-size:11px; resize:none;">${currentProfile.bio || ''}</textarea>
+           </div>
+           <div style="display:flex; flex-direction:column; gap:5px;">
+             <label style="font-size:10px; font-weight:bold;">Relacionamento:</label>
+             <select id="up-edit-rel" style="font-size:11px; padding:2px;">
+               <option value="Não informado" ${currentProfile.relacionamento === 'Não informado' ? 'selected' : ''}>Não informado</option>
+               <option value="Solteiro(a)" ${currentProfile.relacionamento === 'Solteiro(a)' ? 'selected' : ''}>Solteiro(a)</option>
+               <option value="Namorando" ${currentProfile.relacionamento === 'Namorando' ? 'selected' : ''}>Namorando</option>
+               <option value="Casado(a)" ${currentProfile.relacionamento === 'Casado(a)' ? 'selected' : ''}>Casado(a)</option>
+               <option value="Em um relacionamento aberto" ${currentProfile.relacionamento === 'Em um relacionamento aberto' ? 'selected' : ''}>Aberto</option>
+               <option value="Complicado" ${currentProfile.relacionamento === 'Complicado' ? 'selected' : ''}>Complicado</option>
+             </select>
+             <label style="font-size:10px; font-weight:bold;">Identidade Sexual:</label>
+             <input type="text" id="up-edit-sexo" value="${currentProfile.identidade_sexual || ''}" style="font-size:11px; padding:2px;">
+           </div>
+        </div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;">
+          <input type="text" id="up-edit-musicas" placeholder="Músicas" value="${currentProfile.musicas || ''}" style="font-size:11px;">
+          <input type="text" id="up-edit-filmes" placeholder="Filmes" value="${currentProfile.filmes || ''}" style="font-size:11px;">
+          <input type="text" id="up-edit-livros" placeholder="Livros" value="${currentProfile.livros || ''}" style="font-size:11px;">
+          <input type="text" id="up-edit-esportes" placeholder="Esportes" value="${currentProfile.esportes || ''}" style="font-size:11px;">
+        </div>
+        <button onclick="salvarInfoOrkut()" style="width:100%; margin-top:10px; padding:5px; background:#6B90C0; color:white; border:none; cursor:pointer; font-weight:bold;">💾 Salvar Dados Orkut</button>
       </div>
 
       <!-- Ranking da Temporada -->
@@ -1711,6 +1749,27 @@ async function abrirPerfil() {
   tornarArrastavel(j);
   carregarRanking();
   if(temporadaAtiva) carregarRankingTemporada();
+}
+
+async function salvarInfoOrkut() {
+  const payload = {
+    bio: document.getElementById('up-edit-bio').value.trim(),
+    relacionamento: document.getElementById('up-edit-rel').value,
+    identidade_sexual: document.getElementById('up-edit-sexo').value.trim(),
+    musicas: document.getElementById('up-edit-musicas').value.trim(),
+    filmes: document.getElementById('up-edit-filmes').value.trim(),
+    livros: document.getElementById('up-edit-livros').value.trim(),
+    esportes: document.getElementById('up-edit-esportes').value.trim(),
+  };
+
+  const { error } = await supabaseClient.from('profiles').update(payload).eq('id', currentUser.id);
+  
+  if (error) {
+    mostrarNotificacao('Erro ao salvar dados.');
+  } else {
+    mostrarNotificacao('✅ Perfil Orkut atualizado!');
+    Object.assign(currentProfile, payload);
+  }
 }
 
 async function carregarRanking() {

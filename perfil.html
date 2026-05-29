@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>orkut - perfil</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { background-color: #8FAACC; margin: 0; padding: 0; font-family: Tahoma, Arial, sans-serif; font-size: 11px; color: #333; }
+    a { color: #1F4E89; text-decoration: none; font-weight: bold; }
+    a:hover { text-decoration: underline; }
+
+    .navbar { background-color: #3B5998; padding: 0 15px; display: flex; justify-content: space-between; align-items: center; height: 35px; }
+    .logo { color: #FFF; font-family: Georgia, serif; font-style: italic; font-size: 24px; font-weight: bold; cursor: default; }
+    .nav-links { color: #BFD0EA; font-size: 11px; }
+    .nav-links span { margin-left: 10px; opacity: 0.6; }
+
+    .container { width: 850px; margin: 20px auto; display: flex; gap: 15px; }
+    .col-left { width: 200px; display: flex; flex-direction: column; gap: 15px; }
+    .col-right { flex: 1; display: flex; flex-direction: column; gap: 15px; }
+
+    .box { background: #FFFFFF; border: 1px solid #C5D5E8; }
+    .box-header { background: #6B90C0; color: #FFFFFF; padding: 4px 8px; font-weight: bold; font-size: 11px; }
+    .box-content { padding: 10px; }
+
+    .profile-pic { width: 120px; height: 120px; border: 1px solid #C5D5E8; margin: 0 auto 10px; display: block; object-fit: cover; background: #eee; }
+    .user-name { font-size: 16px; font-weight: bold; text-align: center; margin-bottom: 10px; color: #000; }
+    .profile-info { line-height: 1.6; margin-bottom: 5px; }
+
+    .xp-container { font-size: 10px; margin-top: 5px; }
+    .xp-bar-bg { background: #EEE; height: 10px; border: 1px solid #CCC; border-radius: 2px; overflow: hidden; margin-top: 2px; }
+    .xp-bar-fill { background: linear-gradient(to bottom, #94b2d6, #6B90C0); height: 100%; transition: width 0.5s; }
+
+    .info-table { width: 100%; border-collapse: collapse; }
+    .info-table td { padding: 6px 4px; vertical-align: top; border-bottom: 1px solid #F0F4F8; }
+    .info-table .label { color: #666; font-weight: bold; width: 120px; text-align: right; padding-right: 15px !important; }
+
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; text-align: center; }
+    .grid-amigos { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; text-align: center; }
+    .item img { width: 80px; height: 80px; object-fit: cover; border: 1px solid #C5D5E8; background: #f0f0f0; }
+    .item-amigo img { width: 50px; height: 50px; }
+    .item-name { margin-top: 4px; display: block; font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #1F4E89; }
+
+    .btn-add { background: #E8EFF4; border: 1px solid #C5D5E8; padding: 6px; text-align: center; cursor: pointer; font-weight: bold; margin-top: 10px; border-radius: 3px; color: #1F4E89; }
+    .btn-add:hover { background: #D6E0E9; }
+    .report-link { font-size: 9px; color: #789; cursor: pointer; text-align: center; margin-top: 15px; opacity: 0.7; }
+    .error-msg { text-align: center; padding: 50px; font-size: 18px; color: #FFF; font-weight: bold; }
+
+    .badge-cupom { background: #FFF8E1; border: 1px dashed #FFB300; padding: 8px; text-align: center; }
+    .cupom-code { font-family: monospace; font-size: 14px; font-weight: bold; color: #D32F2F; display: block; margin-top: 4px; }
+  </style>
+</head>
+<body>
+
+  <div class="navbar">
+    <div class="logo">orkut</div>
+    <div class="nav-links">
+      <span>início</span> | <span>perfil</span> | <span>recados</span> | <span>amigos</span>
+    </div>
+  </div>
+
+  <div id="main-content">
+    <!-- Renderizado via JS -->
+  </div>
+
+  <script>
+    const supabaseClient = supabase.createClient(
+      'https://hjglujffcjbrmugoprjh.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhqZ2x1amZmY2picm11Z29wcmpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5NTQ5NjUsImV4cCI6MjA5NDUzMDk2NX0.hbeP1zWBYvsH9BCsoyaBOkoZfIvY9U1uXdSSwxmuvos'
+    );
+
+    const LEVELS = [
+      { name:'Rookie', min:0 }, { name:'Insider', min:100 }, { name:'Cult Member', min:300 },
+      { name:'Legend', min:700 }, { name:'Bad Idea Elite', min:1500 }
+    ];
+
+    async function init() {
+      const params = new URLSearchParams(window.location.search);
+      const nick = params.get('u');
+      if (!nick) { renderError("Nickname não fornecido."); return; }
+
+      const { data: profile, error } = await supabaseClient.from('profiles').select('*').ilike('nickname', nick).single();
+      if (error || !profile) { renderError("Perfil não encontrado."); return; }
+
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      const isMe = session?.user?.id === profile.id;
+      
+      let isFriend = false;
+      if (session?.user && !isMe) {
+        const { data: friendship } = await supabaseClient.from('friendships')
+          .select('status')
+          .or(`and(user_id.eq.${session.user.id},friend_id.eq.${profile.id}),and(user_id.eq.${profile.id},friend_id.eq.${session.user.id})`)
+          .eq('status', 'accepted').maybeSingle();
+        isFriend = !!friendship;
+      }
+
+      renderProfile(profile, isMe, isFriend, session?.user);
+    }
+
+    function renderError(msg) {
+      document.getElementById('main-content').innerHTML = `<div class="error-msg">${msg}</div>`;
+    }
+
+    function renderProfile(p, isMe, isFriend, currentUser) {
+      const date = new Date(p.created_at).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+      let nextMin = 1500;
+      for(let l of LEVELS) { if (l.min > p.xp) { nextMin = l.min; break; } }
+      const xpPct = Math.min(100, (p.xp / nextMin) * 100);
+
+      document.getElementById('main-content').innerHTML = `
+        <div class="container">
+          <div class="col-left">
+            <div class="box">
+              <div class="box-content">
+                <img src="${p.avatar_url || 'https://www.gravatar.com/avatar/000?d=mp'}" class="profile-pic">
+                <div class="user-name" style="color:${p.color}">${p.nickname}</div>
+                <div class="profile-info">📍 ${p.city || 'Não informado'}</div>
+                <div class="profile-info">🗓️ Membro desde ${date}</div>
+                ${!isMe && currentUser && !isFriend ? `<div class="btn-add" onclick="adicionarAmigo('${p.id}')">adicionar amigo</div>` : ''}
+                ${!currentUser ? `<div class="btn-add" onclick="window.location.href='index.html'">adicionar amigo</div>` : ''}
+              </div>
+            </div>
+
+            <div class="box">
+              <div class="box-header">nível</div>
+              <div class="box-content xp-container">
+                <b>${p.level}</b> (${p.xp} XP)
+                <div class="xp-bar-bg"><div class="xp-bar-fill" style="width:${xpPct}%"></div></div>
+              </div>
+            </div>
+
+            <div class="box">
+              <div class="box-content badge-cupom">
+                <div style="font-size:10px; color:#666;">Compartilhe e ganhe XP!</div>
+                <span class="cupom-code">${p.referral_code || '---'}</span>
+              </div>
+            </div>
+
+            <div class="report-link" onclick="denunciar('${p.nickname}')">denunciar conteúdo impróprio</div>
+          </div>
+
+          <div class="col-right">
+            <div class="box">
+              <div class="box-header">sobre mim</div>
+              <div class="box-content" style="white-space:pre-wrap;">${p.bio || 'Este usuário ainda não escreveu nada sobre ele.'}</div>
+            </div>
+
+            <div class="box">
+              <div class="box-header">quem sou eu</div>
+              <div class="box-content">
+                <table class="info-table">
+                  <tr><td class="label">relacionamento:</td><td>${p.relacionamento || 'não informado'}</td></tr>
+                  <tr><td class="label">identidade sexual:</td><td>${p.identidade_sexual || 'não informado'}</td></tr>
+                  <tr><td class="label">músicas:</td><td>${p.musicas || 'não informado'}</td></tr>
+                  <tr><td class="label">filmes:</td><td>${p.filmes || 'não informado'}</td></tr>
+                  <tr><td class="label">livros:</td><td>${p.livros || 'não informado'}</td></tr>
+                  <tr><td class="label">esportes:</td><td>${p.esportes || 'não informado'}</td></tr>
+                </table>
+              </div>
+            </div>
+
+            <div class="box">
+              <div class="box-header">comunidades</div>
+              <div class="box-content grid">
+                <div class="item">
+                  <img src="https://hjglujffcjbrmugoprjh.supabase.co/storage/v1/object/public/system/badidea_logo.png" onerror="this.src='data:image/svg+xml;charset=utf-8,%3Csvg%20viewBox%3D%220%200%2048%2048%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Crect%20width%3D%2248%22%20height%3D%2248%22%20fill%3D%22%233B5998%22%2F%3E%3C%2Fsvg%3E'">
+                  <span class="item-name">Bad Idea</span>
+                </div>
+                <div class="item">
+                  <img src="data:image/svg+xml;charset=utf-8,%3Csvg%20viewBox%3D%220%200%2048%2048%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Crect%20width%3D%2248%22%20height%3D%2248%22%20rx%3D%2210%22%20fill%3D%22%23FF6600%22%2F%3E%3Cpath%20d%3D%22M24%2C12%20C17.37%2C12%2012%2C17.37%2012%2C24%20C12%2C30.63%2017.37%2C36%2024%2C36%20C30.63%2C36%2036%2C30.63%2036%2C24%22%20fill%3D%22none%22%20stroke%3D%22white%22%20stroke-width%3D%224%22%2F%3E%3Ccircle%20cx%3D%2224%22%20cy%3D%2224%22%20r%3D%224%22%20fill%3D%22white%22%2F%3E%3C%2Fsvg%3E">
+                  <span class="item-name">Like 2000</span>
+                </div>
+                <div class="item" style="opacity:0.4"><div style="width:80px;height:80px;background:#ddd;display:flex;align-items:center;justify-content:center;margin:0 auto;border:1px solid #ccc">🔒</div><span class="item-name">Em breve</span></div>
+              </div>
+            </div>
+          </div>
+        </div>`;
+        carregarAmigosPublicos(p.id);
+    }
+
+    async function carregarAmigosPublicos(userId) {
+      const { data } = await supabaseClient.from('friendships')
+        .select('profiles_user:user_id(nickname,avatar_url,color), profiles_friend:friend_id(nickname,avatar_url,color)')
+        .or(`user_id.eq.${userId},friend_id.eq.${userId}`)
+        .eq('status', 'accepted').limit(12);
+      
+      if (!data || data.length === 0) return;
+
+      const amigos = data.map(f => f.profiles_user.nickname === undefined ? f.profiles_friend : (f.profiles_user.nickname ? f.profiles_user : f.profiles_friend));
+      
+      const amigosHtml = amigos.map(a => `
+        <div class="item item-amigo" onclick="window.location.href='?u=${a.nickname}'" style="cursor:pointer">
+          <img src="${a.avatar_url || 'https://www.gravatar.com/avatar/000?d=mp'}">
+          <span class="item-name" style="color:${a.color}">${a.nickname}</span>
+        </div>
+      `).join('');
+
+      const box = document.createElement('div');
+      box.className = 'box';
+      box.innerHTML = `<div class="box-header">amigos</div><div class="box-content grid-amigos">${amigosHtml}</div>`;
+      document.querySelector('.col-right').appendChild(box);
+    }
+
+    async function adicionarAmigo(targetId) {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (!session) { window.location.href = 'index.html'; return; }
+      
+      try {
+        const { data, error } = await supabaseClient.functions.invoke('friendship-request', {
+          body: { target_user_id: targetId, action: 'send' }
+        });
+        if (error) alert('Erro ao enviar.');
+        else alert('Solicitação de amizade enviada!');
+      } catch (e) { alert('Erro na conexão.'); }
+    }
+
+    async function denunciar(nick) {
+      const motivo = prompt("Motivo da denúncia contra " + nick + ":");
+      if (!motivo) return;
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      const { error } = await supabaseClient.from('notifications').insert({
+        type: 'report',
+        user_id: session?.user?.id || null,
+        content: `Denúncia contra ${nick}: ${motivo}`
+      });
+      if (!error) alert("Denúncia enviada para moderação.");
+    }
+
+    init();
+  </script>
+</body>
+</html>
