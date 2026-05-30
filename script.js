@@ -1801,7 +1801,7 @@ async function carregarRanking() {
     const av = p.avatar_url
       ?`<img src="${p.avatar_url}" class="up-rank-avatar" alt="">`
       :`<div class="up-rank-avatar-inicial" style="background:${p.color||'#0000cc'}">${p.nickname.charAt(0).toUpperCase()}</div>`;
-    const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':`<span class="up-rank-num">${i+1}</span>`;
+    const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':`<span class="up-rank-num" style="font-size:10px">${i+1}</span>`;
     const mine  = p.nickname===currentProfile.nickname;
     return `<div class="up-rank-row ${mine?'mine':''}">
       <div class="up-rank-medal">${medal}</div>
@@ -1836,7 +1836,7 @@ async function carregarRankingTemporada() {
     const av = p.avatar_url
       ?`<img src="${p.avatar_url}" class="up-rank-avatar" alt="">`
       :`<div class="up-rank-avatar-inicial" style="background:${p.color||'#0000cc'}">${p.nickname.charAt(0).toUpperCase()}</div>`;
-    const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':`<span class="up-rank-num">${i+1}</span>`;
+    const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':`<span class="up-rank-num" style="font-size:10px">${i+1}</span>`;
     return `<div class="up-rank-row">
       <div class="up-rank-medal">${medal}</div>
       ${av}

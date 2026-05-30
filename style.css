@@ -672,7 +672,7 @@ body { width:100vw; height:100vh; overflow:hidden; }
    MEU PERFIL
 ══════════════════════════════════════════ */
 .up-body {
-  flex:1; overflow-y:auto; background:#f0f0e8; display:flex; flex-direction:column; gap:0;
+  flex: 1; overflow-y: auto; min-height: 0; background: #f0f0e8; display: flex; flex-direction: column; gap: 0;
 }
 .up-header {
   background:linear-gradient(to bottom,#3a6ec8,#1a4aac);
