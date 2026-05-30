@@ -11,18 +11,18 @@
     a:hover { text-decoration: underline; }
 
     .navbar { background-color: #6D84B4; padding: 0 15px; display: flex; justify-content: space-between; align-items: center; height: 35px; border-bottom: 1px solid #3B5998; }
-    .logo { color: #FFF; font-family: Georgia, serif; font-style: italic; font-size: 26px; font-weight: bold; cursor: default; }
+    .logo { cursor: default; display: flex; align-items: center; gap: 4px; }
     .nav-links { color: #D0DAE8; font-size: 11px; }
     .nav-links span { margin-left: 10px; opacity: 0.8; cursor: default; }
 
     .container { width: 960px; margin: 15px auto; display: flex; gap: 12px; align-items: flex-start; }
-    .col-esquerda { width: 170px; display: flex; flex-direction: column; }
+    .col-esquerda { width: 170px; display: flex; flex-direction: column; background-color: #FFFFFF; border-radius: 8px; padding: 10px; box-sizing: border-box; }
     .col-centro { flex: 1; display: flex; flex-direction: column; gap: 12px; }
     .col-direita { width: 230px; display: flex; flex-direction: column; gap: 12px; }
 
     /* Coluna Esquerda */
     .profile-pic-container { text-align: center; margin-bottom: 12px; }
-    .profile-pic { width: 100px; height: 100px; object-fit: cover; background: #eee; border: 1px solid #C5D5E8; }
+    .profile-pic { width: 100px; height: 100px; object-fit: cover; background: #eee; border: 3px solid #FFFFFF; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
     .side-name { font-weight: bold; margin-top: 4px; display: block; }
     .side-meta { font-size: 10px; color: #666; margin-top: 2px; }
     .side-menu { margin-top: 10px; border-top: 1px solid #C5D5E8; padding-top: 8px; }
@@ -71,7 +71,10 @@
 <body>
 
   <div class="navbar">
-    <div class="logo">orkut</div>
+    <div class="logo">
+      <div style="background:#F5A623; border-radius:4px; width:22px; height:22px; display:flex; align-items:center; justify-content:center; font-family:Georgia; font-style:italic; color:white; font-size:14px; font-weight:bold;">o</div>
+      <span style="font-family:Georgia; font-style:italic; color:white; font-size:22px; font-weight:bold;">rkut</span>
+    </div>
     <div class="nav-links">
       <span>Início</span> | <span>Página de recados</span> | <span>Amigos</span> | <span>Comunidades</span>
     </div>
