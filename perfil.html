@@ -47,6 +47,10 @@
 
     .col-centro-card { background: #FFFFFF; border-radius: 8px; border: 1px solid #C9D6E8; padding: 15px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
 
+    .votes-line { display: flex; gap: 12px; margin-bottom: 15px; }
+    .vote-item { display: flex; align-items: center; gap: 3px; cursor: pointer; font-size: 10px; color: #666; opacity: 0.6; transition: opacity 0.2s; user-select: none; }
+    .vote-item.voted { opacity: 1; font-weight: bold; color: #333; }
+
     /* Coluna Direita & Boxes */
     .box { background: #FFFFFF; border: 1px solid #6D84B4; }
     .box-header { background: #6D84B4; color: #FFFFFF; padding: 3px 6px; font-weight: bold; font-size: 11px; display: flex; justify-content: space-between; }
@@ -87,6 +91,8 @@
   </div>
 
   <script>
+    let votosUsuario = { confiavel: false, legal: false, sexy: false };
+
     const supabaseClient = supabase.createClient(
       'https://hjglujffcjbrmugoprjh.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhqZ2x1amZmY2picm11Z29wcmpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5NTQ5NjUsImV4cCI6MjA5NDUzMDk2NX0.hbeP1zWBYvsH9BCsoyaBOkoZfIvY9U1uXdSSwxmuvos'
@@ -116,6 +122,8 @@
           .eq('status', 'accepted').maybeSingle();
         isFriend = !!friendship;
       }
+
+      console.log('DEBUG +AMIGO:', { isMe, isFriend, loggedIn: !!session?.user, targetId: profile.id });
 
       renderProfile(profile, isMe, isFriend, session?.user);
     }
@@ -158,6 +166,18 @@
               <div class="main-name">${p.nickname}</div>
               <div class="stats-line">
                 recados <span>0</span> | fotos <span>0</span> | vídeos <span>0</span> | fãs <span>0</span>
+              </div>
+
+              <div class="votes-line">
+                <div class="vote-item" id="item-confiavel" onclick="toggleVote('${p.id}', 'confiavel')">
+                  <span class="vote-icon" title="confiável">⭐</span> confiável: <span id="count-confiavel">0</span>
+                </div>
+                <div class="vote-item" id="item-legal" onclick="toggleVote('${p.id}', 'legal')">
+                  <span class="vote-icon" title="legal">💙</span> legal: <span id="count-legal">0</span>
+                </div>
+                <div class="vote-item" id="item-sexy" onclick="toggleVote('${p.id}', 'sexy')">
+                  <span class="vote-icon" title="sexy">❤️</span> sexy: <span id="count-sexy">0</span>
+                </div>
               </div>
 
               <div class="tabs">
@@ -223,6 +243,73 @@
           </div>
         </div>`;
         carregarAmigosPublicos(p.id);
+        carregarVotos(p.id, currentUser?.id);
+    }
+
+    async function carregarVotos(targetId, currentUserId) {
+      const { data: counts } = await supabaseClient.from('profile_votes').select('vote_type').eq('target_id', targetId);
+      
+      if (counts) {
+        const summary = counts.reduce((acc, v) => {
+          acc[v.vote_type] = (acc[v.vote_type] || 0) + 1;
+          return acc;
+        }, { confiavel: 0, legal: 0, sexy: 0 });
+
+        document.getElementById('count-confiavel').innerText = summary.confiavel;
+        document.getElementById('count-legal').innerText = summary.legal;
+        document.getElementById('count-sexy').innerText = summary.sexy;
+      }
+
+      if (currentUserId && currentUserId !== targetId) {
+        const { data: myVotes } = await supabaseClient.from('profile_votes').select('vote_type').eq('target_id', targetId).eq('voter_id', currentUserId);
+        if (myVotes) {
+          myVotes.forEach(v => {
+            votosUsuario[v.vote_type] = true;
+            const item = document.getElementById('item-' + v.vote_type);
+            if (item) item.classList.add('voted');
+          });
+        }
+      }
+    }
+
+    async function toggleVote(targetId, type) {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (!session) { window.location.href = 'index.html'; return; }
+      if (session.user.id === targetId) {
+        alert("Você não pode votar em si mesmo.");
+        return;
+      }
+
+      if (votosUsuario[type]) {
+        const { error } = await supabaseClient.from('profile_votes').delete().eq('voter_id', session.user.id).eq('target_id', targetId).eq('vote_type', type);
+        if (!error) {
+          votosUsuario[type] = false;
+          atualizarContadorLocal(type, -1);
+        }
+      } else {
+        const { error } = await supabaseClient.from('profile_votes').insert({
+          voter_id: session.user.id,
+          target_id: targetId,
+          vote_type: type
+        });
+        if (!error) {
+          votosUsuario[type] = true;
+          atualizarContadorLocal(type, 1);
+        } else if (error.code === "23505") {
+          votosUsuario[type] = true; 
+        }
+      }
+    }
+
+    function atualizarContadorLocal(type, delta) {
+      const el = document.getElementById('count-' + type);
+      const item = document.getElementById('item-' + type);
+      if (el && item) {
+        const current = parseInt(el.innerText) || 0;
+        el.innerText = Math.max(0, current + delta);
+        if (votosUsuario[type]) item.classList.add('voted');
+        else item.classList.remove('voted');
+      }
     }
 
     async function carregarAmigosPublicos(userId) {
