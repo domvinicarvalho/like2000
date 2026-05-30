@@ -66,10 +66,37 @@
     .report-link { font-size: 9px; color: #666; cursor: pointer; margin-top: 20px; opacity: 0.5; }
     .error-msg { text-align: center; padding: 50px; font-size: 18px; color: #FFF; font-weight: bold; }
 
-    @media (max-width: 600px) {
-      .container { width: 95vw; flex-direction: column; }
-      .col-esquerda, .col-centro, .col-direita { width: 100% !important; }
-      .logo { font-size: 20px; }
+    /* Ajustes Mobile para preservar o visual "Desktop" do Orkut */
+    @media (max-width: 650px) {
+      .container { width: 100%; margin: 5px 0; display: block; }
+      
+      /* Transforma a coluna esquerda em um header compacto */
+      .col-esquerda { 
+        width: 100% !important; 
+        flex-direction: row !important; 
+        border-radius: 0; 
+        box-shadow: none;
+        border-bottom: 1px solid #C5D5E8;
+        padding: 10px;
+        gap: 15px;
+        box-sizing: border-box;
+      }
+      .profile-pic-container { margin-bottom: 0; text-align: left; }
+      .profile-pic { width: 70px; height: 70px; }
+      .side-menu { display: none; } /* Oculta o menu lateral para focar no conteúdo principal */
+      .add-friend-btn { width: auto; margin-bottom: 0; padding: 4px 10px; font-size: 10px; }
+
+      .col-centro { width: 100% !important; padding: 10px; box-sizing: border-box; }
+      .col-centro-card { padding: 10px; border: none; box-shadow: none; }
+      .main-name { font-size: 18px; margin-bottom: 2px; }
+      .stats-line { font-size: 9px; margin-bottom: 10px; }
+      
+      .info-table .label { width: 90px; padding: 4px; font-size: 10px; }
+      .info-table td { padding: 4px; font-size: 10px; }
+      
+      .votes-line { gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+
+      .col-direita { width: 100% !important; padding: 10px; box-sizing: border-box; }
       .nav-links { display: none; }
     }
   </style>
