@@ -1640,7 +1640,7 @@ async function abrirPerfil() {
   zTop++;
   const j=document.createElement('div');
   j.className='xp-window'; j.id='janela-perfil-user';
-  j.style.cssText=`width:520px;height:560px;top:40px;left:120px;z-index:${zTop}`;
+  j.style.cssText=`width:520px;height:600px;top:40px;left:120px;z-index:${zTop}`;
 
   const avHtml=currentProfile.avatar_url
     ?`<img src="${currentProfile.avatar_url}" class="up-avatar-img" alt="">`
@@ -1706,34 +1706,40 @@ async function abrirPerfil() {
       </div>
 
       <!-- Campos Orkut -->
-      <div class="up-ranking-box" style="padding:10px; background:#fffdf5; border-color:#6B90C0;">
-        <div style="font-weight:bold; color:#1F4E89; margin-bottom:10px; border-bottom:1px solid #C5D5E8;">Dados do Perfil Orkut</div>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-           <div>
-             <label style="font-size:10px; font-weight:bold;">Bio / Sobre mim:</label>
-             <textarea id="up-edit-bio" style="width:100%; height:60px; font-size:11px; resize:none;">${currentProfile.bio || ''}</textarea>
+      <div class="up-ranking-box" style="padding:12px; background:#fffdf5; border-color:#6B90C0;">
+        <div style="font-weight:bold; color:#1F4E89; margin-bottom:12px; border-bottom:1px solid #C5D5E8; padding-bottom:4px; font-size:12px;">Dados do Perfil Orkut</div>
+        <div class="up-orkut-fields">
+           <label>Bio / Quem sou eu:</label>
+           <textarea id="up-edit-bio" placeholder="Fale um pouco sobre você...">${currentProfile.bio || ''}</textarea>
+           
+           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+             <div>
+               <label>Relacionamento:</label>
+               <select id="up-edit-rel">
+                 <option value="Não informado" ${currentProfile.relacionamento === 'Não informado' ? 'selected' : ''}>Não informado</option>
+                 <option value="Solteiro(a)" ${currentProfile.relacionamento === 'Solteiro(a)' ? 'selected' : ''}>Solteiro(a)</option>
+                 <option value="Namorando" ${currentProfile.relacionamento === 'Namorando' ? 'selected' : ''}>Namorando</option>
+                 <option value="Casado(a)" ${currentProfile.relacionamento === 'Casado(a)' ? 'selected' : ''}>Casado(a)</option>
+                 <option value="Em um relacionamento aberto" ${currentProfile.relacionamento === 'Em um relacionamento aberto' ? 'selected' : ''}>Aberto</option>
+                 <option value="Complicado" ${currentProfile.relacionamento === 'Complicado' ? 'selected' : ''}>Complicado</option>
+               </select>
+             </div>
+             <div>
+               <label>Identidade Sexual:</label>
+               <input type="text" id="up-edit-sexo" value="${currentProfile.identidade_sexual || ''}" placeholder="Ex: Hetero">
+             </div>
            </div>
-           <div style="display:flex; flex-direction:column; gap:5px;">
-             <label style="font-size:10px; font-weight:bold;">Relacionamento:</label>
-             <select id="up-edit-rel" style="font-size:11px; padding:2px;">
-               <option value="Não informado" ${currentProfile.relacionamento === 'Não informado' ? 'selected' : ''}>Não informado</option>
-               <option value="Solteiro(a)" ${currentProfile.relacionamento === 'Solteiro(a)' ? 'selected' : ''}>Solteiro(a)</option>
-               <option value="Namorando" ${currentProfile.relacionamento === 'Namorando' ? 'selected' : ''}>Namorando</option>
-               <option value="Casado(a)" ${currentProfile.relacionamento === 'Casado(a)' ? 'selected' : ''}>Casado(a)</option>
-               <option value="Em um relacionamento aberto" ${currentProfile.relacionamento === 'Em um relacionamento aberto' ? 'selected' : ''}>Aberto</option>
-               <option value="Complicado" ${currentProfile.relacionamento === 'Complicado' ? 'selected' : ''}>Complicado</option>
-             </select>
-             <label style="font-size:10px; font-weight:bold;">Identidade Sexual:</label>
-             <input type="text" id="up-edit-sexo" value="${currentProfile.identidade_sexual || ''}" style="font-size:11px; padding:2px;">
+
+           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+             <div><label>Músicas:</label><input type="text" id="up-edit-musicas" value="${currentProfile.musicas || ''}"></div>
+             <div><label>Filmes:</label><input type="text" id="up-edit-filmes" value="${currentProfile.filmes || ''}"></div>
+           </div>
+           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+             <div><label>Livros:</label><input type="text" id="up-edit-livros" value="${currentProfile.livros || ''}"></div>
+             <div><label>Esportes:</label><input type="text" id="up-edit-esportes" value="${currentProfile.esportes || ''}"></div>
            </div>
         </div>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;">
-          <input type="text" id="up-edit-musicas" placeholder="Músicas" value="${currentProfile.musicas || ''}" style="font-size:11px;">
-          <input type="text" id="up-edit-filmes" placeholder="Filmes" value="${currentProfile.filmes || ''}" style="font-size:11px;">
-          <input type="text" id="up-edit-livros" placeholder="Livros" value="${currentProfile.livros || ''}" style="font-size:11px;">
-          <input type="text" id="up-edit-esportes" placeholder="Esportes" value="${currentProfile.esportes || ''}" style="font-size:11px;">
-        </div>
-        <button onclick="salvarInfoOrkut()" style="width:100%; margin-top:10px; padding:5px; background:#6B90C0; color:white; border:none; cursor:pointer; font-weight:bold;">💾 Salvar Dados Orkut</button>
+        <button onclick="salvarInfoOrkut()" class="up-orkut-save-btn">💾 Salvar Dados Orkut</button>
       </div>
 
       <!-- Ranking da Temporada -->

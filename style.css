@@ -753,6 +753,19 @@ body { width:100vw; height:100vh; overflow:hidden; }
   .up-cupom-code { font-size:18px; }
 }
 
+/* Estilos para editor do perfil Orkut dentro do Meu Perfil */
+.up-orkut-fields { display: flex; flex-direction: column; gap: 8px; }
+.up-orkut-fields label { font-size: 10px; font-weight: bold; color: #6D84B4; margin-bottom: 2px; display: block; }
+.up-orkut-fields input, .up-orkut-fields select, .up-orkut-fields textarea {
+  width: 100%; padding: 4px; border: 1px solid #7f9db9; font-size: 11px; background: #fff; outline: none;
+}
+.up-orkut-fields textarea { height: 55px; resize: none; font-family: inherit; }
+.up-orkut-save-btn {
+  width: 100%; margin-top: 12px; padding: 6px; background: #6B90C0; color: white; border: 1px solid #3B5998; 
+  cursor: pointer; font-weight: bold; font-size: 11px; border-radius: 2px;
+}
+.up-orkut-save-btn:hover { background: #5577a8; }
+
 /* ── xp-body para janelas simples ── */
 .xp-body {
   flex: 1;
