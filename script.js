@@ -611,7 +611,7 @@ async function mostrarDesktop() {
         <div class="icon" onclick="trazerFrente('janela-winamp');abrirWinamp()">${iconTag('winamp')}<span>Winamp</span></div>
         <div class="icon" onclick="trazerFrente('janela-ie');abrirIE()">${iconTag('ie')}<span>Internet Explorer</span></div>
         <div class="icon" onclick="trazerFrente('janela-amigos');abrirAmigos()">${iconTag('amigos')}<span>Meus Amigos</span></div>
-        <div class="icon" onclick="abrirOrkut()">${iconTag('orkut')}<span>Orkut</span></div>
+        <div class="icon" onclick="trazerFrente('janela-orkut');abrirOrkut()">${iconTag('orkut')}<span>Orkut</span></div>
       </div>
 
       <div class="start-menu" id="start-menu">
@@ -649,7 +649,7 @@ async function mostrarDesktop() {
             <div class="menu-item" onclick="trazerFrente('janela-ie');abrirIE();fecharMenu()">
               ${iconTag('ie',32)}<div><div class="menu-item-title">Internet Explorer</div><div class="menu-item-sub">ingressos</div></div>
             </div>
-            <div class="menu-item" onclick="abrirOrkut()">
+            <div class="menu-item" onclick="trazerFrente('janela-orkut');abrirOrkut();fecharMenu()">
               ${iconTag('orkut',32)}<div><div class="menu-item-title">Orkut</div><div class="menu-item-sub">rede social</div></div>
             </div>
           </div>
@@ -1983,6 +1983,81 @@ function abrirIE(){
       </div>
     </div>
   `);
+}
+
+// ══════════════════════════════════════════
+//  ORKUT
+// ══════════════════════════════════════════
+function abrirOrkut() {
+  fecharMenu();
+  if (document.getElementById('janela-orkut')) { trazerFrente('janela-orkut'); return; }
+
+  const nick = currentProfile?.nickname || 'Usuário';
+  
+  const content = `
+    <div style="height: 100%; background: #E5ECF4; display: flex; flex-direction: column; font-family: Arial, sans-serif; color: #000;">
+      <div style="background: #BFD0EA; padding: 8px 15px; border-bottom: 1px solid #7F9DB9; display: flex; justify-content: space-between; align-items: center;">
+        <span style="color: #E8457A; font-weight: bold; font-size: 22px; font-family: Georgia, serif; font-style: italic;">orkut</span>
+        <div style="font-size: 11px; color: #43699A; font-weight: bold;">
+          página inicial | perfil | amigos | comunidades | recados
+        </div>
+      </div>
+      <div style="flex: 1; padding: 15px; overflow-y: auto; display: flex; gap: 15px;">
+        <div style="width: 160px; display: flex; flex-direction: column; gap: 10px;">
+          <div style="border: 1px solid #7F9DB9; padding: 4px; background: white; box-shadow: 1px 1px 2px rgba(0,0,0,0.1);">
+            ${currentProfile.avatar_url 
+              ? `<img src="${currentProfile.avatar_url}" style="width: 150px; height: 150px; object-fit: cover;">`
+              : `<div style="width: 150px; height: 150px; background: #eee; display: flex; align-items: center; justify-content: center; font-size: 40px; color: #ccc;">?</div>`
+            }
+          </div>
+          <div style="font-size: 11px; color: #43699A; font-weight: bold; background: white; padding: 8px; border: 1px solid #BFD0EA; border-radius: 4px;">
+            <div style="margin-bottom: 5px; border-bottom: 1px solid #E5ECF4;">${escapeHtml(nick)}</div>
+            <div style="font-weight: normal; margin-top: 5px;">
+              🏠 <a href="#" style="color: #43699A; text-decoration: none;">meu perfil</a><br>
+              📸 <a href="#" style="color: #43699A; text-decoration: none;">minhas fotos</a><br>
+              🎥 <a href="#" style="color: #43699A; text-decoration: none;">meus vídeos</a><br>
+              📝 <a href="#" style="color: #43699A; text-decoration: none;">depoimentos</a>
+            </div>
+          </div>
+        </div>
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 12px;">
+          <div style="background: white; border: 1px solid #7F9DB9; padding: 12px; border-radius: 4px;">
+            <div style="font-weight: bold; color: #43699A; margin-bottom: 8px; font-size: 13px; border-bottom: 1px solid #eee; padding-bottom: 4px;">social</div>
+            <div style="display: grid; grid-template-columns: 90px 1fr; font-size: 11px; row-gap: 6px;">
+              <div style="color: #666;">relacionamento:</div>
+              <div style="color: #333;">${escapeHtml(currentProfile.relacionamento || 'Não informado')}</div>
+              <div style="color: #666;">quem sou eu:</div>
+              <div style="color: #333; white-space: pre-wrap;">${escapeHtml(currentProfile.bio || 'A vida é uma caixa de bombons...')}</div>
+              <div style="color: #666;">músicas:</div>
+              <div style="color: #333;">${escapeHtml(currentProfile.musicas || 'Não informado')}</div>
+              <div style="color: #666;">filmes:</div>
+              <div style="color: #333;">${escapeHtml(currentProfile.filmes || 'Não informado')}</div>
+            </div>
+          </div>
+          <div style="display: flex; gap: 10px;">
+             <div style="flex: 1; background: #fff; border: 1px solid #BFD0EA; padding: 8px; border-radius: 4px; text-align: center;">
+               <div style="font-size: 10px; color: #43699A; font-weight: bold;">confiável</div>
+               <div style="font-size: 14px; margin-top: 2px;">😇 😇 😇</div>
+             </div>
+             <div style="flex: 1; background: #fff; border: 1px solid #BFD0EA; padding: 8px; border-radius: 4px; text-align: center;">
+               <div style="font-size: 10px; color: #43699A; font-weight: bold;">legal</div>
+               <div style="font-size: 14px; margin-top: 2px;">👍 👍 👍</div>
+             </div>
+             <div style="flex: 1; background: #fff; border: 1px solid #BFD0EA; padding: 8px; border-radius: 4px; text-align: center;">
+               <div style="font-size: 10px; color: #43699A; font-weight: bold;">sexy</div>
+               <div style="font-size: 14px; margin-top: 2px;">🔥 🔥 🔥</div>
+             </div>
+          </div>
+          <div style="background: #F0F5FB; border: 1px solid #BFD0EA; padding: 10px; border-radius: 4px; font-size: 11px;">
+             <div style="font-weight: bold; color: #43699A; margin-bottom: 5px;">Recados Recentes</div>
+             <div style="color: #888; font-style: italic;">Você não tem novos recados.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  criarJanela('janela-orkut', 'Orkut', 'orkut', 680, 520, 50, 120, content);
 }
 
 // ── UTILS ────────────────────────────────────────────────────
