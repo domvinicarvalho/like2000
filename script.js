@@ -174,6 +174,7 @@ const ICONS_SVG = {
     <circle cx="34" cy="24" r="5" fill="#2ecc71"/><path d="M26,40 C26,34 42,34 42,40 L42,44 L26,44 Z" fill="#27ae60"/>
   </svg>`,
 
+  // Orkut — Logo clássico rosa com o 'o' em Georgia Italic
   orkut: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
     <rect width="48" height="48" rx="8" fill="#E8457A"/>
     <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" fill="white" font-family="Georgia" font-style="italic" font-weight="bold" font-size="34">o</text>
@@ -610,7 +611,7 @@ async function mostrarDesktop() {
         <div class="icon" onclick="trazerFrente('janela-winamp');abrirWinamp()">${iconTag('winamp')}<span>Winamp</span></div>
         <div class="icon" onclick="trazerFrente('janela-ie');abrirIE()">${iconTag('ie')}<span>Internet Explorer</span></div>
         <div class="icon" onclick="trazerFrente('janela-amigos');abrirAmigos()">${iconTag('amigos')}<span>Meus Amigos</span></div>
-        <div class="icon" onclick="trazerFrente('janela-orkut');abrirOrkut()">${iconTag('orkut')}<span>Orkut</span></div>
+        <div class="icon" onclick="abrirOrkut()">${iconTag('orkut')}<span>Orkut</span></div>
       </div>
 
       <div class="start-menu" id="start-menu">
@@ -648,7 +649,7 @@ async function mostrarDesktop() {
             <div class="menu-item" onclick="trazerFrente('janela-ie');abrirIE();fecharMenu()">
               ${iconTag('ie',32)}<div><div class="menu-item-title">Internet Explorer</div><div class="menu-item-sub">ingressos</div></div>
             </div>
-            <div class="menu-item" onclick="trazerFrente('janela-orkut');abrirOrkut();fecharMenu()">
+            <div class="menu-item" onclick="abrirOrkut()">
               ${iconTag('orkut',32)}<div><div class="menu-item-title">Orkut</div><div class="menu-item-sub">rede social</div></div>
             </div>
           </div>
