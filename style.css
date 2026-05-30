@@ -672,7 +672,7 @@ body { width:100vw; height:100vh; overflow:hidden; }
    MEU PERFIL
 ══════════════════════════════════════════ */
 .up-body {
-  flex: 1; overflow-y: auto; min-height: 0; background: #f0f0e8; display: flex; flex-direction: column; gap: 0;
+  flex: 1; overflow-y: auto; overflow-x: hidden; min-height: 0; background: #f0f0e8; display: block;
 }
 .up-header {
   background:linear-gradient(to bottom,#3a6ec8,#1a4aac);
@@ -726,7 +726,7 @@ body { width:100vw; height:100vh; overflow:hidden; }
 /* ranking */
 .up-ranking-box { margin:0 12px 12px; background:white; border:1px solid #c0b090; border-radius:6px; overflow:hidden; }
 .up-ranking-title { padding:8px 12px; background:#e8e0d0; font-size:12px; font-weight:bold; border-bottom:1px solid #c0b090; }
-.up-ranking-lista { display:flex; flex-direction:column; max-height:220px; overflow-y:auto; }
+.up-ranking-lista { display:flex; flex-direction:column; }
 .up-ranking-loading { padding:16px; text-align:center; color:#888; font-size:12px; }
 .up-rank-row {
   display:flex; align-items:center; gap:8px; padding:7px 10px;

@@ -66,7 +66,7 @@
   }
 
   /* IE, WINAMP e PERFIS — Centralizados na tela (fixed) */
-  #janela-ie, [id^="janela-perfil-"], #janela-complemento {
+  #janela-ie, [id^="janela-perfil-"], #janela-complemento, #janela-ranking {
     position: fixed !important;
     top: 45% !important;
     left: 50% !important;

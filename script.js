@@ -657,7 +657,7 @@ async function mostrarDesktop() {
           <div class="start-menu-col right">
             <div class="menu-item-right" onclick="abrirPerfil()">📁 Meu Perfil</div>
             <div class="menu-item-right" onclick="abrirAmigos()">👥 Meus Amigos</div>
-            <div class="menu-item-right">🏆 Ranking</div>
+            <div class="menu-item-right" onclick="abrirRanking()">🏆 Ranking</div>
             <div class="menu-item-right">🎟️ ${escapeHtml(currentProfile.referral_code||'')}</div>
             <div class="menu-item-right" style="margin-top:auto;border-top:1px solid #7090c0;padding-top:8px" onclick="fazerLogout()">🔴 Sair</div>
           </div>
@@ -1742,27 +1742,49 @@ async function abrirPerfil() {
         <button onclick="salvarInfoOrkut()" class="up-orkut-save-btn">💾 Salvar Dados Orkut</button>
       </div>
 
-      <!-- Ranking da Temporada -->
-      ${temporadaAtiva ? `
-      <div class="up-ranking-box" style="border-color:#4a90e8;">
-        <div class="up-ranking-title" style="background:linear-gradient(to bottom,#4a90e8,#1464d8); color:white;">🏆 Ranking: ${escapeHtml(temporadaAtiva.nome)} (Top 10)</div>
-        <div class="up-ranking-lista" id="up-ranking-temporada">
-          <div class="up-ranking-loading">carregando temporada...</div>
-        </div>
-      </div>` : ''}
-
-      <!-- ranking -->
-      <div class="up-ranking-box">
-        <div class="up-ranking-title">🏆 Ranking geral</div>
-        <div class="up-ranking-lista" id="up-ranking-lista">
-          <div class="up-ranking-loading">carregando ranking...</div>
-        </div>
-      </div>
-
     </div>`;
 
   document.querySelector('.desktop').appendChild(j);
   tornarArrastavel(j);
+}
+
+// ══════════════════════════════════════════
+//  RANKING
+// ══════════════════════════════════════════
+function abrirRanking() {
+  fecharMenu();
+  if(document.getElementById('janela-ranking')){trazerFrente('janela-ranking');return;}
+  
+  const content = `
+    <div class="up-body">
+      <div style="padding:16px; background:linear-gradient(to bottom,#3a6ec8,#1a4aac); color:white; text-align:center;">
+        <div style="font-size:18px; font-weight:bold; text-shadow:1px 1px 2px rgba(0,0,0,0.5);">🏆 QUADRO DE HONRA</div>
+        <div style="font-size:11px; opacity:0.8;">Os usuários mais ativos da Like 2000</div>
+      </div>
+
+      ${temporadaAtiva ? `
+      <div class="up-ranking-box" style="margin-top:12px; border-color:#4a90e8;">
+        <div class="up-ranking-title" style="background:linear-gradient(to bottom,#4a90e8,#1464d8); color:white;">
+          Temporada: ${escapeHtml(temporadaAtiva.nome)} (Top 10)
+        </div>
+        <div class="up-ranking-lista" id="up-ranking-temporada">
+          <div class="up-ranking-loading">carregando...</div>
+        </div>
+      </div>` : ''}
+
+      <div class="up-ranking-box" style="margin-top:12px;">
+        <div class="up-ranking-title">🏆 Ranking Geral (Hall da Fama)</div>
+        <div class="up-ranking-lista" id="up-ranking-lista">
+          <div class="up-ranking-loading">carregando...</div>
+        </div>
+      </div>
+      
+      <div style="height:20px;"></div>
+    </div>
+  `;
+
+  const j = criarJanela('janela-ranking', 'Ranking da Temporada', 'amigos', 480, 520, 60, 100, content);
+  if(!j) return;
   carregarRanking();
   if(temporadaAtiva) carregarRankingTemporada();
 }
