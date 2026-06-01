@@ -59,10 +59,11 @@ function tocarSomStartup() { tocarSom(SOM_XP_STARTUP, 0.8); }
 const CLOUDINARY_CLOUD_NAME = 'dhqnjfxny';
 const CLOUDINARY_UPLOAD_PRESET = 'like2000_uploads'; 
 
-async function uploadToCloudinary(file) {
+async function uploadToCloudinary(file, folder) {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+  formData.append('folder', folder);
 
   try {
     const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
@@ -434,7 +435,7 @@ async function salvarPerfilCompleto() {
   if (fotoFile) {
     const compressedFile = await comprimirImagem(fotoFile, 200);
     try {
-      avatarUrl = await uploadToCloudinary(compressedFile);
+      avatarUrl = await uploadToCloudinary(compressedFile, 'avatars');
     } catch (e) {
       mostrarNotificacao('Erro ao fazer upload da foto de perfil.');
       btn.disabled = false;
@@ -1169,7 +1170,7 @@ async function publicarPost() {
   if(fotologPostFile){
     const compressedFile = await comprimirImagem(fotologPostFile,800);
     try {
-      imageUrl = await uploadToCloudinary(compressedFile);
+      imageUrl = await uploadToCloudinary(compressedFile, 'posts');
     } catch (e) {
       mostrarNotificacao('Erro ao fazer upload da foto do post.');
       btn.textContent='Publicar (Gold Camera)';
@@ -1886,7 +1887,7 @@ async function trocarAvatar(event) {
   const compressedFile = await comprimirImagem(file, 200);
   let newAvatarUrl = null;
   try {
-    newAvatarUrl = await uploadToCloudinary(compressedFile);
+    newAvatarUrl = await uploadToCloudinary(compressedFile, 'avatars');
   } catch (e) {
     mostrarNotificacao('Erro ao fazer upload da foto.');
     return;
