@@ -2191,8 +2191,12 @@ async function enviarPrintShare(eventId) {
   try {
     const compressed = await comprimirImagem(file, 1000);
     const url = await uploadToCloudinary(compressed, 'share_claims');
-    await supabaseClient.from('share_claims').insert([{ user_id: currentUser.id, event_id: eventId, image_url: url, description: desc }]);
-    alert("Seu XP será creditado em até 24h, após a verificação. Não apague os compartilhamentos dentro deste período.");
+    const { error: insertError } = await supabaseClient.from('share_claims').insert([{ user_id: currentUser.id, event_id: eventId, image_url: url, description: desc }]);
+    if (!insertError) {
+      mostrarAlerta('share-claim-success', 'Print Enviado!', 'tarefas', "Seu XP será creditado em até 24h, após a verificação. Não apague os compartilhamentos dentro deste período.");
+    } else {
+      mostrarNotificacao('Erro ao registrar o print. Tente novamente.');
+    }
     renderizarCompartilhamentoEventos();
   } catch (e) {
     mostrarNotificacao('Erro ao enviar.');
