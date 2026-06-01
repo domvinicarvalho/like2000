@@ -180,6 +180,15 @@ const ICONS_SVG = {
     <rect width="48" height="48" rx="8" fill="#E8457A"/>
     <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" fill="white" font-family="Georgia" font-style="italic" font-weight="bold" font-size="34">o</text>
   </svg>`,
+
+  tarefas: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+    <rect x="4" y="6" width="20" height="15" rx="2" fill="#3a6ec8" stroke="#003c74" stroke-width="1.5"/>
+    <rect x="6" y="8" width="16" height="11" fill="#fff" opacity="0.3"/>
+    <rect x="24" y="24" width="20" height="15" rx="2" fill="#3a6ec8" stroke="#003c74" stroke-width="1.5"/>
+    <rect x="26" y="26" width="16" height="11" fill="#fff" opacity="0.3"/>
+    <path d="M22,14 L26,34" stroke="#fff" stroke-width="1" stroke-dasharray="2,2"/>
+    <path d="M28,8 L16,40" fill="none" stroke="#22AA22" stroke-width="4" stroke-linecap="round"/>
+  </svg>`,
 };
 
 function svgToDataUri(svgStr) {
@@ -613,6 +622,7 @@ async function mostrarDesktop() {
         <div class="icon" onclick="trazerFrente('janela-ie');abrirIE()">${iconTag('ie')}<span>Internet Explorer</span></div>
         <div class="icon" onclick="trazerFrente('janela-amigos');abrirAmigos()">${iconTag('amigos')}<span>Meus Amigos</span></div>
         <div class="icon" onclick="trazerFrente('janela-orkut');abrirOrkut()">${iconTag('orkut')}<span>Orkut</span></div>
+        <div class="icon" onclick="trazerFrente('janela-tarefas');abrirTarefas()">${iconTag('tarefas')}<span>Tarefas</span></div>
       </div>
 
       <div class="start-menu" id="start-menu">
@@ -652,6 +662,9 @@ async function mostrarDesktop() {
             </div>
             <div class="menu-item" onclick="trazerFrente('janela-orkut');abrirOrkut();fecharMenu()">
               ${iconTag('orkut',32)}<div><div class="menu-item-title">Orkut</div><div class="menu-item-sub">rede social</div></div>
+            </div>
+            <div class="menu-item" onclick="trazerFrente('janela-tarefas');abrirTarefas();fecharMenu()">
+              ${iconTag('tarefas',32)}<div><div class="menu-item-title">Tarefas</div><div class="menu-item-sub">ganhe XP</div></div>
             </div>
           </div>
           <div class="start-menu-divider"></div>
@@ -2037,6 +2050,154 @@ function abrirOrkut() {
   `;
 
   criarJanela('janela-orkut', 'Orkut', 'orkut', 850, 600, 30, 30, content);
+}
+
+// ══════════════════════════════════════════
+//  TAREFAS E COMPARTILHAMENTO
+// ══════════════════════════════════════════
+function abrirTarefas() {
+  fecharMenu();
+  if(document.getElementById('janela-tarefas')){trazerFrente('janela-tarefas');return;}
+
+  const content = `
+    <div style="display:flex; flex-direction:column; height:100%;">
+      <div class="task-tabs">
+        <div class="task-tab active" id="tab-t-diarias" onclick="alternarTabsTarefas('diarias')">Recompensas Diárias</div>
+        <div class="task-tab" id="tab-t-eventos" onclick="alternarTabsTarefas('eventos')">Compartilhar Eventos</div>
+      </div>
+      <div id="tarefas-diarias-content" class="task-list-container">
+        <div class="fl-loading">carregando tarefas...</div>
+      </div>
+      <div id="compartilhar-eventos-content" class="task-list-container" style="display:none;">
+        <div class="fl-loading">carregando eventos...</div>
+      </div>
+    </div>`;
+
+  criarJanela('janela-tarefas', 'Tarefas e Recompensas', 'tarefas', 480, 500, 50, 200, content);
+  renderizarTarefasDiarias();
+}
+
+function alternarTabsTarefas(aba) {
+  const dContent = document.getElementById('tarefas-diarias-content');
+  const eContent = document.getElementById('compartilhar-eventos-content');
+  const dTab = document.getElementById('tab-t-diarias');
+  const eTab = document.getElementById('tab-t-eventos');
+
+  if (aba === 'diarias') {
+    dContent.style.display = 'flex'; eContent.style.display = 'none';
+    dTab.classList.add('active'); eTab.classList.remove('active');
+    renderizarTarefasDiarias();
+  } else {
+    dContent.style.display = 'none'; eContent.style.display = 'flex';
+    dTab.classList.remove('active'); eTab.classList.add('active');
+    renderizarCompartilhamentoEventos();
+  }
+}
+
+async function renderizarTarefasDiarias() {
+  const container = document.getElementById('tarefas-diarias-content');
+  const hoje = new Date().toISOString().split('T')[0];
+
+  const [tasksRes, completionsRes] = await Promise.all([
+    supabaseClient.from('daily_tasks').select('*').eq('active', true),
+    supabaseClient.from('daily_task_completions').select('task_id').eq('user_id', currentUser.id).gte('completed_at', hoje)
+  ]);
+
+  if (tasksRes.error) { container.innerHTML = 'Erro ao carregar.'; return; }
+  const completedIds = new Set(completionsRes.data?.map(c => c.task_id) || []);
+
+  container.innerHTML = tasksRes.data.length ? tasksRes.data.map(t => {
+    const isDone = completedIds.has(t.id);
+    return `
+      <div class="task-card ${isDone ? 'done' : ''}">
+        <div class="task-info">
+          <div class="task-title">${escapeHtml(t.title)} <span class="xp-badge">+${t.xp_reward} XP</span></div>
+          <div class="task-desc">${escapeHtml(t.description)}</div>
+        </div>
+        <div class="task-action">
+          ${isDone ? '<span class="task-done-label">Feito! ✅</span>' : `
+            <button class="task-btn" onclick="executarTarefaDiaria('${t.id}', '${t.url_acao}')">Ir para Tarefa</button>
+          `}
+        </div>
+      </div>`;
+  }).join('') : '<div class="fl-loading">Nenhuma tarefa hoje.</div>';
+}
+
+async function executarTarefaDiaria(taskId, url) {
+  if (url) window.open(url, '_blank');
+  const { error } = await supabaseClient.from('daily_task_completions').insert([{ user_id: currentUser.id, task_id: taskId }]);
+  if (!error) {
+    await adicionarXP(50, 'tarefa diária concluída');
+    renderizarTarefasDiarias();
+  }
+}
+
+async function renderizarCompartilhamentoEventos() {
+  const container = document.getElementById('compartilhar-eventos-content');
+  const hoje = new Date().toISOString().split('T')[0];
+
+  const [eventsRes, claimsRes] = await Promise.all([
+    supabaseClient.from('events').select('*').eq('share_active', true),
+    supabaseClient.from('share_claims').select('event_id, status').eq('user_id', currentUser.id).gte('created_at', hoje)
+  ]);
+
+  if (eventsRes.error) { container.innerHTML = 'Erro ao carregar.'; return; }
+  const claimsMap = new Map(claimsRes.data?.map(c => [c.event_id, c.status]) || []);
+
+  container.innerHTML = eventsRes.data.length ? eventsRes.data.map(e => {
+    const status = claimsMap.get(e.id);
+    return `
+      <div class="event-share-card">
+        <div class="event-share-header">
+          <div class="event-share-title">${escapeHtml(e.name)} <span class="xp-badge">+50 XP</span></div>
+          <div style="display:flex; gap:5px; margin-top:5px;">
+            <button class="task-btn mini" onclick="copiarLinkEvento('${e.referral_url || ''}')">Copiar Link</button>
+            ${e.instagram_post_url ? `<button class="task-btn mini" onclick="window.open('${e.instagram_post_url}', '_blank')">Abrir no Insta</button>` : ''}
+          </div>
+        </div>
+        <div class="event-share-body">
+          ${status ? `
+            <div class="share-status-box">
+              ${status === 'pending' ? 'Aguardando confirmação ⏳' : 'Confirmado! ✅'}
+            </div>
+          ` : `
+            <div class="share-upload-box" id="upload-box-${e.id}">
+              <label>Anexe o print do compartilhamento:</label>
+              <input type="file" id="share-file-${e.id}" accept="image/*" class="share-file-input">
+              <textarea id="share-desc-${e.id}" placeholder="Opcional: algum comentário..." rows="1"></textarea>
+              <button class="up-btn-save" onclick="enviarPrintShare('${e.id}')" id="btn-share-${e.id}">Enviar print — +50 XP</button>
+            </div>
+          `}
+        </div>
+      </div>`;
+  }).join('') : '<div class="fl-loading">Nenhum evento para compartilhar.</div>';
+}
+
+function copiarLinkEvento(baseUrl) {
+  const cupom = currentProfile.referral_code || '';
+  const fullUrl = `${baseUrl}?utm_source=like2000&utm_medium=share&utm_campaign=${cupom}`;
+  copiarCupom(fullUrl);
+}
+
+async function enviarPrintShare(eventId) {
+  const fileInput = document.getElementById(`share-file-${eventId}`);
+  const desc = document.getElementById(`share-desc-${eventId}`).value.trim();
+  const btn = document.getElementById(`btn-share-${eventId}`);
+  const file = fileInput.files[0];
+
+  if (!file) { mostrarNotificacao('Selecione uma imagem!'); return; }
+
+  btn.disabled = true; btn.textContent = 'Enviando...';
+  try {
+    const compressed = await comprimirImagem(file, 1000);
+    const url = await uploadToCloudinary(compressed, 'share_claims');
+    await supabaseClient.from('share_claims').insert([{ user_id: currentUser.id, event_id: eventId, image_url: url, description: desc }]);
+    alert("Seu XP será creditado em até 24h, após a verificação. Não apague os compartilhamentos dentro deste período.");
+    renderizarCompartilhamentoEventos();
+  } catch (e) {
+    mostrarNotificacao('Erro ao enviar.');
+    btn.disabled = false; btn.textContent = 'Enviar print — +50 XP';
+  }
 }
 
 // ── UTILS ────────────────────────────────────────────────────

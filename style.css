@@ -544,6 +544,58 @@ body { width:100vw; height:100vh; overflow:hidden; }
   gap: 6px;
   animation: msnSlideUp 0.5s ease-out;
 }
+
+/* ══════════════════════════════════════════
+   JANELA DE TAREFAS
+══════════════════════════════════════════ */
+.task-tabs { display: flex; background: #e0dfe3; padding: 4px 4px 0; border-bottom: 1px solid #999; }
+.task-tab { 
+  padding: 4px 12px; font-size: 11px; cursor: pointer; background: #d6d6d6; 
+  border: 1px solid #999; border-bottom: none; border-radius: 4px 4px 0 0; margin-right: 2px;
+}
+.task-tab.active { background: #fff; font-weight: bold; border-bottom: 1px solid #fff; margin-bottom: -1px; z-index: 2; }
+
+.task-list-container { padding: 12px; display: flex; flex-direction: column; gap: 10px; background: #fff; height: 100%; overflow-y: auto; }
+
+.task-card, .event-share-card {
+  border: 1px solid #c0b090; border-radius: 4px; background: #fdfcf7; padding: 10px;
+  display: flex; flex-direction: column; gap: 8px; box-shadow: 1px 1px 2px rgba(0,0,0,0.05);
+}
+.task-card.done { opacity: 0.7; background: #f0f0f0; border-color: #ccc; }
+.task-info, .event-share-header { flex: 1; }
+.task-title, .event-share-title { font-size: 12px; font-weight: bold; color: #333; display: flex; align-items: center; gap: 6px; }
+.task-desc { font-size: 11px; color: #666; margin-top: 2px; }
+.xp-badge { 
+  background: #ffcc00; color: #000; font-size: 9px; font-weight: bold; 
+  padding: 1px 6px; border-radius: 10px; border: 1px solid #d4a017;
+}
+.task-btn {
+  background: linear-gradient(to bottom, #f0f0e8, #d8d0c0); border: 1px solid;
+  border-top-color: #fff; border-left-color: #fff; border-right-color: #888; border-bottom-color: #888;
+  font-size: 11px; padding: 4px 10px; cursor: pointer; border-radius: 3px;
+}
+.task-btn:hover { background: #e8e0d0; }
+.task-btn.mini { font-size: 10px; padding: 2px 6px; }
+.task-done-label { font-size: 11px; color: #5aad5a; font-weight: bold; }
+
+.share-upload-box {
+  background: #f0f4fc; border: 1px dashed #7090c0; border-radius: 4px; padding: 8px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.share-upload-box label { font-size: 10px; font-weight: bold; color: #003399; }
+.share-file-input { font-size: 10px; }
+.share-upload-box textarea { 
+  width: 100%; padding: 4px; font-size: 11px; border: 1px solid #7f9db9; 
+  resize: none; font-family: inherit;
+}
+.share-status-box {
+  text-align: center; padding: 10px; background: #fffbe8; border: 1px solid #ffe066;
+  border-radius: 4px; font-size: 11px; font-weight: bold; color: #856404;
+}
+
+/* ══════════════════════════════════════════
+   NOTIFICAÇÃO XP
+══════════════════════════════════════════ */
 @keyframes msnSlideUp {
   from { transform: translateY(100%); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
