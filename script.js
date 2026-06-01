@@ -811,6 +811,7 @@ function fecharJanela(id) {
     if (id === 'tutorial-fotolog') localStorage.setItem('tutorial_fotolog_visto', 'true');
     if (id === 'tutorial-winamp') localStorage.setItem('tutorial_winamp_visto', 'true');
     if (id === 'tutorial-ie') localStorage.setItem('tutorial_ie_visto', 'true');
+    if (id === 'tutorial-orkut') localStorage.setItem('tutorial_orkut_visto', 'true');
     
     j.remove();
   }
@@ -2019,6 +2020,12 @@ function abrirIE(){
 function abrirOrkut() {
   fecharMenu();
   if (document.getElementById('janela-orkut')) { trazerFrente('janela-orkut'); return; }
+
+  mostrarAlerta('tutorial-orkut', 'Orkut', 'orkut', 
+    `Esse é o seu perfil público — qualquer pessoa pode ver, mesmo sem estar cadastrada na Like 2000.\n\n` +
+    `Edite suas informações e foto quando quiser em Meu Perfil, na barra de tarefas. Seu link compartilhável também fica lá.\n\n` +
+    `Compartilhe o link e chame seus amigos. Quanto mais trouxer, mais XP você ganha.`, 
+    'tutorial_orkut_visto');
 
   const nick = currentProfile?.nickname || '';
   // Define a URL baseada no nickname, assim como no link do "Meu Perfil"
