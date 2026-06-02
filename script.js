@@ -761,9 +761,9 @@ async function mostrarDesktop() {
   // Realtime para Alertas e Notificações do Admin
   supabaseClient.channel('admin-alerts')
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, (payload) => {
-      console.log("🔔 Alerta recebido via Realtime:", payload);
-      if (payload.new && payload.new.active) {
-        const n = payload.new;
+      const n = payload.new;
+      console.log("🔔 Sinal de Realtime recebido:", n);
+      if (n && (n.active === true || n.active === undefined)) {
         mostrarAlerta(`alert-${n.id}`, n.title, n.icon || 'ie', n.content, `alert_visto_${n.id}`);
       }
     })
