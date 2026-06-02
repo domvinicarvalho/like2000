@@ -1015,15 +1015,18 @@ function abrirMSN() {
 }
 
 function atualizarMolduraStatusMSN(status) {
-  const statusClass = `status-${status || 'online'}`;
+  const currentStatus = status || 'online';
+  const statusClass = `status-${currentStatus}`;
 
-  // 1. Atualiza a moldura da coluna direita (Sidebar)
+  // 1. Atualiza a moldura da coluna direita (Sidebar) - Big Avatar
   const frame = document.getElementById('msn-my-avatar-frame');
   if (frame) {
-    frame.className = `msn-frame avatar-frame ${statusClass}`;
+    // Mantém as classes base e remove status antigos para evitar conflitos
+    frame.classList.remove('status-online', 'status-ausente', 'status-ocupado', 'status-offline');
+    frame.classList.add(statusClass);
   }
 
-  // 2. Atualiza o avatar da barra de usuário (Top)
+  // 2. Atualiza o avatar da barra de usuário (Top) - Small Avatar
   const userbarAvatar = document.querySelector('.msn-userbar .avatar, .msn-userbar .avatar-img');
   if (userbarAvatar) {
     userbarAvatar.classList.remove('status-online', 'status-ausente', 'status-ocupado', 'status-offline');
@@ -1032,9 +1035,9 @@ function atualizarMolduraStatusMSN(status) {
 
   // 3. Sincroniza os dropdowns de status
   const msnSelect = document.getElementById('msn-my-status-select');
-  if (msnSelect) msnSelect.value = status;
+  if (msnSelect) msnSelect.value = currentStatus;
   const startSelect = document.getElementById('start-menu-status-select');
-  if (startSelect) startSelect.value = status;
+  if (startSelect) startSelect.value = currentStatus;
 }
 
 async function carregarBannerMSN() {

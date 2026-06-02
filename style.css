@@ -305,10 +305,10 @@ body { width:100vw; height:100vh; overflow:hidden; }
   border-radius: 8px;
 }
 
-/* Moldura do banner - sempre verde e mais espessa */
 .banner-frame {
-  background: #00b300 !important;
+  background: #22AA22 !important; /* Verde MSN mais vibrante */
   border: 1px solid #808080 !important;
+  padding: 4px; /* Igual ao avatar */
 }
 
 /* Moldura colorida do avatar conforme status */
