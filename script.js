@@ -2344,5 +2344,25 @@ async function enviarPrintShare(eventId) {
   }
 }
 
+async function checkAndDisplayNotifications() {
+  if (!currentUser) return;
+  try {
+    const { data, error } = await supabaseClient
+      .from('notifications')
+      .select('*')
+      .eq('active', true)
+      .order('created_at', { ascending: false });
+
+    if (error || !data) return;
+
+    data.forEach(n => {
+      // A função mostrarAlerta já lida com a persistência (não repetir alerta fechado) via storageKey
+      mostrarAlerta(`alert-${n.id}`, n.title, n.icon || 'ie', n.content, `alert_visto_${n.id}`);
+    });
+  } catch (e) {
+    console.error("Erro ao processar notificações do sistema:", e);
+  }
+}
+
 // ── UTILS ────────────────────────────────────────────────────
 function escapeHtml(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
