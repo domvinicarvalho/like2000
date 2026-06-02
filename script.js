@@ -1016,23 +1016,38 @@ function atualizarMolduraStatusMSN(status) {
 }
 
 async function carregarBannerMSN() {
-  const { data } = await supabaseClient.from('app_config').select('value').eq('key', 'msn_banner_url').single();
-  const img = document.getElementById('msn-banner-img');
-  if (img) img.src = data?.value || svgToDataUri(ICONS_SVG.fotolog);
+  try {
+    const { data, error } = await supabaseClient.from('app_config').select('value').eq('key', 'msn_banner_url').single();
+    if (error) throw error;
+    const img = document.getElementById('msn-banner-img');
+    if (img) img.src = data?.value || svgToDataUri(ICONS_SVG.fotolog);
+  } catch (e) {
+    console.warn("Erro ao carregar banner MSN (conexão recusada ou timeout):", e);
+  }
 }
 
 // ── WALLPAPER ────────────────────────────────────────────────
 async function carregarWallpaper() {
   const fallback = 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Microsoft_bliss_wallpaper.jpg/1280px-Van_Microsoft_bliss_wallpaper.jpg';
 
-  // Busca as duas chaves no banco
-  const { data } = await supabaseClient.from('app_config').select('key, value').in('key', ['desktop_wallpaper_url', 'mobile_wallpaper_url']);
-  
-  if (data) {
-    const d = data.find(i => i.key === 'desktop_wallpaper_url');
-    const m = data.find(i => i.key === 'mobile_wallpaper_url');
-    wallpaperCache.desktop = d?.value || fallback;
-    wallpaperCache.mobile = m?.value || d?.value || fallback;
+  try {
+    // Busca as duas chaves no banco
+    const { data, error } = await supabaseClient
+      .from('app_config')
+      .select('key, value')
+      .in('key', ['desktop_wallpaper_url', 'mobile_wallpaper_url']);
+    
+    if (error) throw error;
+    if (data) {
+      const d = data.find(i => i.key === 'desktop_wallpaper_url');
+      const m = data.find(i => i.key === 'mobile_wallpaper_url');
+      wallpaperCache.desktop = d?.value || fallback;
+      wallpaperCache.mobile = m?.value || d?.value || fallback;
+    }
+  } catch (e) {
+    console.warn("Erro ao carregar wallpaper (conexão recusada ou timeout):", e);
+    wallpaperCache.desktop = fallback;
+    wallpaperCache.mobile = fallback;
   }
   
   aplicarWallpaperEstilo();
@@ -2361,6 +2376,25 @@ async function checkAndDisplayNotifications() {
     });
   } catch (e) {
     console.error("Erro ao processar notificações do sistema:", e);
+  }
+}
+
+// ── ADMIN ACTIONS (Use no botão do seu painel) ────────────────
+async function dispararAlertaAdmin(titulo, conteudo, icone = 'ie') {
+  if (!titulo || !conteudo) {
+    alert("Preencha título e conteúdo!");
+    return;
+  }
+  try {
+    const { error } = await supabaseClient
+      .from('notifications')
+      .insert([{ title: titulo, content: conteudo, icon: icone, active: true }]);
+
+    if (error) throw error;
+    alert("✅ Alerta disparado com sucesso!");
+  } catch (e) {
+    console.error("Erro ao disparar alerta:", e);
+    alert("❌ Erro ao conectar com o Supabase. Verifique se o projeto está ATIVO no painel deles.");
   }
 }
 
