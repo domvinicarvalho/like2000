@@ -2180,11 +2180,9 @@ async function renderizarTarefasDiarias() {
     const status = claimsMap.get(t.id);
     return `
       <div class="task-card ${status === 'credited' ? 'done' : ''}">
-        ${t.image_url ? `
-          <div class="link-preview" onclick="window.open('${t.url_acao}', '_blank')" style="cursor:pointer;">
-            <img src="${t.image_url}" style="width:100%; height:120px; object-fit:cover; border-radius:4px; margin-bottom:8px; border:1px solid #ccc;">
-          </div>
-        ` : ''}
+        <div class="link-preview-auto" data-url="${t.url_acao}" onclick="window.open('${t.url_acao}', '_blank')">
+          ${t.image_url ? `<img src="${t.image_url}" style="width:100%; height:120px; object-fit:cover; border-radius:4px; margin-bottom:8px; border:1px solid #ccc;">` : ''}
+        </div>
         <div class="task-info">
           <div class="task-title">${escapeHtml(t.title)} <span class="xp-badge">+${t.xp_reward} XP</span></div>
           <div class="task-desc">${escapeHtml(t.description)}</div>
@@ -2207,6 +2205,7 @@ async function renderizarTarefasDiarias() {
         </div>
       </div>`;
   }).join('') : '<div class="fl-loading">Nenhuma tarefa hoje.</div>';
+  carregarPreviewsGeral();
 }
 
 async function enviarPrintTarefa(taskId) {
@@ -2249,11 +2248,9 @@ async function renderizarCompartilhamentoEventos() {
     const status = claimsMap.get(e.id);
     return `
       <div class="event-share-card">
-        ${e.image_url ? `
-          <div class="link-preview" onclick="window.open('${e.instagram_post_url || e.referral_url}', '_blank')" style="cursor:pointer;">
-            <img src="${e.image_url}" style="width:100%; height:120px; object-fit:cover; border-radius:4px; margin-bottom:8px; border:1px solid #ccc;">
-          </div>
-        ` : ''}
+        <div class="link-preview-auto" data-url="${e.instagram_post_url || e.referral_url}" onclick="window.open('${e.instagram_post_url || e.referral_url}', '_blank')">
+          ${e.image_url ? `<img src="${e.image_url}" style="width:100%; height:120px; object-fit:cover; border-radius:4px; margin-bottom:8px; border:1px solid #ccc;">` : ''}
+        </div>
         <div class="event-share-header">
           <div class="event-share-title">${escapeHtml(e.name)} <span class="xp-badge">+50 XP</span></div>
           <div style="display:flex; gap:5px; margin-top:5px;">
@@ -2277,6 +2274,29 @@ async function renderizarCompartilhamentoEventos() {
         </div>
       </div>`;
   }).join('') : '<div class="fl-loading">Nenhum evento para compartilhar.</div>';
+  carregarPreviewsGeral();
+}
+
+async function carregarPreviewsGeral() {
+  const containers = document.querySelectorAll('.link-preview-auto');
+  containers.forEach(async (el) => {
+    const url = el.getAttribute('data-url');
+    // Se já tem imagem (vinda do banco) ou já carregou, pula para evitar re-carregamento
+    if (!url || el.dataset.loaded || el.querySelector('img')) return;
+    el.dataset.loaded = "true";
+
+    try {
+      // Microlink API - Grátis e eficiente para extrair metadados OpenGraph (og:image, title)
+      const res = await fetch(`https://api.microlink.io?url=${encodeURIComponent(url)}`);
+      const json = await res.json();
+      if (json.status === 'success' && json.data.image) {
+        el.innerHTML = `
+          <img src="${json.data.image.url}" style="width:100%; height:120px; object-fit:cover; border-radius:4px; margin-bottom:4px; border:1px solid #ccc;">
+          <div style="font-size:10px; font-weight:bold; color:#003399; margin-bottom:5px;">${escapeHtml(json.data.title || '')}</div>
+        `;
+      }
+    } catch (e) { console.warn("Erro ao carregar preview para:", url); }
+  });
 }
 
 function copiarLinkEvento(baseUrl) {
