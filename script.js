@@ -2166,7 +2166,8 @@ function alternarTabsTarefas(aba) {
 
 async function renderizarTarefasDiarias() {
   const container = document.getElementById('tarefas-diarias-content');
-  const hoje = new Date().toISOString().split('T')[0];
+  // Pega a data local YYYY-MM-DD para evitar problemas de fuso horário UTC
+  const hoje = new Date().toLocaleDateString('en-CA'); 
 
   const [tasksRes, claimsRes] = await Promise.all([
     supabaseClient.from('daily_tasks').select('*').eq('active', true),
@@ -2197,8 +2198,8 @@ async function renderizarTarefasDiarias() {
               <button class="task-btn" onclick="window.open('${t.url_acao}', '_blank')">Ir para Tarefa</button>
               <div class="share-upload-box">
                 <label style="font-size:9px;">Anexe o print da tarefa concluída:</label>
-                <input type="file" id="task-file-${t.id}" accept="image/*" class="share-file-input">
-                <button class="up-btn-save" onclick="enviarPrintTarefa('${t.id}')" id="btn-task-${t.id}" style="padding:5px; font-size:10px;">enviar print para ganhar XP</button>
+                <input type="file" id="task-file-${String(t.id)}" accept="image/*" class="share-file-input">
+                <button class="up-btn-save" onclick="enviarPrintTarefa('${String(t.id)}')" id="btn-task-${String(t.id)}" style="padding:5px; font-size:10px;">enviar print para ganhar XP</button>
               </div>
             </div>
           `}
@@ -2219,22 +2220,30 @@ async function enviarPrintTarefa(taskId) {
   try {
     const compressed = await comprimirImagem(file, 1000);
     const url = await uploadToCloudinary(compressed, 'task_claims');
-    const { error: insertError } = await supabaseClient.from('task_claims').insert([{ user_id: currentUser.id, task_id: taskId, image_url: url }]);
+    
+    // Garante que o taskId seja tratado corretamente (string para UUID ou compatível com Number)
+    const { error: insertError } = await supabaseClient
+      .from('task_claims')
+      .insert([{ user_id: currentUser.id, task_id: taskId, image_url: url }]);
+
     if (!insertError) {
       mostrarAlerta('task-claim-success', 'Print Enviado!', 'tarefas', "Seu XP será creditado em até 18h, após a verificação. Não apague os prints dentro deste período.");
+      renderizarTarefasDiarias();
     } else {
+      console.error("Erro ao inserir claim de tarefa:", insertError);
       mostrarNotificacao('Erro ao registrar o print.');
+      btn.disabled = false; btn.textContent = 'enviar print para ganhar XP';
     }
-    renderizarTarefasDiarias();
   } catch (e) {
-    mostrarNotificacao('Erro ao enviar.');
+    console.error("Erro no processo de envio:", e);
+    mostrarNotificacao('Erro ao processar imagem.');
     btn.disabled = false; btn.textContent = 'enviar print para ganhar XP';
   }
 }
 
 async function renderizarCompartilhamentoEventos() {
   const container = document.getElementById('compartilhar-eventos-content');
-  const hoje = new Date().toISOString().split('T')[0];
+  const hoje = new Date().toLocaleDateString('en-CA');
 
   const [eventsRes, claimsRes] = await Promise.all([
     supabaseClient.from('events').select('*').eq('share_active', true),
