@@ -432,16 +432,17 @@ async function salvarPerfilCompleto() {
     }
 
     const nick = nickEl.value.trim();
-    const nasc = nascEl.value;
+    const nascRaw = nascEl.value; // Formato YYYY-MM-DD vindo do Android
     const cidade = cidadeEl.value.trim();
 
     if (!nick) { mostrarNotificacao('Escolha um Nickname.'); return; }
-    if (!nasc) { mostrarNotificacao('Informe sua data de nascimento.'); return; }
+    if (!nascRaw) { mostrarNotificacao('Informe sua data de nascimento.'); return; }
     if (!cidade) { mostrarNotificacao('Informe sua cidade.'); return; }
 
+    // Parse manual da data para garantir compatibilidade total no Android
+    const partes = nascRaw.split('-');
+    const dataNasc = new Date(parseInt(partes[0]), parseInt(partes[1]) - 1, parseInt(partes[2]));
     const hoje = new Date();
-    const dataNasc = new Date(nasc);
-    if (isNaN(dataNasc.getTime())) { mostrarNotificacao('Data de nascimento inválida.'); return; }
 
     let idade = hoje.getFullYear() - dataNasc.getFullYear();
     if (hoje.getMonth() < dataNasc.getMonth() || (hoje.getMonth() === dataNasc.getMonth() && hoje.getDate() < dataNasc.getDate())) idade--;
@@ -456,15 +457,15 @@ async function salvarPerfilCompleto() {
 
     btn.disabled = true; btn.textContent = 'Salvando...';
     let avatarUrl = null;
+
     if (fotoFile) {
       try {
-        const compressedFile = await comprimirImagem(fotoFile, 300);
+        // Tenta comprimir, se falhar por memória no Android, usa o arquivo original
+        const compressedFile = await comprimirImagem(fotoFile, 600).catch(() => fotoFile);
         avatarUrl = await uploadToCloudinary(compressedFile, 'avatars');
       } catch (e) {
-        console.error("Erro no processamento da imagem:", e);
-        mostrarNotificacao('Não foi possível usar esta foto. Tente outra ou salve sem foto.');
-        btn.disabled = false; btn.textContent = 'CONCLUIR INSTALAÇÃO';
-        return;
+        console.warn("Falha no upload da foto, prosseguindo sem ela:", e);
+        // Não paramos o processo aqui, apenas deixamos o avatarUrl como null
       }
     }
 
@@ -473,7 +474,7 @@ async function salvarPerfilCompleto() {
     const { error } = await supabaseClient.from('profiles').upsert({
       id: currentUser.id, nickname: nick, color: corSelecionada,
       avatar_url: avatarUrl, xp: 0, level: 'Rookie', referral_code: ref,
-      birth_date: nasc, city: cidade, terms_accepted_at: agora
+      birth_date: nascRaw, city: cidade, terms_accepted_at: agora
     }, { onConflict: 'id' });
 
     if (error) {
@@ -505,21 +506,24 @@ function comprimirImagem(file, maxSize=800) {
           let w=img.width, h=img.height;
           if (w>h) { h=h*maxSize/w; w=maxSize; } else { w=w*maxSize/h; h=maxSize; }
           canvas.width=w; canvas.height=h;
-          const ctx = canvas.getContext('2d');
+          const ctx = canvas.getContext('2d', { alpha: false });
           ctx.drawImage(img,0,0,w,h);
-          if (!canvas.toBlob) {
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-            const byteString = atob(dataUrl.split(',')[1]);
-            const mimeString = dataUrl.split(',')[0].split(':')[1].split(';')[0];
-            const ab = new ArrayBuffer(byteString.length);
-            const ia = new Uint8Array(ab);
-            for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
-            resolve(new Blob([ab], {type: mimeString}));
-          } else {
-            canvas.toBlob(b => b ? resolve(b) : reject(new Error("Erro Blob")), 'image/jpeg', 0.85);
+
+          // Método mais compatível para Android (DataURL para Blob manual)
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+          const parts = dataUrl.split(',');
+          const byteString = atob(parts[1]);
+          const mimeString = parts[0].split(':')[1].split(';')[0];
+          const ab = new ArrayBuffer(byteString.length);
+          const ia = new Uint8Array(ab);
+          for (let i = 0; i < byteString.length; i++) {
+            ia[i] = byteString.charCodeAt(i);
           }
+          const resultBlob = new Blob([ab], { type: mimeString });
+          resolve(resultBlob);
         } catch (err) {
-          reject(err);
+          // Se der qualquer erro no processamento do canvas (comum em Android sem memória)
+          resolve(file); 
         }
       }; img.src=e.target.result;
     }; r.readAsDataURL(file);
