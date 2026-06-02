@@ -2226,7 +2226,7 @@ async function enviarPrintTarefa(taskId) {
       .insert([{ user_id: currentUser.id, task_id: taskId, image_url: url }]);
 
     if (!insertError) {
-      mostrarAlerta('task-claim-success', 'Print Enviado!', 'tarefas', "Seu XP será creditado em até 18h, após a verificação. Não apague os prints dentro deste período.");
+      mostrarAlerta('task-claim-success', 'Print Enviado!', 'tarefas', "Seu XP será creditado em até 24h, após a verificação. Não apague os prints dentro deste período.");
       renderizarTarefasDiarias();
     } else {
       // Log detalhado para identificar se a tabela existe ou se faltam colunas
@@ -2333,7 +2333,7 @@ async function enviarPrintShare(eventId) {
     const url = await uploadToCloudinary(compressed, 'share_claims');
     const { error: insertError } = await supabaseClient.from('share_claims').insert([{ user_id: currentUser.id, event_id: eventId, image_url: url, description: desc }]);
     if (!insertError) {
-      mostrarAlerta('share-claim-success', 'Print Enviado!', 'tarefas', "Seu XP será creditado em até 18h, após a verificação. Não apague os compartilhamentos dentro deste período.");
+      mostrarAlerta('share-claim-success', 'Print Enviado!', 'tarefas', "Seu XP será creditado em até 24h, após a verificação. Não apague os compartilhamentos dentro deste período.");
     } else {
       mostrarNotificacao('Erro ao registrar o print. Tente novamente.');
     }
