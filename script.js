@@ -2221,7 +2221,6 @@ async function enviarPrintTarefa(taskId) {
     const compressed = await comprimirImagem(file, 1000);
     const url = await uploadToCloudinary(compressed, 'task_claims');
     
-    // Garante que o taskId seja tratado corretamente (string para UUID ou compatível com Number)
     const { error: insertError } = await supabaseClient
       .from('task_claims')
       .insert([{ user_id: currentUser.id, task_id: taskId, image_url: url }]);
@@ -2230,8 +2229,14 @@ async function enviarPrintTarefa(taskId) {
       mostrarAlerta('task-claim-success', 'Print Enviado!', 'tarefas', "Seu XP será creditado em até 18h, após a verificação. Não apague os prints dentro deste período.");
       renderizarTarefasDiarias();
     } else {
-      console.error("Erro ao inserir claim de tarefa:", insertError);
-      mostrarNotificacao('Erro ao registrar o print.');
+      // Log detalhado para identificar se a tabela existe ou se faltam colunas
+      console.error("Erro detalhado do Supabase:", insertError.message, insertError.details, insertError.hint);
+      
+      const msgErro = insertError.message.includes("not found") 
+        ? 'Tabela "task_claims" não encontrada no banco.' 
+        : 'Erro ao registrar o print no banco.';
+      
+      mostrarNotificacao(msgErro);
       btn.disabled = false; btn.textContent = 'enviar print para ganhar XP';
     }
   } catch (e) {
