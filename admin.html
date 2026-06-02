@@ -412,6 +412,7 @@
       });
 
       if (error) {
+        console.error("Erro ao criar tarefa:", error);
         showNotification(`Erro ao criar tarefa: ${error.message}`, 'error');
       } else {
         showNotification('Tarefa criada com sucesso!');
@@ -441,6 +442,7 @@
       }).eq('id', taskId);
 
       if (error) {
+        console.error("Erro ao atualizar tarefa:", error);
         showNotification(`Erro ao atualizar tarefa: ${error.message}`, 'error');
       } else {
         showNotification('Tarefa atualizada com sucesso!');
@@ -454,6 +456,7 @@
       const { error } = await supabaseClient.from('daily_tasks').delete().eq('id', taskId);
 
       if (error) {
+        console.error("Erro ao excluir tarefa:", error);
         showNotification(`Erro ao excluir tarefa: ${error.message}`, 'error');
       } else {
         showNotification('Tarefa excluída com sucesso!');
@@ -522,6 +525,7 @@
       });
 
       if (error) {
+        console.error("Erro ao criar evento:", error);
         showNotification(`Erro ao criar evento: ${error.message}`, 'error');
       } else {
         showNotification('Evento criado com sucesso!');
@@ -549,6 +553,7 @@
       }).eq('id', eventId);
 
       if (error) {
+        console.error("Erro ao atualizar evento:", error);
         showNotification(`Erro ao atualizar evento: ${error.message}`, 'error');
       } else {
         showNotification('Evento atualizado com sucesso!');
@@ -562,6 +567,7 @@
       const { error } = await supabaseClient.from('events').delete().eq('id', eventId);
 
       if (error) {
+        console.error("Erro ao excluir evento:", error);
         showNotification(`Erro ao excluir evento: ${error.message}`, 'error');
       } else {
         showNotification('Evento excluído com sucesso!');
@@ -605,6 +611,7 @@
       const { error } = await supabaseClient.from('app_config').upsert({ key, value }, { onConflict: 'key' });
 
       if (error) {
+        console.error("Erro ao salvar config:", error);
         showNotification(`Erro ao salvar ${key}: ${error.message}`, 'error');
       } else {
         showNotification(`${key} salvo com sucesso!`);
@@ -647,6 +654,7 @@
       const { error } = await supabaseClient.from('notifications').insert(payload);
 
       if (error) {
+        console.error("Erro ao disparar alerta:", error);
         showNotification(`Erro ao disparar alerta: ${error.message}`, 'error');
       } else {
         showNotification('Alerta disparado com sucesso!');
