@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LIKE 2000 - Painel Admin</title>
+  <link rel="stylesheet" href="style.css"> <!-- Reutiliza alguns estilos base -->
+  <style>
+    body {
+      font-family: Tahoma, sans-serif;
+      background-color: #f0f0f0;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      min-height: 100vh;
+      color: #333;
+    }
+    #admin-sidebar {
+      width: 200px;
+      background-color: #2e6da4;
+      color: white;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 2px 0 5px rgba(0,0,0,0.2);
+      flex-shrink: 0;
+    }
+    #admin-sidebar h2 {
+      font-size: 20px;
+      margin-bottom: 30px;
+      text-align: center;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    }
+    #admin-sidebar ul {
+      list-style: none;
+      padding: 0;
+      flex-grow: 1;
+    }
+    #admin-sidebar ul li {
+      margin-bottom: 10px;
+    }
+    #admin-sidebar ul li a {
+      color: white;
+      text-decoration: none;
+      padding: 10px 15px;
+      display: block;
+      border-radius: 5px;
+      transition: background-color 0.2s;
+    }
+    #admin-sidebar ul li a:hover, #admin-sidebar ul li a.active {
+      background-color: #3a8c3a;
+    }
+    #admin-main-content {
+      flex-grow: 1;
+      padding: 20px;
+      background-color: #fff;
+      overflow-y: auto;
+    }
+    .admin-section {
+      margin-bottom: 40px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 20px;
+      background-color: #f9f9f9;
+    }
+    .admin-section h3 {
+      font-size: 22px;
+      color: #2e6da4;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #2e6da4;
+      padding-bottom: 10px;
+    }
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+    .admin-table th, .admin-table td {
+      border: 1px solid #eee;
+      padding: 8px;
+      text-align: left;
+      font-size: 12px;
+    }
+    .admin-table th {
+      background-color: #e0e0e0;
+      font-weight: bold;
+    }
+    .admin-table tr:nth-child(even) {
+      background-color: #f5f5f5;
+    }
+    .admin-table .actions button {
+      padding: 4px 8px;
+      margin-right: 5px;
+      cursor: pointer;
+      border: 1px solid #ccc;
+      background-color: #e0e0e0;
+      border-radius: 3px;
+      font-size: 11px;
+    }
+    .admin-table .actions button:hover {
+      background-color: #d0d0d0;
+    }
+    .admin-form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .admin-form label {
+      font-weight: bold;
+      font-size: 13px;
+      margin-bottom: 2px;
+    }
+    .admin-form input[type="text"],
+    .admin-form input[type="number"],
+    .admin-form input[type="url"],
+    .admin-form textarea,
+    .admin-form select {
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .admin-form input[type="checkbox"] {
+      margin-right: 5px;
+    }
+    .admin-form button {
+      padding: 10px 15px;
+      background-color: #2e6da4;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+    .admin-form button:hover {
+      background-color: #3a8c3a;
+    }
+    .admin-logout-btn {
+      margin-top: auto; /* Push to bottom */
+      padding: 10px 15px;
+      background-color: #d9534f;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      text-align: center;
+      text-decoration: none;
+    }
+    .admin-logout-btn:hover {
+      background-color: #c9302c;
+    }
+    .config-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .config-item label {
+      flex-shrink: 0;
+      width: 150px;
+    }
+    .config-item input {
+      flex-grow: 1;
+    }
+    .config-item button {
+      padding: 6px 12px;
+      font-size: 12px;
+      background-color: #5cb85c;
+      border: none;
+      color: white;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    .config-item button:hover {
+      background-color: #4cae4c;
+    }
+    .alert-options {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      margin-top: 10px;
+    }
+    .alert-options div {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .alert-options input[type="radio"] {
+      margin-right: 5px;
+    }
+    .alert-options label {
+      font-weight: normal;
+    }
+    .alert-datetime-picker {
+      margin-top: 10px;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div id="admin-sidebar">
+    <h2>Admin Panel</h2>
+    <ul>
+      <li><a href="#" id="nav-daily-tasks" class="active" onclick="showSection('daily-tasks', this)">Tarefas Diárias</a></li>
+      <li><a href="#" id="nav-events" onclick="showSection('events', this)">Eventos Compartilhamento</a></li>
+      <li><a href="#" id="nav-configs" onclick="showSection('configs', this)">Configurações Gerais</a></li>
+      <li><a href="#" id="nav-alerts" onclick="showSection('alerts', this)">Disparar Alertas</a></li>
+    </ul>
+    <a href="#" class="admin-logout-btn" onclick="adminLogout()">Sair</a>
+  </div>
+
+  <div id="admin-main-content">
+    <div id="daily-tasks-section" class="admin-section">
+      <h3>Tarefas Diárias</h3>
+      <div id="daily-tasks-list"></div>
+      <h4>Criar Nova Tarefa</h4>
+      <div class="admin-form">
+        <label for="new-task-title">Título:</label>
+        <input type="text" id="new-task-title" placeholder="Título da Tarefa">
+        <label for="new-task-description">Descrição:</label>
+        <textarea id="new-task-description" placeholder="Descrição da Tarefa"></textarea>
+        <label for="new-task-url">URL da Ação (opcional):</label>
+        <input type="url" id="new-task-url" placeholder="https://exemplo.com">
+        <label for="new-task-xp">XP (default 50):</label>
+        <input type="number" id="new-task-xp" value="50">
+        <div>
+          <input type="checkbox" id="new-task-active" checked>
+          <label for="new-task-active">Ativa</label>
+        </div>
+        <button onclick="createDailyTask()">Criar Tarefa</button>
+      </div>
+    </div>
+
+    <div id="events-section" class="admin-section" style="display:none;">
+      <h3>Eventos para Compartilhamento</h3>
+      <div id="events-list"></div>
+      <h4>Criar Novo Evento</h4>
+      <div class="admin-form">
+        <label for="new-event-name">Nome do Evento:</label>
+        <input type="text" id="new-event-name" placeholder="Nome do Evento">
+        <label for="new-event-referral-url">URL de Referência:</label>
+        <input type="url" id="new-event-referral-url" placeholder="https://linkdoevento.com">
+        <label for="new-event-instagram-url">URL do Post no Instagram (opcional):</label>
+        <input type="url" id="new-event-instagram-url" placeholder="https://instagram.com/p/...">
+        <div>
+          <input type="checkbox" id="new-event-share-active" checked>
+          <label for="new-event-share-active">Ativo para Compartilhamento</label>
+        </div>
+        <button onclick="createEvent()">Criar Evento</button>
+      </div>
+    </div>
+
+    <div id="configs-section" class="admin-section" style="display:none;">
+      <h3>Configurações Gerais</h3>
+      <div id="app-configs-list"></div>
+    </div>
+
+    <div id="alerts-section" class="admin-section" style="display:none;">
+      <h3>Disparar Alertas</h3>
+      <div class="admin-form">
+        <label for="alert-title">Título do Alerta:</label>
+        <input type="text" id="alert-title" placeholder="Título (ex: Novidade!)">
+        <label for="alert-message">Mensagem:</label>
+        <textarea id="alert-message" placeholder="Sua mensagem aqui..." rows="4"></textarea>
+        <label>Modo de Disparo:</label>
+        <div class="alert-options">
+          <div>
+            <input type="radio" id="alert-mode-online" name="alert-mode" value="online" checked>
+            <label for="alert-mode-online">Só quem está logado agora</label>
+          </div>
+          <div>
+            <input type="radio" id="alert-mode-all" name="alert-mode" value="all">
+            <label for="alert-mode-all">Todos no próximo login</label>
+          </div>
+        </div>
+        <div id="alert-expires-at-container" style="display:none;">
+          <label for="alert-expires-at">Expirar em (data/hora):</label>
+          <input type="datetime-local" id="alert-expires-at" class="alert-datetime-picker">
+        </div>
+        <button onclick="sendAlert()">Disparar Alerta</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://hjglujffcjbrmugoprjh.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhqZ2x1amZmY2picm11Z29wcmpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5NTQ5NjUsImV4cCI6MjA5NDUzMDk2NX0.hbeP1zWBYvsH9BCsoyaBOkoZfIvY9U1uXdSSwxmuvos';
+    const ADMIN_USER_ID = '6ddf2883-da69-4a8f-8525-6d7a1b45869d'; // ID do usuário administrador
+
+    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // --- Auth Check ---
+    async function checkAdminAuth() {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (!session || session.user.id !== ADMIN_USER_ID) {
+        window.location.href = 'index.html'; // Redireciona se não for o admin
+      } else {
+        initAdminPanel();
+      }
+    }
+
+    function adminLogout() {
+      supabaseClient.auth.signOut();
+      window.location.href = 'index.html';
+    }
+
+    // --- UI Navigation ---
+    function showSection(sectionId, element) {
+      document.querySelectorAll('.admin-section').forEach(sec => sec.style.display = 'none');
+      document.getElementById(sectionId + '-section').style.display = 'block';
+      document.querySelectorAll('#admin-sidebar ul li a').forEach(link => link.classList.remove('active'));
+      element.classList.add('active');
+
+      // Carrega dados para a seção selecionada
+      if (sectionId === 'daily-tasks') renderDailyTasks();
+      else if (sectionId === 'events') renderEvents();
+      else if (sectionId === 'configs') renderAppConfig();
+    }
+
+    // --- Notifications / Alerts ---
+    function showNotification(message, type = 'success') {
+      const notificationDiv = document.createElement('div');
+      notificationDiv.style.cssText = `
+        position: fixed; bottom: 20px; right: 20px;
+        background-color: ${type === 'success' ? '#4CAF50' : '#f44336'};
+        color: white; padding: 10px 20px; border-radius: 5px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2); z-index: 10000;
+        opacity: 0; transition: opacity 0.5s ease-in-out;
+      `;
+      notificationDiv.textContent = message;
+      document.body.appendChild(notificationDiv);
+
+      setTimeout(() => notificationDiv.style.opacity = '1', 10);
+      setTimeout(() => {
+        notificationDiv.style.opacity = '0';
+        notificationDiv.addEventListener('transitionend', () => notificationDiv.remove());
+      }, 3000);
+    }
+
+    // --- Daily Tasks CRUD ---
+    async function renderDailyTasks() {
+      const container = document.getElementById('daily-tasks-list');
+      container.innerHTML = 'Carregando tarefas...';
+
+      const { data, error } = await supabaseClient.from('daily_tasks').select('*').order('id');
+
+      if (error) {
+        container.innerHTML = `<div style="color:red;">Erro ao carregar tarefas: ${error.message}</div>`;
+        return;
+      }
+
+      let html = `
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Título</th>
+              <th>Descrição</th>
+              <th>URL</th>
+              <th>XP</th>
+              <th>Ativa</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+      data.forEach(task => {
+        html += `
+          <tr>
+            <td>${task.id}</td>
+            <td><input type="text" id="task-title-${task.id}" value="${escapeHtml(task.title)}" style="width:100%;"></td>
+            <td><textarea id="task-desc-${task.id}" style="width:100%;">${escapeHtml(task.description)}</textarea></td>
+            <td><input type="url" id="task-url-${task.id}" value="${escapeHtml(task.url_acao || '')}" style="width:100%;"></td>
+            <td><input type="number" id="task-xp-${task.id}" value="${task.xp_reward}" style="width:60px;"></td>
+            <td><input type="checkbox" id="task-active-${task.id}" ${task.active ? 'checked' : ''}></td>
+            <td class="actions">
+              <button onclick="updateDailyTask('${task.id}')">Salvar</button>
+              <button onclick="deleteDailyTask('${task.id}')">Excluir</button>
+            </td>
+          </tr>
+        `;
+      });
+      html += `</tbody></table>`;
+      container.innerHTML = html;
+    }
+
+    async function createDailyTask() {
+      const title = document.getElementById('new-task-title').value;
+      const description = document.getElementById('new-task-description').value;
+      const url_acao = document.getElementById('new-task-url').value;
+      const xp_reward = parseInt(document.getElementById('new-task-xp').value);
+      const active = document.getElementById('new-task-active').checked;
+
+      if (!title || !description || isNaN(xp_reward)) {
+        showNotification('Preencha título, descrição e XP.', 'error');
+        return;
+      }
+
+      const { error } = await supabaseClient.from('daily_tasks').insert({
+        title, description, url_acao, xp_reward, active
+      });
+
+      if (error) {
+        showNotification(`Erro ao criar tarefa: ${error.message}`, 'error');
+      } else {
+        showNotification('Tarefa criada com sucesso!');
+        document.getElementById('new-task-title').value = '';
+        document.getElementById('new-task-description').value = '';
+        document.getElementById('new-task-url').value = '';
+        document.getElementById('new-task-xp').value = '50';
+        document.getElementById('new-task-active').checked = true;
+        renderDailyTasks();
+      }
+    }
+
+    async function updateDailyTask(taskId) {
+      const title = document.getElementById(`task-title-${taskId}`).value;
+      const description = document.getElementById(`task-desc-${taskId}`).value;
+      const url_acao = document.getElementById(`task-url-${taskId}`).value;
+      const xp_reward = parseInt(document.getElementById(`task-xp-${taskId}`).value);
+      const active = document.getElementById(`task-active-${taskId}`).checked;
+
+      if (!title || !description || isNaN(xp_reward)) {
+        showNotification('Preencha título, descrição e XP.', 'error');
+        return;
+      }
+
+      const { error } = await supabaseClient.from('daily_tasks').update({
+        title, description, url_acao, xp_reward, active
+      }).eq('id', taskId);
+
+      if (error) {
+        showNotification(`Erro ao atualizar tarefa: ${error.message}`, 'error');
+      } else {
+        showNotification('Tarefa atualizada com sucesso!');
+        renderDailyTasks();
+      }
+    }
+
+    async function deleteDailyTask(taskId) {
+      if (!confirm('Tem certeza que deseja excluir esta tarefa?')) return;
+
+      const { error } = await supabaseClient.from('daily_tasks').delete().eq('id', taskId);
+
+      if (error) {
+        showNotification(`Erro ao excluir tarefa: ${error.message}`, 'error');
+      } else {
+        showNotification('Tarefa excluída com sucesso!');
+        renderDailyTasks();
+      }
+    }
+
+    // --- Events CRUD ---
+    async function renderEvents() {
+      const container = document.getElementById('events-list');
+      container.innerHTML = 'Carregando eventos...';
+
+      const { data, error } = await supabaseClient.from('events').select('*').order('id');
+
+      if (error) {
+        container.innerHTML = `<div style="color:red;">Erro ao carregar eventos: ${error.message}</div>`;
+        return;
+      }
+
+      let html = `
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nome</th>
+              <th>URL Referência</th>
+              <th>URL Instagram</th>
+              <th>Ativo</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+      data.forEach(event => {
+        html += `
+          <tr>
+            <td>${event.id}</td>
+            <td><input type="text" id="event-name-${event.id}" value="${escapeHtml(event.name)}" style="width:100%;"></td>
+            <td><input type="url" id="event-referral-url-${event.id}" value="${escapeHtml(event.referral_url || '')}" style="width:100%;"></td>
+            <td><input type="url" id="event-instagram-url-${event.id}" value="${escapeHtml(event.instagram_post_url || '')}" style="width:100%;"></td>
+            <td><input type="checkbox" id="event-share-active-${event.id}" ${event.share_active ? 'checked' : ''}></td>
+            <td class="actions">
+              <button onclick="updateEvent('${event.id}')">Salvar</button>
+              <button onclick="deleteEvent('${event.id}')">Excluir</button>
+            </td>
+          </tr>
+        `;
+      });
+      html += `</tbody></table>`;
+      container.innerHTML = html;
+    }
+
+    async function createEvent() {
+      const name = document.getElementById('new-event-name').value;
+      const referral_url = document.getElementById('new-event-referral-url').value;
+      const instagram_post_url = document.getElementById('new-event-instagram-url').value;
+      const share_active = document.getElementById('new-event-share-active').checked;
+
+      if (!name || !referral_url) {
+        showNotification('Preencha nome e URL de referência.', 'error');
+        return;
+      }
+
+      const { error } = await supabaseClient.from('events').insert({
+        name, referral_url, instagram_post_url, share_active
+      });
+
+      if (error) {
+        showNotification(`Erro ao criar evento: ${error.message}`, 'error');
+      } else {
+        showNotification('Evento criado com sucesso!');
+        document.getElementById('new-event-name').value = '';
+        document.getElementById('new-event-referral-url').value = '';
+        document.getElementById('new-event-instagram-url').value = '';
+        document.getElementById('new-event-share-active').checked = true;
+        renderEvents();
+      }
+    }
+
+    async function updateEvent(eventId) {
+      const name = document.getElementById(`event-name-${eventId}`).value;
+      const referral_url = document.getElementById(`event-referral-url-${eventId}`).value;
+      const instagram_post_url = document.getElementById(`event-instagram-url-${eventId}`).value;
+      const share_active = document.getElementById(`event-share-active-${eventId}`).checked;
+
+      if (!name || !referral_url) {
+        showNotification('Preencha nome e URL de referência.', 'error');
+        return;
+      }
+
+      const { error } = await supabaseClient.from('events').update({
+        name, referral_url, instagram_post_url, share_active
+      }).eq('id', eventId);
+
+      if (error) {
+        showNotification(`Erro ao atualizar evento: ${error.message}`, 'error');
+      } else {
+        showNotification('Evento atualizado com sucesso!');
+        renderEvents();
+      }
+    }
+
+    async function deleteEvent(eventId) {
+      if (!confirm('Tem certeza que deseja excluir este evento?')) return;
+
+      const { error } = await supabaseClient.from('events').delete().eq('id', eventId);
+
+      if (error) {
+        showNotification(`Erro ao excluir evento: ${error.message}`, 'error');
+      } else {
+        showNotification('Evento excluído com sucesso!');
+        renderEvents();
+      }
+    }
+
+    // --- App Configs ---
+    const CONFIG_KEYS = ['desktop_wallpaper_url', 'mobile_wallpaper_url', 'msn_banner_url'];
+
+    async function renderAppConfig() {
+      const container = document.getElementById('app-configs-list');
+      container.innerHTML = 'Carregando configurações...';
+
+      const { data, error } = await supabaseClient.from('app_config').select('*').in('key', CONFIG_KEYS);
+
+      if (error) {
+        container.innerHTML = `<div style="color:red;">Erro ao carregar configurações: ${error.message}</div>`;
+        return;
+      }
+
+      const configMap = new Map(data.map(item => [item.key, item.value]));
+
+      let html = '';
+      CONFIG_KEYS.forEach(key => {
+        const value = configMap.get(key) || '';
+        html += `
+          <div class="config-item">
+            <label>${key.replace(/_/g, ' ').toUpperCase()}:</label>
+            <input type="url" id="config-${key}" value="${escapeHtml(value)}">
+            <button onclick="saveAppConfig('${key}')">Salvar</button>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    async function saveAppConfig(key) {
+      const value = document.getElementById(`config-${key}`).value;
+
+      const { error } = await supabaseClient.from('app_config').upsert({ key, value }, { onConflict: 'key' });
+
+      if (error) {
+        showNotification(`Erro ao salvar ${key}: ${error.message}`, 'error');
+      } else {
+        showNotification(`${key} salvo com sucesso!`);
+      }
+    }
+
+    // --- Send Alerts ---
+    async function sendAlert() {
+      const title = document.getElementById('alert-title').value.trim();
+      const message = document.getElementById('alert-message').value.trim();
+      const modeOnline = document.getElementById('alert-mode-online').checked;
+      const expiresAt = document.getElementById('alert-expires-at').value;
+
+      if (!title || !message) {
+        showNotification('Preencha título e mensagem do alerta.', 'error');
+        return;
+      }
+
+      let payload = {
+        title: title,
+        message: message,
+        user_id: null, // Para 'online' ou 'all', user_id é null
+        read: false,
+        target: modeOnline ? 'online' : 'all',
+        expires_at: null
+      };
+
+      if (!modeOnline) {
+        if (!expiresAt) {
+          showNotification('Defina a data/hora de expiração para o modo "Todos no próximo login".', 'error');
+          return;
+        }
+        payload.expires_at = new Date(expiresAt).toISOString();
+      }
+
+      // Para esta ação, é crucial que as RLS policies da tabela 'notifications' permitam
+      // que o usuário admin (com a chave anon) insira dados, ou que esta ação seja
+      // delegada a uma Edge Function que use a service_role_key.
+      // Por simplicidade, assumimos que as RLS policies estão configuradas.
+      const { error } = await supabaseClient.from('notifications').insert(payload);
+
+      if (error) {
+        showNotification(`Erro ao disparar alerta: ${error.message}`, 'error');
+      } else {
+        showNotification('Alerta disparado com sucesso!');
+        document.getElementById('alert-title').value = '';
+        document.getElementById('alert-message').value = '';
+        document.getElementById('alert-mode-online').checked = true;
+        document.getElementById('alert-expires-at-container').style.display = 'none';
+        document.getElementById('alert-expires-at').value = '';
+      }
+    }
+
+    // --- Event Listeners for Alerts Section ---
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('input[name="alert-mode"]').forEach(radio => {
+        radio.addEventListener('change', (event) => {
+          document.getElementById('alert-expires-at-container').style.display = 
+            event.target.value === 'all' ? 'block' : 'none';
+        });
+      });
+    });
+
+    // --- Utility ---
+    function escapeHtml(text) {
+      const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      };
+      return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
+
+    // --- Init ---
+    async function initAdminPanel() {
+      showSection('daily-tasks', document.getElementById('nav-daily-tasks'));
+    }
+
+    checkAdminAuth();
+  </script>
+</body>
+</html>

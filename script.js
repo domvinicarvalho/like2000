@@ -596,6 +596,7 @@ function getBotaoAmizade(targetUserId) {
 async function mostrarDesktop() {
   await checarLoginDiario();
   await carregarTemporada();
+  await checkAndDisplayNotifications(); // NEW: Verifica e exibe notificações do admin
   await carregarCacheAmizades();
   iniciarRealtimeAmizades();
   
