@@ -420,62 +420,84 @@ function previewFotoComp(event) {
 }
 
 async function salvarPerfilCompleto() {
-  const nick = document.getElementById('comp-nick').value.trim();
-  const nasc = document.getElementById('comp-nasc').value;
-  const cidade = document.getElementById('comp-cidade').value.trim();
-  const btn = document.getElementById('btn-save-comp');
-  if (!nick || !nasc || !cidade) { mostrarNotificacao('Preencha tudo!'); return; }
+  try {
+    const nick = document.getElementById('comp-nick').value.trim();
+    const nasc = document.getElementById('comp-nasc').value;
+    const cidade = document.getElementById('comp-cidade').value.trim();
+    const btn = document.getElementById('btn-save-comp');
+    if (!nick || !nasc || !cidade) { mostrarNotificacao('Preencha tudo!'); return; }
 
-  const hoje = new Date();
-  const dataNasc = new Date(nasc);
-  let idade = hoje.getFullYear() - dataNasc.getFullYear();
-  if (hoje.getMonth() < dataNasc.getMonth() || (hoje.getMonth() === dataNasc.getMonth() && hoje.getDate() < dataNasc.getDate())) idade--;
+    const hoje = new Date();
+    const dataNasc = new Date(nasc);
+    let idade = hoje.getFullYear() - dataNasc.getFullYear();
+    if (hoje.getMonth() < dataNasc.getMonth() || (hoje.getMonth() === dataNasc.getMonth() && hoje.getDate() < dataNasc.getDate())) idade--;
 
-  if (idade < 18) {
-    tocarSomErro();
-    alert("ERRO: Você precisa ter 18 anos ou mais para acessar.");
-    await supabaseClient.auth.signOut();
-    location.reload();
-    return;
-  }
-
-  btn.disabled = true; btn.textContent = 'Salvando...';
-  let avatarUrl = null;
-  if (fotoFile) {
-    const compressedFile = await comprimirImagem(fotoFile, 200);
-    try {
-      avatarUrl = await uploadToCloudinary(compressedFile, 'avatars');
-    } catch (e) {
-      mostrarNotificacao('Erro ao fazer upload da foto de perfil.');
-      btn.disabled = false;
+    if (idade < 18) {
+      tocarSomErro();
+      alert("ERRO: Você precisa ter 18 anos ou mais para acessar.");
+      await supabaseClient.auth.signOut();
+      location.reload();
       return;
     }
-  }
 
-  const agora = new Date().toISOString();
-  const ref = nick.toUpperCase().replace(/\s+/g,'').slice(0,8)+Math.floor(Math.random()*900+100);
-  const { error } = await supabaseClient.from('profiles').upsert({
-    id:currentUser.id, nickname:nick, color:corSelecionada,
-    avatar_url:avatarUrl, xp:0, level:'Rookie', referral_code:ref,
-    birth_date: nasc, city: cidade, terms_accepted_at: agora
-  });
-  if (error) { mostrarNotificacao('Erro ao salvar.'); btn.disabled = false; return; }
-  location.reload();
+    btn.disabled = true; btn.textContent = 'Salvando...';
+    let avatarUrl = null;
+    if (fotoFile) {
+      try {
+        const compressedFile = await comprimirImagem(fotoFile, 200);
+        avatarUrl = await uploadToCloudinary(compressedFile, 'avatars');
+      } catch (e) {
+        console.error("Erro no upload:", e);
+        mostrarNotificacao('Erro ao processar foto. Tente outra ou sem foto.');
+        btn.disabled = false; btn.textContent = 'CONCLUIR INSTALAÇÃO';
+        return;
+      }
+    }
+
+    const agora = new Date().toISOString();
+    const ref = nick.toUpperCase().replace(/\s+/g,'').slice(0,8)+Math.floor(Math.random()*900+100);
+    const { error } = await supabaseClient.from('profiles').upsert({
+      id: currentUser.id, nickname: nick, color: corSelecionada,
+      avatar_url: avatarUrl, xp: 0, level: 'Rookie', referral_code: ref,
+      birth_date: nasc, city: cidade, terms_accepted_at: agora
+    }, { onConflict: 'id' });
+
+    if (error) {
+      console.error("Erro no banco:", error);
+      mostrarNotificacao('Erro ao salvar: ' + error.message);
+      btn.disabled = false; btn.textContent = 'CONCLUIR INSTALAÇÃO';
+      return;
+    }
+    location.reload();
+  } catch (err) {
+    console.error("Erro fatal:", err);
+    mostrarNotificacao('Erro inesperado. Tente novamente.');
+    const btn = document.getElementById('btn-save-comp');
+    if(btn) { btn.disabled = false; btn.textContent = 'CONCLUIR INSTALAÇÃO'; }
+  }
 }
 
 // ── COMPRIMIR IMAGEM ──────────────────────────────────────────
 function comprimirImagem(file, maxSize=800) {
-  return new Promise(resolve => {
+  return new Promise((resolve, reject) => {
     const r = new FileReader();
+    r.onerror = reject;
     r.onload = e => {
       const img = new Image();
+      img.onerror = reject;
       img.onload = () => {
         const canvas = document.createElement('canvas');
         let w=img.width, h=img.height;
         if (w>h) { h=h*maxSize/w; w=maxSize; } else { w=w*maxSize/h; h=maxSize; }
         canvas.width=w; canvas.height=h;
-        canvas.getContext('2d').drawImage(img,0,0,w,h);
-        canvas.toBlob(b=>resolve(b),'image/jpeg',0.85);
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img,0,0,w,h);
+        if (!canvas.toBlob) {
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          fetch(dataUrl).then(res => res.blob()).then(resolve).catch(reject);
+        } else {
+          canvas.toBlob(b => b ? resolve(b) : reject("Erro blob"), 'image/jpeg', 0.85);
+        }
       }; img.src=e.target.result;
     }; r.readAsDataURL(file);
   });
