@@ -760,9 +760,11 @@ async function mostrarDesktop() {
 
   // Realtime para Alertas e Notificações do Admin
   supabaseClient.channel('admin-alerts')
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, () => {
-      if (typeof checkAndDisplayNotifications === 'function') {
-        checkAndDisplayNotifications();
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, (payload) => {
+      console.log("🔔 Alerta recebido via Realtime:", payload);
+      if (payload.new && payload.new.active) {
+        const n = payload.new;
+        mostrarAlerta(`alert-${n.id}`, n.title, n.icon || 'ie', n.content, `alert_visto_${n.id}`);
       }
     })
     .subscribe();
@@ -2369,6 +2371,7 @@ async function checkAndDisplayNotifications() {
       .order('created_at', { ascending: false });
 
     if (error || !data) return;
+    console.log(`🔎 Notificações ativas encontradas: ${data.length}`);
 
     data.forEach(n => {
       // A função mostrarAlerta já lida com a persistência (não repetir alerta fechado) via storageKey
