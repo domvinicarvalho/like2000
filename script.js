@@ -274,15 +274,15 @@ async function fazerCadastro() {
 // ── VERIFICAR PERFIL ──────────────────────────────────────────
 let primeiroAcesso = false;
 async function verificarPerfil() {
-  const { data } = await supabaseClient.from('profiles').select('*').eq('id',currentUser.id).maybeSingle();
+  const { data } = await supabaseClient.from('profiles').select('*').eq('id', currentUser.id).maybeSingle();
   if (data && data.nickname) { 
     currentProfile = data; 
     primeiroAcesso = false;
-    mostrarBoot(); 
   } else { 
+    currentProfile = { xp: 0, level: 'Rookie', nickname: 'Novo Usuário', color: '#ffffff' };
     primeiroAcesso = true;
-    mostrarBoot(); 
   }
+  mostrarBoot();
 }
 
 function selecionarCor(cor, el) {
@@ -594,10 +594,14 @@ function getBotaoAmizade(targetUserId) {
 
 // ── DESKTOP ───────────────────────────────────────────────────
 async function mostrarDesktop() {
-  await checarLoginDiario();
-  await carregarTemporada();
-  await carregarCacheAmizades();
-  iniciarRealtimeAmizades();
+  try {
+    await checarLoginDiario();
+    await carregarTemporada();
+    await carregarCacheAmizades();
+    iniciarRealtimeAmizades();
+  } catch (e) {
+    console.error("Erro ao carregar dados iniciais (background):", e);
+  }
   
   const isSetup = primeiroAcesso;
   
@@ -634,7 +638,7 @@ async function mostrarDesktop() {
           </div>
           <div>
             <div class="start-menu-nick" style="color:${currentProfile?.color || '#fff'}">${escapeHtml(currentProfile?.nickname || 'Usuário')}</div>
-            <div style="font-size:11px;color:#aac4ff">⭐ ${currentProfile.xp||0} XP · ${currentProfile.level||'Rookie'}</div>
+            <div style="font-size:11px;color:#aac4ff">⭐ ${currentProfile?.xp || 0} XP · ${currentProfile?.level || 'Rookie'}</div>
             <div style="margin-top:4px;">
               <select class="status-select" onchange="mudarStatus(this.value)">
                 <option value="online" ${currentProfile.status === 'online' ? 'selected' : ''}>🟢 Online</option>
@@ -677,7 +681,7 @@ async function mostrarDesktop() {
               ? `<div class="menu-item-right" onclick="window.location.href='admin.html'" style="color:#d9534f; font-weight:bold; border-top:1px dashed #7090c0; margin-top:5px; padding-top:10px;">🛠️ Painel Admin</div>` 
               : ''
             }
-            <div class="menu-item-right">🎟️ ${escapeHtml(currentProfile.referral_code||'')}</div>
+            <div class="menu-item-right">🎟️ ${escapeHtml(currentProfile?.referral_code || '')}</div>
             <div class="menu-item-right" style="margin-top:auto;border-top:1px solid #7090c0;padding-top:8px" onclick="fazerLogout()">🔴 Sair</div>
           </div>
         </div>
@@ -685,7 +689,7 @@ async function mostrarDesktop() {
 
       <div class="taskbar" id="taskbar">
         <div class="start" onclick="toggleMenu(event)">iniciar</div>
-        <div class="taskbar-xp" id="taskbar-xp">⭐ ${currentProfile.xp||0} XP · ${currentProfile.level||'Rookie'}</div>
+        <div class="taskbar-xp" id="taskbar-xp">⭐ ${currentProfile?.xp || 0} XP · ${currentProfile?.level || 'Rookie'}</div>
         <div class="taskbar-right"><div class="clock" id="clock">00:00</div></div>
       </div>
     </div>`;
@@ -710,12 +714,16 @@ async function mostrarDesktop() {
   // Realtime para Alertas e Notificações do Admin
   supabaseClient.channel('admin-alerts')
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, () => {
-      checkAndDisplayNotifications();
+      if (typeof checkAndDisplayNotifications === 'function') {
+        checkAndDisplayNotifications();
+      }
     })
     .subscribe();
 
   // CHAMA NOTIFICAÇÕES APENAS NO FINAL
-  setTimeout(checkAndDisplayNotifications, 1000);
+  if (typeof checkAndDisplayNotifications === 'function') {
+    setTimeout(checkAndDisplayNotifications, 1000);
+  }
 }
 function atualizarRelogio() {
   const el=document.getElementById('clock'); if(!el)return;
