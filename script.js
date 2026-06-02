@@ -764,7 +764,9 @@ async function mostrarDesktop() {
       const n = payload.new;
       console.log("🔔 Sinal de Realtime recebido:", n);
       if (n && (n.active === true || n.active === undefined)) {
-        mostrarAlerta(`alert-${n.id}`, n.title, n.icon || 'ie', n.content, `alert_visto_${n.id}`);
+        // Tenta pegar o texto de 'content' ou 'message' para evitar o undefined
+        const textoAlerta = n.content || n.message || n.text || "";
+        mostrarAlerta(`alert-${n.id}`, n.title, n.icon || 'ie', textoAlerta, `alert_visto_${n.id}`);
       }
     })
     .subscribe();
@@ -2375,7 +2377,9 @@ async function checkAndDisplayNotifications() {
 
     data.forEach(n => {
       // A função mostrarAlerta já lida com a persistência (não repetir alerta fechado) via storageKey
-      mostrarAlerta(`alert-${n.id}`, n.title, n.icon || 'ie', n.content, `alert_visto_${n.id}`);
+      // Tenta pegar o texto de 'content' ou 'message' para evitar o undefined
+      const textoAlerta = n.content || n.message || n.text || "";
+      mostrarAlerta(`alert-${n.id}`, n.title, n.icon || 'ie', textoAlerta, `alert_visto_${n.id}`);
     });
   } catch (e) {
     console.error("Erro ao processar notificações do sistema:", e);
@@ -2389,6 +2393,7 @@ async function dispararAlertaAdmin(titulo, conteudo, icone = 'ie') {
     return;
   }
   try {
+    console.log("🚀 Disparando alerta com:", { titulo, conteudo, icone });
     const { error } = await supabaseClient
       .from('notifications')
       .insert([{ title: titulo, content: conteudo, icon: icone, active: true }]);
