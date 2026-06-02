@@ -2168,37 +2168,68 @@ async function renderizarTarefasDiarias() {
   const container = document.getElementById('tarefas-diarias-content');
   const hoje = new Date().toISOString().split('T')[0];
 
-  const [tasksRes, completionsRes] = await Promise.all([
+  const [tasksRes, claimsRes] = await Promise.all([
     supabaseClient.from('daily_tasks').select('*').eq('active', true),
-    supabaseClient.from('daily_task_completions').select('task_id').eq('user_id', currentUser.id).gte('completed_at', hoje)
+    supabaseClient.from('task_claims').select('task_id, status').eq('user_id', currentUser.id).gte('created_at', hoje)
   ]);
 
   if (tasksRes.error) { container.innerHTML = 'Erro ao carregar.'; return; }
-  const completedIds = new Set(completionsRes.data?.map(c => c.task_id) || []);
+  const claimsMap = new Map(claimsRes.data?.map(c => [c.task_id, c.status]) || []);
 
   container.innerHTML = tasksRes.data.length ? tasksRes.data.map(t => {
-    const isDone = completedIds.has(t.id);
+    const status = claimsMap.get(t.id);
     return `
-      <div class="task-card ${isDone ? 'done' : ''}">
+      <div class="task-card ${status === 'credited' ? 'done' : ''}">
+        ${t.image_url ? `
+          <div class="link-preview" onclick="window.open('${t.url_acao}', '_blank')" style="cursor:pointer;">
+            <img src="${t.image_url}" style="width:100%; height:120px; object-fit:cover; border-radius:4px; margin-bottom:8px; border:1px solid #ccc;">
+          </div>
+        ` : ''}
         <div class="task-info">
           <div class="task-title">${escapeHtml(t.title)} <span class="xp-badge">+${t.xp_reward} XP</span></div>
           <div class="task-desc">${escapeHtml(t.description)}</div>
         </div>
-        <div class="task-action">
-          ${isDone ? '<span class="task-done-label">Feito! ✅</span>' : `
-            <button class="task-btn" onclick="executarTarefaDiaria('${t.id}', '${t.url_acao}')">Ir para Tarefa</button>
+        <div class="task-action" style="margin-top:10px;">
+          ${status ? `
+            <div class="share-status-box">
+              ${status === 'pending' ? 'Aguardando confirmação ⏳' : 'Confirmado! ✅'}
+            </div>
+          ` : `
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <button class="task-btn" onclick="window.open('${t.url_acao}', '_blank')">Ir para Tarefa</button>
+              <div class="share-upload-box">
+                <label style="font-size:9px;">Anexe o print da tarefa concluída:</label>
+                <input type="file" id="task-file-${t.id}" accept="image/*" class="share-file-input">
+                <button class="up-btn-save" onclick="enviarPrintTarefa('${t.id}')" id="btn-task-${t.id}" style="padding:5px; font-size:10px;">enviar print para ganhar XP</button>
+              </div>
+            </div>
           `}
         </div>
       </div>`;
   }).join('') : '<div class="fl-loading">Nenhuma tarefa hoje.</div>';
 }
 
-async function executarTarefaDiaria(taskId, url) {
-  if (url) window.open(url, '_blank');
-  const { error } = await supabaseClient.from('daily_task_completions').insert([{ user_id: currentUser.id, task_id: taskId }]);
-  if (!error) {
-    await adicionarXP(50, 'tarefa diária concluída');
+async function enviarPrintTarefa(taskId) {
+  const fileInput = document.getElementById(`task-file-${taskId}`);
+  const btn = document.getElementById(`btn-task-${taskId}`);
+  const file = fileInput.files[0];
+
+  if (!file) { mostrarNotificacao('Selecione uma imagem!'); return; }
+
+  btn.disabled = true; btn.textContent = 'Enviando...';
+  try {
+    const compressed = await comprimirImagem(file, 1000);
+    const url = await uploadToCloudinary(compressed, 'task_claims');
+    const { error: insertError } = await supabaseClient.from('task_claims').insert([{ user_id: currentUser.id, task_id: taskId, image_url: url }]);
+    if (!insertError) {
+      mostrarAlerta('task-claim-success', 'Print Enviado!', 'tarefas', "Seu XP será creditado em até 18h, após a verificação. Não apague os prints dentro deste período.");
+    } else {
+      mostrarNotificacao('Erro ao registrar o print.');
+    }
     renderizarTarefasDiarias();
+  } catch (e) {
+    mostrarNotificacao('Erro ao enviar.');
+    btn.disabled = false; btn.textContent = 'enviar print para ganhar XP';
   }
 }
 
@@ -2218,10 +2249,15 @@ async function renderizarCompartilhamentoEventos() {
     const status = claimsMap.get(e.id);
     return `
       <div class="event-share-card">
+        ${e.image_url ? `
+          <div class="link-preview" onclick="window.open('${e.instagram_post_url || e.referral_url}', '_blank')" style="cursor:pointer;">
+            <img src="${e.image_url}" style="width:100%; height:120px; object-fit:cover; border-radius:4px; margin-bottom:8px; border:1px solid #ccc;">
+          </div>
+        ` : ''}
         <div class="event-share-header">
           <div class="event-share-title">${escapeHtml(e.name)} <span class="xp-badge">+50 XP</span></div>
           <div style="display:flex; gap:5px; margin-top:5px;">
-            <button class="task-btn mini" onclick="copiarLinkEvento('${e.referral_url || ''}')">Copiar Link</button>
+            <button class="task-btn mini" onclick="window.open('${e.instagram_post_url || e.referral_url || ''}', '_blank')">Ir para Publicação</button>
             ${e.instagram_post_url ? `<button class="task-btn mini" onclick="window.open('${e.instagram_post_url}', '_blank')">Abrir no Insta</button>` : ''}
           </div>
         </div>
@@ -2235,7 +2271,7 @@ async function renderizarCompartilhamentoEventos() {
               <label>Anexe o print do compartilhamento:</label>
               <input type="file" id="share-file-${e.id}" accept="image/*" class="share-file-input">
               <textarea id="share-desc-${e.id}" placeholder="Opcional: algum comentário..." rows="1"></textarea>
-              <button class="up-btn-save" onclick="enviarPrintShare('${e.id}')" id="btn-share-${e.id}">Enviar print — +50 XP</button>
+              <button class="up-btn-save" onclick="enviarPrintShare('${e.id}')" id="btn-share-${e.id}">enviar print para ganhar XP</button>
             </div>
           `}
         </div>
@@ -2263,14 +2299,14 @@ async function enviarPrintShare(eventId) {
     const url = await uploadToCloudinary(compressed, 'share_claims');
     const { error: insertError } = await supabaseClient.from('share_claims').insert([{ user_id: currentUser.id, event_id: eventId, image_url: url, description: desc }]);
     if (!insertError) {
-      mostrarAlerta('share-claim-success', 'Print Enviado!', 'tarefas', "Seu XP será creditado em até 24h, após a verificação. Não apague os compartilhamentos dentro deste período.");
+      mostrarAlerta('share-claim-success', 'Print Enviado!', 'tarefas', "Seu XP será creditado em até 18h, após a verificação. Não apague os compartilhamentos dentro deste período.");
     } else {
       mostrarNotificacao('Erro ao registrar o print. Tente novamente.');
     }
     renderizarCompartilhamentoEventos();
   } catch (e) {
     mostrarNotificacao('Erro ao enviar.');
-    btn.disabled = false; btn.textContent = 'Enviar print — +50 XP';
+    btn.disabled = false; btn.textContent = 'enviar print para ganhar XP';
   }
 }
 
