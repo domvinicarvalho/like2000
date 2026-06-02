@@ -421,14 +421,28 @@ function previewFotoComp(event) {
 
 async function salvarPerfilCompleto() {
   try {
-    const nick = document.getElementById('comp-nick').value.trim();
-    const nasc = document.getElementById('comp-nasc').value;
-    const cidade = document.getElementById('comp-cidade').value.trim();
+    const nickEl = document.getElementById('comp-nick');
+    const nascEl = document.getElementById('comp-nasc');
+    const cidadeEl = document.getElementById('comp-cidade');
     const btn = document.getElementById('btn-save-comp');
-    if (!nick || !nasc || !cidade) { mostrarNotificacao('Preencha tudo!'); return; }
+
+    if (!nickEl || !nascEl || !cidadeEl) {
+      mostrarNotificacao('Erro técnico: Campos não encontrados.');
+      return;
+    }
+
+    const nick = nickEl.value.trim();
+    const nasc = nascEl.value;
+    const cidade = cidadeEl.value.trim();
+
+    if (!nick) { mostrarNotificacao('Escolha um Nickname.'); return; }
+    if (!nasc) { mostrarNotificacao('Informe sua data de nascimento.'); return; }
+    if (!cidade) { mostrarNotificacao('Informe sua cidade.'); return; }
 
     const hoje = new Date();
     const dataNasc = new Date(nasc);
+    if (isNaN(dataNasc.getTime())) { mostrarNotificacao('Data de nascimento inválida.'); return; }
+
     let idade = hoje.getFullYear() - dataNasc.getFullYear();
     if (hoje.getMonth() < dataNasc.getMonth() || (hoje.getMonth() === dataNasc.getMonth() && hoje.getDate() < dataNasc.getDate())) idade--;
 
@@ -444,11 +458,11 @@ async function salvarPerfilCompleto() {
     let avatarUrl = null;
     if (fotoFile) {
       try {
-        const compressedFile = await comprimirImagem(fotoFile, 200);
+        const compressedFile = await comprimirImagem(fotoFile, 300);
         avatarUrl = await uploadToCloudinary(compressedFile, 'avatars');
       } catch (e) {
-        console.error("Erro no upload:", e);
-        mostrarNotificacao('Erro ao processar foto. Tente outra ou sem foto.');
+        console.error("Erro no processamento da imagem:", e);
+        mostrarNotificacao('Não foi possível usar esta foto. Tente outra ou salve sem foto.');
         btn.disabled = false; btn.textContent = 'CONCLUIR INSTALAÇÃO';
         return;
       }
@@ -481,22 +495,31 @@ async function salvarPerfilCompleto() {
 function comprimirImagem(file, maxSize=800) {
   return new Promise((resolve, reject) => {
     const r = new FileReader();
-    r.onerror = reject;
+    r.onerror = () => reject(new Error("Erro ao ler arquivo"));
     r.onload = e => {
       const img = new Image();
-      img.onerror = reject;
+      img.onerror = () => reject(new Error("Erro ao carregar imagem"));
       img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let w=img.width, h=img.height;
-        if (w>h) { h=h*maxSize/w; w=maxSize; } else { w=w*maxSize/h; h=maxSize; }
-        canvas.width=w; canvas.height=h;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img,0,0,w,h);
-        if (!canvas.toBlob) {
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-          fetch(dataUrl).then(res => res.blob()).then(resolve).catch(reject);
-        } else {
-          canvas.toBlob(b => b ? resolve(b) : reject("Erro blob"), 'image/jpeg', 0.85);
+        try {
+          const canvas = document.createElement('canvas');
+          let w=img.width, h=img.height;
+          if (w>h) { h=h*maxSize/w; w=maxSize; } else { w=w*maxSize/h; h=maxSize; }
+          canvas.width=w; canvas.height=h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img,0,0,w,h);
+          if (!canvas.toBlob) {
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+            const byteString = atob(dataUrl.split(',')[1]);
+            const mimeString = dataUrl.split(',')[0].split(':')[1].split(';')[0];
+            const ab = new ArrayBuffer(byteString.length);
+            const ia = new Uint8Array(ab);
+            for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
+            resolve(new Blob([ab], {type: mimeString}));
+          } else {
+            canvas.toBlob(b => b ? resolve(b) : reject(new Error("Erro Blob")), 'image/jpeg', 0.85);
+          }
+        } catch (err) {
+          reject(err);
         }
       }; img.src=e.target.result;
     }; r.readAsDataURL(file);
