@@ -672,6 +672,9 @@ async function mostrarDesktop() {
             <div class="menu-item-right" onclick="abrirPerfil()">📁 Meu Perfil</div>
             <div class="menu-item-right" onclick="abrirAmigos()">👥 Meus Amigos</div>
             <div class="menu-item-right" onclick="abrirRanking()">🏆 Ranking</div>
+            ${currentUser.id === '6ddf2883-da69-4a8f-8525-6d7a1b45869d' ? `
+              <div class="menu-item-right" onclick="window.location.href='admin.html'" style="color:#d9534f; font-weight:bold;">🛠️ Painel Admin</div>
+            ` : ''}
             <div class="menu-item-right">🎟️ ${escapeHtml(currentProfile.referral_code||'')}</div>
             <div class="menu-item-right" style="margin-top:auto;border-top:1px solid #7090c0;padding-top:8px" onclick="fazerLogout()">🔴 Sair</div>
           </div>
@@ -701,9 +704,6 @@ async function mostrarDesktop() {
     .subscribe();
 
   if (isSetup) abrirJanelaComplemento();
-
-  // Agora que o Desktop existe, podemos verificar notificações
-  checkAndDisplayNotifications();
 }
 function atualizarRelogio() {
   const el=document.getElementById('clock'); if(!el)return;
