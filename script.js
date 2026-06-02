@@ -707,6 +707,13 @@ async function mostrarDesktop() {
 
   if (isSetup) abrirJanelaComplemento();
 
+  // Realtime para Alertas e Notificações do Admin
+  supabaseClient.channel('admin-alerts')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, () => {
+      checkAndDisplayNotifications();
+    })
+    .subscribe();
+
   // CHAMA NOTIFICAÇÕES APENAS NO FINAL
   setTimeout(checkAndDisplayNotifications, 1000);
 }

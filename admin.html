@@ -251,6 +251,8 @@
         <input type="text" id="new-event-name" placeholder="Nome do Evento">
         <label for="new-event-referral-url">URL de Referência:</label>
         <input type="url" id="new-event-referral-url" placeholder="https://linkdoevento.com">
+        <label for="new-event-date">Data do Evento:</label>
+        <input type="date" id="new-event-date">
         <label for="new-event-instagram-url">URL do Post no Instagram (opcional):</label>
         <input type="url" id="new-event-instagram-url" placeholder="https://instagram.com/p/...">
         <div>
@@ -484,6 +486,7 @@
             <tr>
               <th>ID</th>
               <th>Nome</th>
+              <th>Data</th>
               <th>URL Referência</th>
               <th>URL Instagram</th>
               <th>Ativo</th>
@@ -497,6 +500,7 @@
           <tr>
             <td>${event.id}</td>
             <td><input type="text" id="event-name-${event.id}" value="${escapeHtml(event.name)}" style="width:100%;"></td>
+            <td><input type="date" id="event-date-${event.id}" value="${event.event_date ? event.event_date.split('T')[0] : ''}"></td>
             <td><input type="url" id="event-referral-url-${event.id}" value="${escapeHtml(event.referral_url || '')}" style="width:100%;"></td>
             <td><input type="url" id="event-instagram-url-${event.id}" value="${escapeHtml(event.instagram_post_url || '')}" style="width:100%;"></td>
             <td><input type="checkbox" id="event-share-active-${event.id}" ${event.share_active ? 'checked' : ''}></td>
@@ -514,25 +518,27 @@
     async function adminCreateEvent() {
       const name = document.getElementById('new-event-name').value;
       const referral_url = document.getElementById('new-event-referral-url').value;
+      const event_date = document.getElementById('new-event-date').value;
       const instagram_post_url = document.getElementById('new-event-instagram-url').value;
       const share_active = document.getElementById('new-event-share-active').checked;
 
-      if (!name || !referral_url) {
-        showNotification('Preencha nome e URL de referência.', 'error');
+      if (!name || !referral_url || !event_date) {
+        showNotification('Preencha nome, link e data do evento.', 'error');
         return;
       }
 
       const { error } = await supabaseClient.from('events').insert({
-        name, referral_url, instagram_post_url, share_active
+        name, referral_url, event_date, instagram_post_url, share_active
       });
 
       if (error) {
         console.error("Erro Supabase:", error);
-        alert(`Erro ao criar evento: ${error.message}`);
+        alert(`Erro ao criar evento: ${error.message}\nCertifique-se de que a data está preenchida.`);
       } else {
         showNotification('Evento criado com sucesso!');
         document.getElementById('new-event-name').value = '';
         document.getElementById('new-event-referral-url').value = '';
+        document.getElementById('new-event-date').value = '';
         document.getElementById('new-event-instagram-url').value = '';
         document.getElementById('new-event-share-active').checked = true;
         renderEvents();
@@ -542,16 +548,17 @@
     async function adminUpdateEvent(eventId) {
       const name = document.getElementById(`event-name-${eventId}`).value;
       const referral_url = document.getElementById(`event-referral-url-${eventId}`).value;
+      const event_date = document.getElementById(`event-date-${eventId}`).value;
       const instagram_post_url = document.getElementById(`event-instagram-url-${eventId}`).value;
       const share_active = document.getElementById(`event-share-active-${eventId}`).checked;
 
-      if (!name || !referral_url) {
-        showNotification('Preencha nome e URL de referência.', 'error');
+      if (!name || !referral_url || !event_date) {
+        showNotification('Preencha nome, link e data.', 'error');
         return;
       }
 
       const { error } = await supabaseClient.from('events').update({
-        name, referral_url, instagram_post_url, share_active
+        name, referral_url, event_date, instagram_post_url, share_active
       }).eq('id', eventId);
 
       if (error) {
