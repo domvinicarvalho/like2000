@@ -432,18 +432,16 @@ async function salvarPerfilCompleto() {
     }
 
     const nick = nickEl.value.trim();
-    const nascRaw = nascEl.value; // Formato YYYY-MM-DD vindo do Android
+    const nascRaw = nascEl.value; 
     const cidade = cidadeEl.value.trim();
 
     if (!nick) { mostrarNotificacao('Escolha um Nickname.'); return; }
     if (!nascRaw) { mostrarNotificacao('Informe sua data de nascimento.'); return; }
     if (!cidade) { mostrarNotificacao('Informe sua cidade.'); return; }
 
-    // Parse manual da data para garantir compatibilidade total no Android
-    const partes = nascRaw.split('-');
-    const dataNasc = new Date(parseInt(partes[0]), parseInt(partes[1]) - 1, parseInt(partes[2]));
+    // Validação de idade simples para evitar erros de fuso horário no mobile
+    const dataNasc = new Date(nascRaw + "T12:00:00");
     const hoje = new Date();
-
     let idade = hoje.getFullYear() - dataNasc.getFullYear();
     if (hoje.getMonth() < dataNasc.getMonth() || (hoje.getMonth() === dataNasc.getMonth() && hoje.getDate() < dataNasc.getDate())) idade--;
 
@@ -460,17 +458,20 @@ async function salvarPerfilCompleto() {
 
     if (fotoFile) {
       try {
-        // Tenta comprimir, se falhar por memória no Android, usa o arquivo original
-        const compressedFile = await comprimirImagem(fotoFile, 600).catch(() => fotoFile);
+        // Se a foto for muito grande ou o Android estiver sem memória, a compressão falha
+        // Usamos um timeout ou catch para não travar o processo
+        const compressedFile = await comprimirImagem(fotoFile, 400).catch(() => fotoFile);
         avatarUrl = await uploadToCloudinary(compressedFile, 'avatars');
       } catch (e) {
         console.warn("Falha no upload da foto, prosseguindo sem ela:", e);
-        // Não paramos o processo aqui, apenas deixamos o avatarUrl como null
       }
     }
 
     const agora = new Date().toISOString();
     const ref = nick.toUpperCase().replace(/\s+/g,'').slice(0,8)+Math.floor(Math.random()*900+100);
+    
+    // Tentativa de salvamento. Se der erro de "coluna não encontrada", 
+    // o erro será capturado no catch abaixo.
     const { error } = await supabaseClient.from('profiles').upsert({
       id: currentUser.id, nickname: nick, color: corSelecionada,
       avatar_url: avatarUrl, xp: 0, level: 'Rookie', referral_code: ref,
@@ -478,15 +479,15 @@ async function salvarPerfilCompleto() {
     }, { onConflict: 'id' });
 
     if (error) {
-      console.error("Erro no banco:", error);
-      mostrarNotificacao('Erro ao salvar: ' + error.message);
+      console.error("Erro Supabase:", error);
+      mostrarNotificacao('Erro no banco: ' + (error.message || 'Verifique os campos'));
       btn.disabled = false; btn.textContent = 'CONCLUIR INSTALAÇÃO';
       return;
     }
     location.reload();
   } catch (err) {
-    console.error("Erro fatal:", err);
-    mostrarNotificacao('Erro inesperado. Tente novamente.');
+    console.error("Erro Geral:", err);
+    mostrarNotificacao('Erro ao processar dados. Tente novamente.');
     const btn = document.getElementById('btn-save-comp');
     if(btn) { btn.disabled = false; btn.textContent = 'CONCLUIR INSTALAÇÃO'; }
   }
@@ -495,38 +496,35 @@ async function salvarPerfilCompleto() {
 // ── COMPRIMIR IMAGEM ──────────────────────────────────────────
 function comprimirImagem(file, maxSize=800) {
   return new Promise((resolve, reject) => {
-    const r = new FileReader();
-    r.onerror = () => reject(new Error("Erro ao ler arquivo"));
-    r.onload = e => {
+    if (!file.type.startsWith('image/')) return resolve(file);
+    
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
       const img = new Image();
-      img.onerror = () => reject(new Error("Erro ao carregar imagem"));
+      img.src = event.target.result;
       img.onload = () => {
-        try {
-          const canvas = document.createElement('canvas');
-          let w=img.width, h=img.height;
-          if (w>h) { h=h*maxSize/w; w=maxSize; } else { w=w*maxSize/h; h=maxSize; }
-          canvas.width=w; canvas.height=h;
-          const ctx = canvas.getContext('2d', { alpha: false });
-          ctx.drawImage(img,0,0,w,h);
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
 
-          // Método mais compatível para Android (DataURL para Blob manual)
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-          const parts = dataUrl.split(',');
-          const byteString = atob(parts[1]);
-          const mimeString = parts[0].split(':')[1].split(';')[0];
-          const ab = new ArrayBuffer(byteString.length);
-          const ia = new Uint8Array(ab);
-          for (let i = 0; i < byteString.length; i++) {
-            ia[i] = byteString.charCodeAt(i);
-          }
-          const resultBlob = new Blob([ab], { type: mimeString });
-          resolve(resultBlob);
-        } catch (err) {
-          // Se der qualquer erro no processamento do canvas (comum em Android sem memória)
-          resolve(file); 
+        if (width > height) {
+          if (width > maxSize) { height *= maxSize / width; width = maxSize; }
+        } else {
+          if (height > maxSize) { width *= maxSize / height; height = maxSize; }
         }
-      }; img.src=e.target.result;
-    }; r.readAsDataURL(file);
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        canvas.toBlob((blob) => {
+          resolve(blob || file);
+        }, 'image/jpeg', 0.7);
+      };
+      img.onerror = () => resolve(file);
+    };
+    reader.onerror = () => resolve(file);
   });
 }
 
