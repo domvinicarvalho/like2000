@@ -412,11 +412,12 @@
       });
 
       if (error) {
-        console.error("Erro ao criar tarefa:", error);
-        showNotification(`Erro ao criar tarefa: ${error.message}`, 'error');
+        console.error("Erro Supabase:", error);
+        alert(`Erro ao criar tarefa: ${error.message}\nVerifique se a tabela 'daily_tasks' existe.`);
       } else {
         showNotification('Tarefa criada com sucesso!');
-        document.getElementById('new-task-title').value = '';
+        // Limpa campos
+        document.getElementById('new-task-title').value = ''; 
         document.getElementById('new-task-description').value = '';
         document.getElementById('new-task-url').value = '';
         document.getElementById('new-task-xp').value = '50';
@@ -525,8 +526,8 @@
       });
 
       if (error) {
-        console.error("Erro ao criar evento:", error);
-        showNotification(`Erro ao criar evento: ${error.message}`, 'error');
+        console.error("Erro Supabase:", error);
+        alert(`Erro ao criar evento: ${error.message}`);
       } else {
         showNotification('Evento criado com sucesso!');
         document.getElementById('new-event-name').value = '';
@@ -567,8 +568,8 @@
       const { error } = await supabaseClient.from('events').delete().eq('id', eventId);
 
       if (error) {
-        console.error("Erro ao excluir evento:", error);
-        showNotification(`Erro ao excluir evento: ${error.message}`, 'error');
+        console.error("Erro Supabase:", error);
+        alert(`Erro ao excluir evento: ${error.message}`);
       } else {
         showNotification('Evento excluído com sucesso!');
         renderEvents();

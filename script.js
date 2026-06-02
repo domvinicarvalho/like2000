@@ -596,7 +596,6 @@ function getBotaoAmizade(targetUserId) {
 async function mostrarDesktop() {
   await checarLoginDiario();
   await carregarTemporada();
-  await checkAndDisplayNotifications(); // NEW: Verifica e exibe notificações do admin
   await carregarCacheAmizades();
   iniciarRealtimeAmizades();
   
@@ -673,9 +672,11 @@ async function mostrarDesktop() {
             <div class="menu-item-right" onclick="abrirPerfil()">📁 Meu Perfil</div>
             <div class="menu-item-right" onclick="abrirAmigos()">👥 Meus Amigos</div>
             <div class="menu-item-right" onclick="abrirRanking()">🏆 Ranking</div>
-            ${currentUser.id === '6ddf2883-da69-4a8f-8525-6d7a1b45869d' ? `
-              <div class="menu-item-right" onclick="window.location.href='admin.html'" style="color:#d9534f; font-weight:bold;">🛠️ Painel Admin</div>
-            ` : ''}
+            ${
+              currentUser.id === '6ddf2883-da69-4a8f-8525-6d7a1b45869d' 
+              ? `<div class="menu-item-right" onclick="window.location.href='admin.html'" style="color:#d9534f; font-weight:bold; border-top:1px dashed #7090c0; margin-top:5px; padding-top:10px;">🛠️ Painel Admin</div>` 
+              : ''
+            }
             <div class="menu-item-right">🎟️ ${escapeHtml(currentProfile.referral_code||'')}</div>
             <div class="menu-item-right" style="margin-top:auto;border-top:1px solid #7090c0;padding-top:8px" onclick="fazerLogout()">🔴 Sair</div>
           </div>
@@ -706,57 +707,13 @@ async function mostrarDesktop() {
 
   if (isSetup) abrirJanelaComplemento();
 
-  // Agora que a interface existe, verifica notificações do banco
-  checkAndDisplayNotifications();
+  // CHAMA NOTIFICAÇÕES APENAS NO FINAL
+  setTimeout(checkAndDisplayNotifications, 1000);
 }
 function atualizarRelogio() {
   const el=document.getElementById('clock'); if(!el)return;
   const d=new Date();
   el.textContent=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
-}
-
-// Verifica e exibe notificações do banco de dados (Alertas do Admin)
-async function checkAndDisplayNotifications() {
-  if (!currentUser) return;
-  try {
-    const now = new Date();
-    // Busca todas as notificações não lidas
-    const { data: notifications, error } = await supabaseClient
-      .from('notifications')
-      .select('*')
-      .eq('read', false)
-      .order('created_at', { ascending: true });
-
-    if (error || !notifications) return;
-
-    for (const notification of notifications) {
-      const isToMe = notification.user_id === currentUser.id;
-      const isGlobal = notification.target === 'all';
-      const isOnlineAlert = notification.target === 'online';
-      const isExpired = notification.expires_at && new Date(notification.expires_at) < now;
-      const storageKey = `notif_seen_${notification.id}`;
-
-      // Filtra se a notificação deve ser exibida para este usuário
-      if (!isToMe && !isGlobal && !isOnlineAlert) continue;
-      if (isGlobal && isExpired) continue;
-      if ((isGlobal || isOnlineAlert) && localStorage.getItem(storageKey)) continue;
-      
-      // Se for alerta em tempo real (online), só mostra se tiver menos de 1 minuto de vida
-      if (isOnlineAlert && new Date(notification.created_at) < new Date(now.getTime() - 60000)) continue;
-
-      // Exibe o alerta visual
-      mostrarAlerta(`db-notification-${notification.id}`, notification.title || 'Alerta do Sistema', 'ie', notification.message, storageKey);
-
-      // Só marca como lida no BANCO se for uma mensagem direcionada especificamente para este ID
-      if (isToMe) {
-        await supabaseClient.from('notifications')
-          .update({ read: true, read_at: now.toISOString() })
-          .eq('id', notification.id);
-      }
-    }
-  } catch (e) {
-    console.error('Falha ao processar notificações:', e);
-  }
 }
 
 // ── MENU ─────────────────────────────────────────────────────
