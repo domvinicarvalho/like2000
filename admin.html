@@ -257,7 +257,7 @@
           <input type="checkbox" id="new-event-share-active" checked>
           <label for="new-event-share-active">Ativo para Compartilhamento</label>
         </div>
-        <button onclick="createEvent()">Criar Evento</button>
+        <button onclick="adminCreateEvent()">Criar Evento</button>
       </div>
     </div>
 
@@ -298,6 +298,7 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhqZ2x1amZmY2picm11Z29wcmpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5NTQ5NjUsImV4cCI6MjA5NDUzMDk2NX0.hbeP1zWBYvsH9BCsoyaBOkoZfIvY9U1uXdSSwxmuvos';
     const ADMIN_USER_ID = '6ddf2883-da69-4a8f-8525-6d7a1b45869d'; // ID do usuário administrador
 
+    const { createClient } = supabase;
     const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     // --- Auth Check ---
@@ -500,8 +501,8 @@
             <td><input type="url" id="event-instagram-url-${event.id}" value="${escapeHtml(event.instagram_post_url || '')}" style="width:100%;"></td>
             <td><input type="checkbox" id="event-share-active-${event.id}" ${event.share_active ? 'checked' : ''}></td>
             <td class="actions">
-              <button onclick="updateEvent('${event.id}')">Salvar</button>
-              <button onclick="deleteEvent('${event.id}')">Excluir</button>
+              <button onclick="adminUpdateEvent('${event.id}')">Salvar</button>
+              <button onclick="adminDeleteEvent('${event.id}')">Excluir</button>
             </td>
           </tr>
         `;
@@ -510,7 +511,7 @@
       container.innerHTML = html;
     }
 
-    async function createEvent() {
+    async function adminCreateEvent() {
       const name = document.getElementById('new-event-name').value;
       const referral_url = document.getElementById('new-event-referral-url').value;
       const instagram_post_url = document.getElementById('new-event-instagram-url').value;
@@ -538,7 +539,7 @@
       }
     }
 
-    async function updateEvent(eventId) {
+    async function adminUpdateEvent(eventId) {
       const name = document.getElementById(`event-name-${eventId}`).value;
       const referral_url = document.getElementById(`event-referral-url-${eventId}`).value;
       const instagram_post_url = document.getElementById(`event-instagram-url-${eventId}`).value;
@@ -562,7 +563,7 @@
       }
     }
 
-    async function deleteEvent(eventId) {
+    async function adminDeleteEvent(eventId) {
       if (!confirm('Tem certeza que deseja excluir este evento?')) return;
 
       const { error } = await supabaseClient.from('events').delete().eq('id', eventId);
