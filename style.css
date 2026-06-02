@@ -307,7 +307,8 @@ body { width:100vw; height:100vh; overflow:hidden; }
 
 /* Moldura do banner - sempre verde e mais espessa */
 .banner-frame {
-  border: 3px solid #00b300 !important;
+  background: #00b300 !important;
+  border: 1px solid #808080 !important;
 }
 
 /* Moldura colorida do avatar conforme status */

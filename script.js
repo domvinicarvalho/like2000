@@ -243,6 +243,7 @@ async function mudarStatus(novoStatus) {
     currentProfile.status = novoStatus;
     mostrarNotificacao(`Status alterado para: ${novoStatus}`);
     atualizarMolduraStatusMSN(novoStatus);
+    tocarSomOnline(); // Som de feedback ao mudar status
   }
 }
 
@@ -687,7 +688,7 @@ async function mostrarDesktop() {
             <div class="start-menu-nick" style="color:${currentProfile?.color || '#fff'}">${escapeHtml(currentProfile?.nickname || 'Usuário')}</div>
             <div style="font-size:11px;color:#aac4ff">⭐ ${currentProfile?.xp || 0} XP · ${currentProfile?.level || 'Rookie'}</div>
             <div style="margin-top:4px;">
-              <select class="status-select" onchange="mudarStatus(this.value)">
+            <select class="status-select" id="start-menu-status-select" onchange="mudarStatus(this.value)">
                 <option value="online" ${currentProfile.status === 'online' ? 'selected' : ''}>🟢 Online</option>
                 <option value="ausente" ${currentProfile.status === 'ausente' ? 'selected' : ''}>🟠 Ausente</option>
                 <option value="ocupado" ${currentProfile.status === 'ocupado' ? 'selected' : ''}>🔴 Ocupado</option>
@@ -1014,9 +1015,26 @@ function abrirMSN() {
 }
 
 function atualizarMolduraStatusMSN(status) {
+  const statusClass = `status-${status || 'online'}`;
+
+  // 1. Atualiza a moldura da coluna direita (Sidebar)
   const frame = document.getElementById('msn-my-avatar-frame');
-  if (!frame) return;
-  frame.className = `msn-frame avatar-frame status-${status || 'online'}`;
+  if (frame) {
+    frame.className = `msn-frame avatar-frame ${statusClass}`;
+  }
+
+  // 2. Atualiza o avatar da barra de usuário (Top)
+  const userbarAvatar = document.querySelector('.msn-userbar .avatar, .msn-userbar .avatar-img');
+  if (userbarAvatar) {
+    userbarAvatar.classList.remove('status-online', 'status-ausente', 'status-ocupado', 'status-offline');
+    userbarAvatar.classList.add(statusClass);
+  }
+
+  // 3. Sincroniza os dropdowns de status
+  const msnSelect = document.getElementById('msn-my-status-select');
+  if (msnSelect) msnSelect.value = status;
+  const startSelect = document.getElementById('start-menu-status-select');
+  if (startSelect) startSelect.value = status;
 }
 
 async function carregarBannerMSN() {
