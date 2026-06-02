@@ -1307,11 +1307,20 @@ async function carregarFeed() {
   const {data,error}=await supabaseClient.from('posts').select('*').order('created_at',{ascending:false}).limit(30);
   if(error){feed.innerHTML='<div class="fl-loading">Erro ao carregar.</div>';return;}
   feed.innerHTML='';
-  if(!data.length){feed.innerHTML='<div class="fl-loading">Nenhum post ainda. Seja o primeiro! 📸</div>';return;}
-  for(const post of data){
-    const {data:comms}=await supabaseClient.from('comments').select('*').eq('post_id',post.id).order('created_at',{ascending:true});
-    feed.appendChild(criarCardPost(post,comms||[]));
-  }
+  if(!data || !data.length){feed.innerHTML='<div class="fl-loading">Nenhum post ainda. Seja o primeiro! 📸</div>';return;}
+
+  // Otimização: Busca todos os comentários dos posts carregados em uma única query (evita N+1)
+  const postIds = data.map(p => p.id);
+  const { data: allComments } = await supabaseClient
+    .from('comments')
+    .select('*')
+    .in('post_id', postIds)
+    .order('created_at', { ascending: true });
+
+  data.forEach(post => {
+    const postComments = allComments ? allComments.filter(c => c.post_id === post.id) : [];
+    feed.appendChild(criarCardPost(post, postComments));
+  });
 }
 
 function criarCardPost(post,comments){
@@ -2379,7 +2388,9 @@ async function checkAndDisplayNotifications() {
       // A função mostrarAlerta já lida com a persistência (não repetir alerta fechado) via storageKey
       // Tenta pegar o texto de 'content' ou 'message' para evitar o undefined
       const textoAlerta = n.content || n.message || n.text || "";
-      mostrarAlerta(`alert-${n.id}`, n.title, n.icon || 'ie', textoAlerta, `alert_visto_${n.id}`);
+      if (n.title || textoAlerta) {
+        mostrarAlerta(`alert-${n.id}`, n.title || "Aviso do Sistema", n.icon || 'ie', textoAlerta, `alert_visto_${n.id}`);
+      }
     });
   } catch (e) {
     console.error("Erro ao processar notificações do sistema:", e);
