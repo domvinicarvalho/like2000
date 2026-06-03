@@ -9,7 +9,7 @@ Deno.serve(async (req: Request) => {
   try {
     // Validação de Segurança: Garante que apenas o sistema (via service_role) dispare o e-mail
     const authHeader = req.headers.get("Authorization");
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const serviceRoleKey = Deno.env.get("APP_SERVICE_ROLE_KEY");
     const brevoKey = Deno.env.get("BREVO_API_KEY");
 
     if (!authHeader || !serviceRoleKey || !authHeader.includes(serviceRoleKey)) {
