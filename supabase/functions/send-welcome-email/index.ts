@@ -1,4 +1,3 @@
-const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY");
 const BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
 
 Deno.serve(async (req: Request) => {
@@ -39,7 +38,7 @@ Deno.serve(async (req: Request) => {
 
     // Se o webhook disparou mas o nickname ainda é o padrão ou nulo, 
     // podemos ignorar e esperar o preenchimento completo.
-    console.log(`2. Verificando dados: Email=${email}, Nickname=${nickname}, Ref=${referral_code}`);
+    console.log(`2. Verificando dados: Email=${email}, Nickname=${nickname}, Ref=${referral_code}, ServiceKeySet=${!!serviceRoleKey}`);
 
     if (nickname === "Viajante" || !record?.nickname) {
       console.log("3. Abortando: Nickname ainda é padrão ou nulo.");
