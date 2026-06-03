@@ -642,15 +642,13 @@ function getBotaoAmizade(targetUserId) {
 
 // ── DESKTOP ───────────────────────────────────────────────────
 async function mostrarDesktop() {
-  try {
-    await checarLoginDiario();
-    await carregarTemporada();
-    await carregarCacheAmizades();
-    iniciarRealtimeAmizades();
-  } catch (e) {
-    console.error("Erro ao carregar dados iniciais (background):", e);
-  }
-  
+  // Removendo o 'await' destas chamadas para que elas não bloqueiem o carregamento do Desktop.
+  // Os dados serão carregados em background.
+  checarLoginDiario().catch(e => console.error("Erro background:", e));
+  carregarTemporada().catch(e => console.error("Erro background:", e));
+  carregarCacheAmizades().catch(e => console.error("Erro background:", e));
+  iniciarRealtimeAmizades();
+
   const isSetup = primeiroAcesso;
   
   // Tutorial de XP (Onboarding Geral)
