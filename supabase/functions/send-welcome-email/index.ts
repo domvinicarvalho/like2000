@@ -1,19 +1,22 @@
-const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY");
 const BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
 
 Deno.serve(async (req: Request) => {
-  if (req.method !== "POST") {
-    return new Response("Method not allowed", { status: 405 });
+  // Tratamento de CORS para requisições de pré-vôo
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: { "Access-Control-Allow-Origin": "*" } });
   }
 
   try {
-    // Validação de Segurança: Garante que apenas o sistema (via service_role) dispare o e-mail
     const authHeader = req.headers.get("Authorization");
-    const serviceRoleKey = Deno.env.get("APP_SERVICE_ROLE_KEY");
-    const brevoKey = Deno.env.get("BREVO_API_KEY");
+    // Usamos .trim() para evitar que espaços invisíveis causem erro 401
+    const expectedKey = Deno.env.get("APP_SERVICE_ROLE_KEY")?.trim();
+    const brevoKey = Deno.env.get("BREVO_API_KEY")?.trim();
 
-    if (!authHeader || !serviceRoleKey || !authHeader.includes(serviceRoleKey)) {
-      console.error("Erro de Autenticação: Chave service_role não enviada ou incorreta.");
+    console.log("--- Início do Processamento de E-mail ---");
+
+    // Validação de Segurança robusta
+    if (!authHeader || !expectedKey || !authHeader.includes(expectedKey)) {
+      console.error("ERRO 401: Falha na autenticação. Chave inválida ou ausente.");
       return new Response(JSON.stringify({ error: "Não autorizado" }), { 
         status: 401, 
         headers: { "Content-Type": "application/json" } 
@@ -21,7 +24,7 @@ Deno.serve(async (req: Request) => {
     }
 
     if (!brevoKey) {
-      console.error("Erro de Configuração: Variável BREVO_API_KEY não encontrada no Supabase Secrets.");
+      console.error("ERRO 500: BREVO_API_KEY não configurada nos Secrets.");
       return new Response(JSON.stringify({ error: "Configuração BREVO_API_KEY ausente" }), { 
         status: 500, 
         headers: { "Content-Type": "application/json" } 
@@ -31,23 +34,23 @@ Deno.serve(async (req: Request) => {
     const payload = await req.json();
     console.log("1. Payload recebido:", JSON.stringify(payload));
     
-    const { record } = payload;
+    const record = payload.record || {};
     // O email pode vir do record (tabela profiles) ou do auth (se disparado por trigger de auth)
-    const email = record?.email || payload?.email;
-    const nickname = record?.nickname || "Viajante";
-    const referral_code = record?.referral_code || "OFFICIAL";
+    const email = record.email || payload.email;
+    const nickname = record.nickname || "Viajante";
+    const referral_code = record.referral_code || "OFFICIAL";
 
     // Se o webhook disparou mas o nickname ainda é o padrão ou nulo, 
     // podemos ignorar e esperar o preenchimento completo.
-    console.log(`2. Verificando dados: Email=${email}, Nickname=${nickname}, Ref=${referral_code}`);
+    console.log(`2. Verificando dados: Email=${email}, Nickname=${nickname}, Ref=${referral_code}, AuthSet=${!!expectedKey}`);
 
-    if (nickname === "Viajante" || !record?.nickname) {
+    if (nickname === "Viajante" || !record.nickname) {
       console.log("3. Abortando: Nickname ainda é padrão ou nulo.");
       return new Response(JSON.stringify({ message: "Nickname não disponível ainda." }), { status: 200 });
     }
 
     if (!email) {
-      console.error("3. Erro: O campo 'email' veio vazio no payload.");
+      console.error("3. ERRO: E-mail não encontrado no payload.");
       return new Response(JSON.stringify({ error: "Email não encontrado no registro" }), { 
         status: 400, 
         headers: { "Content-Type": "application/json" } 
@@ -134,7 +137,7 @@ Deno.serve(async (req: Request) => {
       htmlContent: htmlTemplate
     };
 
-    console.log("4. Enviando requisição para o Brevo...");
+    console.log("4. Disparando para o Brevo...");
     const response = await fetch(BREVO_API_URL, {
       method: "POST",
       headers: {
@@ -146,7 +149,7 @@ Deno.serve(async (req: Request) => {
     });
 
     const result = await response.json();
-    console.log("5. Resposta do Brevo:", JSON.stringify(result));
+    console.log("5. Resposta final do Brevo:", JSON.stringify(result));
 
     if (!response.ok) {
       console.error("Erro na API do Brevo:", result);
