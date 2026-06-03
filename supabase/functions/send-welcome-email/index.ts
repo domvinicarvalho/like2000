@@ -27,9 +27,18 @@ Deno.serve(async (req: Request) => {
 
     const payload = await req.json();
     
-    // O payload do webhook do Supabase contém os dados do novo usuário no campo 'record'
     const { record } = payload;
-    const email = record?.email;
+    // O email pode vir do record (tabela profiles) ou do auth (se disparado por trigger de auth)
+    const email = record?.email || payload?.email;
+    const nickname = record?.nickname || "Viajante";
+    const referral_code = record?.referral_code || "OFFICIAL";
+
+    // Se o webhook disparou mas o nickname ainda é o padrão ou nulo, 
+    // podemos ignorar e esperar o preenchimento completo.
+    if (nickname === "Viajante" || !record?.nickname) {
+      console.log("Aguardando preenchimento do nickname para enviar e-mail.");
+      return new Response(JSON.stringify({ message: "Nickname não disponível ainda." }), { status: 200 });
+    }
 
     if (!email) {
       return new Response(JSON.stringify({ error: "Email não encontrado no registro" }), { 
@@ -38,6 +47,76 @@ Deno.serve(async (req: Request) => {
       });
     }
 
+    const htmlTemplate = `
+<div style="font-family: 'Tahoma', 'Geneva', sans-serif; background-color: #dce9f7; padding: 20px; color: #333;">
+  <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #7ab3e0; box-shadow: 4px 4px 0px rgba(0,0,0,0.1);">
+    
+    <!-- Header Estilo Hotmail 2003 -->
+    <div style="background: linear-gradient(to bottom, #1b3f7e 0%, #2563c8 100%); padding: 10px 15px; border-bottom: 1px solid #0c2d7e;">
+      <table width="100%" cellspacing="0" cellpadding="0">
+        <tr>
+          <td>
+            <span style="color: white; font-weight: bold; font-size: 14px; text-shadow: 1px 1px 0px rgba(0,0,0,0.5);">Like 2000 - Inbox</span>
+          </td>
+          <td align="right">
+            <span style="color: #aac4ff; font-size: 11px;">msn messenger active</span>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <div style="padding: 25px;">
+      <div style="margin-bottom: 20px;">
+        <h2 style="margin: 0; color: #1b3f7e; font-size: 18px;">Olá, ${nickname}!</h2>
+        <p style="font-size: 13px; margin-top: 10px; color: #555;">Sua máquina do tempo está pronta. Bem-vinde à Like 2000!</p>
+      </div>
+
+      <!-- Grid de Dicas -->
+      <table width="100%" cellspacing="0" cellpadding="10" style="background-color: #f0f6ff; border: 1px solid #dce9f7; margin-bottom: 25px;">
+        <tr>
+          <td width="33%" align="center" style="border-right: 1px solid #dce9f7;">
+            <div style="font-weight: bold; color: #2563c8; font-size: 12px;">MSN</div>
+            <div style="font-size: 10px; color: #666;">Chat em tempo real</div>
+          </td>
+          <td width="33%" align="center" style="border-right: 1px solid #dce9f7;">
+            <div style="font-weight: bold; color: #2563c8; font-size: 12px;">FOTOLOG</div>
+            <div style="font-size: 10px; color: #666;">Sua foto diária</div>
+          </td>
+          <td width="33%" align="center">
+            <div style="font-weight: bold; color: #2563c8; font-size: 12px;">ORKUT</div>
+            <div style="font-size: 10px; color: #666;">Perfil Público</div>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Link Rastreável -->
+      <div style="background-color: #fffdf5; border: 1px dashed #ffaa66; padding: 15px; border-radius: 4px; text-align: center; margin-bottom: 25px;">
+        <div style="font-size: 12px; font-weight: bold; color: #cc4400; margin-bottom: 8px;">🚀 Ganhe +100 XP por amigo indicado!</div>
+        <div style="background: #f0f0e8; padding: 8px; border: 1px solid #ccc; font-family: monospace; font-size: 11px; word-break: break-all; color: #333;">
+          https://like2000.com.br?utm_source=email&utm_medium=welcome&utm_campaign=${referral_code}
+        </div>
+        <div style="margin-top: 10px;">
+          <span style="font-size: 10px; color: #888;">Compartilhe seu link exclusivo e suba no ranking da temporada.</span>
+        </div>
+      </div>
+
+      <!-- Botão CTA -->
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="https://like2000.com.br" style="background: linear-gradient(to bottom, #5aad5a 0%, #3a8c3a 100%); color: white; padding: 12px 30px; text-decoration: none; font-weight: bold; font-size: 14px; border-radius: 3px; border: 1px solid #2d8f2d; box-shadow: 0px 2px 4px rgba(0,0,0,0.2); display: inline-block;">
+          Acessar a Like 2000
+        </a>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="background-color: #f0f6ff; padding: 15px; text-align: center; border-top: 1px solid #dce9f7; font-size: 10px; color: #999;">
+      © 2026 Like 2000 · Bad Idea<br>
+      <a href="#" style="color: #999; text-decoration: underline;">cancelar inscrição</a>
+    </div>
+  </div>
+</div>
+`;
+
     const emailPayload = {
       sender: {
         name: "Like 2000",
@@ -45,12 +124,7 @@ Deno.serve(async (req: Request) => {
       },
       to: [{ email: email }],
       subject: "Bem-vinde à LIKE 2000! 🕹️",
-      textContent: `Viagem no tempo concluída. Bem-vinde à Like 2000!
-
-Sua conta está pronta. Acesse agora e reviva os anos 2000:
-https://like2000.com.br
-
-— Equipe Like 2000`
+      htmlContent: htmlTemplate
     };
 
     const response = await fetch(BREVO_API_URL, {
