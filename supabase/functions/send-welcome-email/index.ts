@@ -8,15 +8,13 @@ Deno.serve(async (req: Request) => {
 
   try {
     const authHeader = req.headers.get("Authorization");
-    // Usamos .trim() para evitar que espaços invisíveis causem erro 401
     const expectedKey = Deno.env.get("APP_SERVICE_ROLE_KEY")?.trim();
     const brevoKey = Deno.env.get("BREVO_API_KEY")?.trim();
 
-    console.log("--- Início do Processamento de E-mail ---");
+    console.log("--- Request recebido na Edge Function ---");
 
-    // Validação de Segurança robusta
     if (!authHeader || !expectedKey || !authHeader.includes(expectedKey)) {
-      console.error("ERRO 401: Falha na autenticação. Chave inválida ou ausente.");
+      console.error("ERRO 401: Falha na autenticação interna.");
       return new Response(JSON.stringify({ error: "Não autorizado" }), { 
         status: 401, 
         headers: { "Content-Type": "application/json" } 
@@ -24,7 +22,7 @@ Deno.serve(async (req: Request) => {
     }
 
     if (!brevoKey) {
-      console.error("ERRO 500: BREVO_API_KEY não configurada nos Secrets.");
+      console.error("ERRO 500: BREVO_API_KEY ausente.");
       return new Response(JSON.stringify({ error: "Configuração BREVO_API_KEY ausente" }), { 
         status: 500, 
         headers: { "Content-Type": "application/json" } 
@@ -32,17 +30,13 @@ Deno.serve(async (req: Request) => {
     }
 
     const payload = await req.json();
-    console.log("1. Payload recebido:", JSON.stringify(payload));
     
     const record = payload.record || {};
-    // O email pode vir do record (tabela profiles) ou do auth (se disparado por trigger de auth)
     const email = record.email || payload.email;
     const nickname = record.nickname || "Viajante";
     const referral_code = record.referral_code || "OFFICIAL";
 
-    // Se o webhook disparou mas o nickname ainda é o padrão ou nulo, 
-    // podemos ignorar e esperar o preenchimento completo.
-    console.log(`2. Verificando dados: Email=${email}, Nickname=${nickname}, Ref=${referral_code}, AuthSet=${!!expectedKey}`);
+    console.log(`Dados processados: Email=${email}, Nickname=${nickname}`);
 
     if (nickname === "Viajante" || !record.nickname) {
       console.log("3. Abortando: Nickname ainda é padrão ou nulo.");
