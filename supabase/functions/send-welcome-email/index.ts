@@ -1,3 +1,4 @@
+const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY");
 const BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
 
 Deno.serve(async (req: Request) => {
@@ -8,19 +9,17 @@ Deno.serve(async (req: Request) => {
   try {
     // Validação de Segurança: Garante que apenas o sistema (via service_role) dispare o e-mail
     const authHeader = req.headers.get("Authorization");
-    const serviceRoleKey = Deno.env.get("APP_SERVICE_ROLE_KEY");
-    const brevoKey = Deno.env.get("BREVO_API_KEY");
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-    if (!authHeader || !serviceRoleKey || !authHeader.includes(serviceRoleKey)) {
-      console.error("Erro de Autenticação: Chave service_role não enviada ou incorreta.");
+    if (!authHeader || !authHeader.includes(serviceRoleKey!)) {
+      console.error("Erro de Autenticação: Chave recebida não confere com APP_SERVICE_ROLE_KEY.");
       return new Response(JSON.stringify({ error: "Não autorizado" }), { 
         status: 401, 
         headers: { "Content-Type": "application/json" } 
       });
     }
 
-    if (!brevoKey) {
-      console.error("Erro de Configuração: Variável BREVO_API_KEY não encontrada no Supabase Secrets.");
+    if (!BREVO_API_KEY) {
       return new Response(JSON.stringify({ error: "Configuração BREVO_API_KEY ausente" }), { 
         status: 500, 
         headers: { "Content-Type": "application/json" } 
@@ -28,7 +27,7 @@ Deno.serve(async (req: Request) => {
     }
 
     const payload = await req.json();
-    console.log("1. Payload recebido:", JSON.stringify(payload));
+    console.log("Payload recebido pela Edge Function:", JSON.stringify(payload));
     
     const { record } = payload;
     // O email pode vir do record (tabela profiles) ou do auth (se disparado por trigger de auth)
@@ -38,15 +37,12 @@ Deno.serve(async (req: Request) => {
 
     // Se o webhook disparou mas o nickname ainda é o padrão ou nulo, 
     // podemos ignorar e esperar o preenchimento completo.
-    console.log(`2. Verificando dados: Email=${email}, Nickname=${nickname}, Ref=${referral_code}, ServiceKeySet=${!!serviceRoleKey}`);
-
     if (nickname === "Viajante" || !record?.nickname) {
-      console.log("3. Abortando: Nickname ainda é padrão ou nulo.");
+      console.log("Aguardando preenchimento do nickname para enviar e-mail.");
       return new Response(JSON.stringify({ message: "Nickname não disponível ainda." }), { status: 200 });
     }
 
     if (!email) {
-      console.error("3. Erro: O campo 'email' veio vazio no payload.");
       return new Response(JSON.stringify({ error: "Email não encontrado no registro" }), { 
         status: 400, 
         headers: { "Content-Type": "application/json" } 
@@ -133,11 +129,10 @@ Deno.serve(async (req: Request) => {
       htmlContent: htmlTemplate
     };
 
-    console.log("4. Enviando requisição para o Brevo...");
     const response = await fetch(BREVO_API_URL, {
       method: "POST",
       headers: {
-        "api-key": brevoKey,
+        "api-key": BREVO_API_KEY,
         "Content-Type": "application/json",
         "Accept": "application/json"
       },
@@ -145,7 +140,6 @@ Deno.serve(async (req: Request) => {
     });
 
     const result = await response.json();
-    console.log("5. Resposta do Brevo:", JSON.stringify(result));
 
     if (!response.ok) {
       console.error("Erro na API do Brevo:", result);
