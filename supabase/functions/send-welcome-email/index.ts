@@ -26,6 +26,7 @@ Deno.serve(async (req: Request) => {
     }
 
     const payload = await req.json();
+    console.log("Payload recebido pela Edge Function:", JSON.stringify(payload));
     
     const { record } = payload;
     // O email pode vir do record (tabela profiles) ou do auth (se disparado por trigger de auth)
