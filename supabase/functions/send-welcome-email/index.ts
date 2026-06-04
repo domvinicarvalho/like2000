@@ -49,7 +49,7 @@ Deno.serve(async (req: Request) => {
     const userId = record.id;
 
     // Só prosseguimos se houver um nickname real (ignora o INSERT inicial do Auth)
-    if (!record.nickname || record.nickname === "Viajante" || record.nickname === "Novo Usuário") {
+    if (!record.nickname || record.nickname === "Novo Usuário") {
       console.log("2. Nickname ainda genérico. Ignorando.");
       return new Response(JSON.stringify({ message: "Cadastro incompleto" }), { status: 200 });
     }
