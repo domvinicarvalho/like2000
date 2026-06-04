@@ -24,6 +24,12 @@ let friendshipRealtime = null;
 let configRealtime = null;
 let onlineUsersRealtime = null;
 
+// ── CAPTURA DE REFERRAL ─────────────────────────────────────
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.has('utm_campaign')) {
+  localStorage.setItem('referred_by_code', urlParams.get('utm_campaign'));
+}
+
 // ── WINAMP STATE ───────────────────────────────────────────
 let webampInstance = null;
 
