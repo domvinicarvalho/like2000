@@ -476,13 +476,15 @@ async function salvarPerfilCompleto() {
 
     const agora = new Date().toISOString();
     const ref = nick.toUpperCase().replace(/\s+/g,'').slice(0,8)+Math.floor(Math.random()*900+100);
+    const referredBy = localStorage.getItem('referred_by_code');
     
     // Tentativa de salvamento. Se der erro de "coluna não encontrada", 
     // o erro será capturado no catch abaixo.
     const { error } = await supabaseClient.from('profiles').upsert({
       id: currentUser.id, nickname: nick, color: corSelecionada,
       avatar_url: avatarUrl, xp: 0, level: 'Rookie', referral_code: ref,
-      birth_date: nascRaw, city: cidade, terms_accepted_at: agora
+      birth_date: nascRaw, city: cidade, terms_accepted_at: agora,
+      referred_by: referredBy
     }, { onConflict: 'id' });
 
     if (error) {
@@ -491,6 +493,7 @@ async function salvarPerfilCompleto() {
       btn.disabled = false; btn.textContent = 'CONCLUIR INSTALAÇÃO';
       return;
     }
+    localStorage.removeItem('referred_by_code');
     location.reload();
   } catch (err) {
     console.error("Erro Geral:", err);
