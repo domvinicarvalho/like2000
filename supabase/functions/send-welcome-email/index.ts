@@ -20,13 +20,12 @@ Deno.serve(async (req: Request) => {
     console.log("--- [DEBUG] Início da Execução ---");
 
     // Validação de Segurança robusta
-    // Verificamos se o que está vindo no Header não é o placeholder viciado do Dashboard
     if (authHeader?.includes("cole-sua-chave") || authHeader?.includes("sua-chave-aqui")) {
-      console.error("❌ ERRO CRÍTICO: O Gateway do Webhook ainda está enviando o texto de exemplo!");
+      console.error("❌ ERRO: O Webhook está enviando o placeholder 'cole-sua-chave'.");
       return new Response(JSON.stringify({ error: "Configuração de Webhook viciada no Dashboard" }), { status: 400 });
     }
 
-    // Validação de Segurança
+    // Validação de Segurança (Gatilho -> Function)
     if (!authHeader || !expectedKey || !authHeader.includes(expectedKey)) {
       console.error("ERRO 401: Falha na autenticação (Gatilho -> Function).");
       return new Response(JSON.stringify({ error: "Não autorizado" }), { 
@@ -36,7 +35,7 @@ Deno.serve(async (req: Request) => {
     }
 
     if (!brevoKey) {
-      console.error("ERRO 500: BREVO_API_KEY não configurada nos Secrets.");
+      console.error("ERRO 500: BREVO_API_KEY ausente.");
       return new Response(JSON.stringify({ error: "Configuração BREVO_API_KEY ausente" }), { 
         status: 500, 
         headers: { "Content-Type": "application/json" } 
@@ -51,7 +50,7 @@ Deno.serve(async (req: Request) => {
 
     // Só prosseguimos se houver um nickname real (ignora o INSERT inicial do Auth)
     if (!record.nickname || record.nickname === "Viajante" || record.nickname === "Novo Usuário") {
-      console.log("2. Cadastro incompleto (nickname ausente). Ignorando.");
+      console.log("2. Nickname ainda genérico. Ignorando.");
       return new Response(JSON.stringify({ message: "Cadastro incompleto" }), { status: 200 });
     }
 
@@ -157,7 +156,7 @@ Deno.serve(async (req: Request) => {
       htmlContent: htmlTemplate
     };
 
-    console.log("Chamando API do Brevo...");
+    console.log(`4. Chamando Brevo para: ${email}`);
     const response = await fetch(BREVO_API_URL, {
       method: "POST",
       headers: {
