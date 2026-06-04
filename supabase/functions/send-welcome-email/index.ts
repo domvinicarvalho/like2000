@@ -1,3 +1,5 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
 const BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
 
 Deno.serve(async (req: Request) => {
@@ -11,12 +13,24 @@ Deno.serve(async (req: Request) => {
     // Usamos .trim() para evitar que espaços invisíveis causem erro 401
     const expectedKey = Deno.env.get("APP_SERVICE_ROLE_KEY")?.trim();
     const brevoKey = Deno.env.get("BREVO_API_KEY")?.trim();
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")?.trim();
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")?.trim();
 
     console.log("--- Request recebido na Edge Function ---");
+    console.log("--- [DEBUG] Início da Execução ---");
 
     // Validação de Segurança robusta
+    // CORREÇÃO DO LOOP/GATEWAY: 
+    // Verificamos se o que está vindo no Header não é o placeholder viciado do Dashboard
+    if (authHeader?.includes("cole-sua-chave") || authHeader?.includes("sua-chave-aqui")) {
+      console.error("❌ ERRO CRÍTICO: O Gateway do Webhook ainda está enviando o texto de exemplo!");
+      return new Response(JSON.stringify({ error: "Configuração de Webhook viciada no Dashboard" }), { status: 400 });
+    }
+
+    // Validação de Segurança
     if (!authHeader || !expectedKey || !authHeader.includes(expectedKey)) {
       console.error("ERRO 401: Falha na autenticação. Chave inválida ou ausente.");
+      console.error("ERRO 401: Falha na autenticação (Gatilho -> Function).");
       return new Response(JSON.stringify({ error: "Não autorizado" }), { 
         status: 401, 
         headers: { "Content-Type": "application/json" } 
@@ -33,27 +47,52 @@ Deno.serve(async (req: Request) => {
 
     const payload = await req.json();
     console.log("1. Payload recebido:", JSON.stringify(payload));
+    console.log("1. Payload recebido.");
     
     const record = payload.record || {};
     // O email pode vir do record (tabela profiles) ou do auth (se disparado por trigger de auth)
     const email = record.email || payload.email;
     const nickname = record.nickname || "Viajante";
     const referral_code = record.referral_code || "OFFICIAL";
+    const userId = record.id;
 
     console.log(`--- Processando e-mail para: ${nickname} (${email}) ---`);
+    // Só prosseguimos se houver um nickname real (ignora o INSERT inicial do Auth)
+    if (!record.nickname || record.nickname === "Viajante" || record.nickname === "Novo Usuário") {
+      console.log("2. Cadastro incompleto (nickname ausente). Ignorando.");
+      return new Response(JSON.stringify({ message: "Cadastro incompleto" }), { status: 200 });
+    }
 
     if (nickname === "Viajante" || !record.nickname) {
       console.log("Abortando: Nickname ainda é padrão ou nulo.");
       return new Response(JSON.stringify({ message: "Nickname não disponível ainda." }), { status: 200 });
+    let email = record.email || payload.email;
+    
+    if (!email && userId && supabaseUrl && serviceRoleKey) {
+      console.log("3. E-mail ausente no profile. Buscando no Auth para ID:", userId);
+      const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
+      const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId);
+      
+      if (!userError && userData?.user) {
+        email = userData.user.email;
+      }
     }
 
+    
     if (!email) {
       console.error("ERRO: E-mail não encontrado no payload.");
       return new Response(JSON.stringify({ error: "Email não encontrado no registro" }), { 
         status: 400, 
         headers: { "Content-Type": "application/json" } 
       });
+      console.error("ERRO: E-mail não encontrado após busca no Auth.");
+      return new Response(JSON.stringify({ error: "Email não encontrado" }), { status: 400 });
     }
+
+    const nickname = record.nickname;
+    const referral_code = record.referral_code || "OFFICIAL";
+
+    console.log(`4. Preparando envio para: ${nickname} <${email}>`);
 
     const htmlTemplate = `
 <div style="font-family: 'Tahoma', 'Geneva', sans-serif; background-color: #dce9f7; padding: 20px; color: #333;">
@@ -135,7 +174,7 @@ Deno.serve(async (req: Request) => {
       htmlContent: htmlTemplate
     };
 
-    console.log("4. Disparando para o Brevo...");
+    console.log("Chamando API do Brevo...");
     const response = await fetch(BREVO_API_URL, {
       method: "POST",
       headers: {
