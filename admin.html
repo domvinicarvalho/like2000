@@ -214,6 +214,7 @@
     <ul>
       <li><a href="#" id="nav-daily-tasks" class="active" onclick="showSection('daily-tasks', this)">Tarefas Diárias</a></li>
       <li><a href="#" id="nav-events" onclick="showSection('events', this)">Eventos Compartilhamento</a></li>
+      <li><a href="#" id="nav-events-ie" onclick="showSection('events-ie', this)">Eventos IE</a></li>
       <li><a href="#" id="nav-configs" onclick="showSection('configs', this)">Configurações Gerais</a></li>
       <li><a href="#" id="nav-alerts" onclick="showSection('alerts', this)">Disparar Alertas</a></li>
     </ul>
@@ -260,6 +261,31 @@
           <label for="new-event-share-active">Ativo para Compartilhamento</label>
         </div>
         <button onclick="adminCreateEvent()">Criar Evento</button>
+      </div>
+    </div>
+
+    <div id="events-ie-section" class="admin-section" style="display:none;">
+      <h3>Gerenciar Eventos (Hub Ingressos IE)</h3>
+      <div id="events-ie-list"></div>
+      <h4>Criar Novo Evento para o Hub</h4>
+      <div class="admin-form">
+        <label for="new-ie-event-name">Nome do Evento:</label>
+        <input type="text" id="new-ie-event-name" placeholder="Nome do Evento">
+        <label for="new-ie-event-referral-url">URL do Ingresso:</label>
+        <input type="url" id="new-ie-event-referral-url" placeholder="https://linkdoevento.com">
+        <label for="new-ie-event-date">Data do Evento:</label>
+        <input type="datetime-local" id="new-ie-event-date">
+        <label for="new-ie-event-status">Status:</label>
+        <select id="new-ie-event-status">
+          <option value="em_breve">Em breve</option>
+          <option value="ativo">Ativo (Venda aberta)</option>
+          <option value="encerrado">Encerrado</option>
+        </select>
+        <div>
+          <input type="checkbox" id="new-ie-event-share-active">
+          <label for="new-ie-event-share-active">Ativar também para Compartilhamento</label>
+        </div>
+        <button onclick="adminCreateEventIE()">Salvar Evento</button>
       </div>
     </div>
 
@@ -328,6 +354,7 @@
       // Carrega dados para a seção selecionada
       if (sectionId === 'daily-tasks') renderDailyTasks();
       else if (sectionId === 'events') renderEvents();
+      else if (sectionId === 'events-ie') renderEventsIE();
       else if (sectionId === 'configs') renderAppConfig();
     }
 
@@ -570,6 +597,92 @@
       }
     }
 
+    // --- Events IE CRUD ---
+    async function renderEventsIE() {
+      const container = document.getElementById('events-ie-list');
+      container.innerHTML = 'Carregando eventos...';
+      const { data, error } = await supabaseClient.from('events').select('*').order('event_date', { ascending: false });
+      if (error) { container.innerHTML = 'Erro.'; return; }
+
+      let html = `
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Data</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+      data.forEach(event => {
+        html += `
+          <tr>
+            <td><input type="text" id="ie-name-${event.id}" value="${escapeHtml(event.name)}"></td>
+            <td><input type="datetime-local" id="ie-date-${event.id}" value="${event.event_date ? event.event_date.slice(0, 16) : ''}"></td>
+            <td>
+              <select id="ie-status-${event.id}">
+                <option value="em_breve" ${event.status === 'em_breve' ? 'selected' : ''}>Em breve</option>
+                <option value="ativo" ${event.status === 'ativo' ? 'selected' : ''}>Ativo</option>
+                <option value="encerrado" ${event.status === 'encerrado' ? 'selected' : ''}>Encerrado</option>
+              </select>
+            </td>
+            <td class="actions">
+              <button onclick="adminUpdateEventIE('${event.id}')">Salvar</button>
+              <button onclick="adminDeleteEvent('${event.id}')">Excluir</button>
+            </td>
+          </tr>
+        `;
+      });
+      html += `</tbody></table>`;
+      container.innerHTML = html;
+    }
+
+    async function adminCreateEventIE() {
+      const name = document.getElementById('new-ie-event-name').value;
+      const referral_url = document.getElementById('new-ie-event-referral-url').value;
+      const event_date = document.getElementById('new-ie-event-date').value;
+      const status = document.getElementById('new-ie-event-status').value;
+      const share_active = document.getElementById('new-ie-event-share-active').checked;
+
+      if (!name || !referral_url || !event_date) {
+        showNotification('Preencha nome, link e data.', 'error');
+        return;
+      }
+
+      const { error } = await supabaseClient.from('events').insert({
+        name, referral_url, event_date, status, share_active
+      });
+
+      if (error) {
+        alert(`Erro: ${error.message}`);
+      } else {
+        showNotification('Evento criado!');
+        document.getElementById('new-ie-event-name').value = '';
+        document.getElementById('new-ie-event-referral-url').value = '';
+        document.getElementById('new-ie-event-date').value = '';
+        renderEventsIE();
+      }
+    }
+
+    async function adminUpdateEventIE(eventId) {
+      const name = document.getElementById(`ie-name-${eventId}`).value;
+      const event_date = document.getElementById(`ie-date-${eventId}`).value;
+      const status = document.getElementById(`ie-status-${eventId}`).value;
+
+      const { error } = await supabaseClient.from('events').update({
+        name, event_date, status
+      }).eq('id', eventId);
+
+      if (error) {
+        showNotification('Erro ao atualizar', 'error');
+      } else {
+        showNotification('Evento atualizado!');
+        renderEventsIE();
+      }
+    }
+
     async function adminDeleteEvent(eventId) {
       if (!confirm('Tem certeza que deseja excluir este evento?')) return;
 
@@ -580,7 +693,7 @@
         alert(`Erro ao excluir evento: ${error.message}`);
       } else {
         showNotification('Evento excluído com sucesso!');
-        renderEvents();
+        renderEventsIE();
       }
     }
 

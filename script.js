@@ -678,7 +678,7 @@ async function mostrarDesktop() {
         <div class="icon" onclick="trazerFrente('janela-msn');abrirMSN()">${iconTag('msn')}<span>MSN Messenger</span></div>
         <div class="icon" onclick="trazerFrente('janela-fotolog');abrirFotolog()">${iconTag('fotolog')}<span>Fotolog</span></div>
         <div class="icon" onclick="trazerFrente('janela-winamp');abrirWinamp()">${iconTag('winamp')}<span>Winamp</span></div>
-        <div class="icon" onclick="trazerFrente('janela-ie');abrirIE()">${iconTag('ie')}<span>Internet Explorer</span></div>
+        <div class="icon" onclick="trazerFrente('janela-ie');abrirIE()">${iconTag('ie')}<span>Ingressos Explorer</span></div>
         <div class="icon" onclick="trazerFrente('janela-amigos');abrirAmigos()">${iconTag('amigos')}<span>Meus Amigos</span></div>
         <div class="icon" onclick="trazerFrente('janela-orkut');abrirOrkut()">${iconTag('orkut')}<span>Orkut</span></div>
         <div class="icon" onclick="trazerFrente('janela-tarefas');abrirTarefas()">${iconTag('tarefas')}<span>Tarefas</span></div>
@@ -717,7 +717,7 @@ async function mostrarDesktop() {
               ${iconTag('winamp',32)}<div><div class="menu-item-title">Winamp</div><div class="menu-item-sub">rádio online</div></div>
             </div>
             <div class="menu-item" onclick="trazerFrente('janela-ie');abrirIE();fecharMenu()">
-              ${iconTag('ie',32)}<div><div class="menu-item-title">Internet Explorer</div><div class="menu-item-sub">ingressos</div></div>
+              ${iconTag('ie',32)}<div><div class="menu-item-title">Ingressos Explorer</div><div class="menu-item-sub">ingressos</div></div>
             </div>
             <div class="menu-item" onclick="trazerFrente('janela-orkut');abrirOrkut();fecharMenu()">
               ${iconTag('orkut',32)}<div><div class="menu-item-title">Orkut</div><div class="menu-item-sub">rede social</div></div>
@@ -2130,28 +2130,94 @@ async function comprarIngresso() {
 }
 function abrirIE(){
   fecharMenu();
+  if(document.getElementById('janela-ie')){trazerFrente('janela-ie');return;}
 
-  mostrarAlerta('tutorial-ie', 'Internet Explorer', 'ie', 
+  mostrarAlerta('tutorial-ie', 'Ingressos Explorer', 'ie', 
     `Acesse os ingressos dos próximos eventos da Bad Idea.\n\n` +
     `Comprar ingresso pelo IE vale +200 XP e ainda entra no sistema de indicação do seu cupom.`, 
     'tutorial_ie_visto');
 
-  criarJanela('janela-ie','Internet Explorer','ie',500,240,220,200,`
-    <div style="padding:15px; font-size:12px; color:#333; background:#f0f0e8; height:100%;">
-      <div style="background:#fff; padding:12px; border:1px solid #7f9db9; margin-bottom:10px; box-shadow:inset 1px 1px 2px rgba(0,0,0,0.1);">
-        <div style="color:#003399; font-weight:bold; font-size:14px; margin-bottom:5px;">Bad Idea Events</div>
-        Compre seu ingresso antecipado e ganhe XP bônus na plataforma!
-      </div>
-      <div style="display:flex; flex-direction:column; gap:8px;">
-        <label style="font-weight:bold; font-size:11px;">Código do Cupom de Desconto:</label>
-        <div style="display:flex; gap:5px;">
-          <input type="text" id="ie-coupon" placeholder="EX: ANOS2000" style="flex:1; padding:6px; border:1px solid #7f9db9; font-family:monospace;">
-          <button onclick="comprarIngresso()" style="padding:6px 12px; cursor:pointer; background:linear-gradient(to bottom, #eee, #ccc); border:1px solid #777; font-weight:bold;">Comprar (+200 XP)</button>
+  const content = `
+    <div class="ie-browser-container">
+      <div class="ie-toolbar">
+        <div class="ie-toolbar-btns">
+          <button class="ie-btn-nav" title="Voltar">⬅️ Voltar</button>
+          <button class="ie-btn-nav" title="Avançar">➡️</button>
+          <button class="ie-btn-nav" title="Parar">✖️</button>
+          <button class="ie-btn-nav" title="Atualizar" onclick="renderizarEventosIE()">🔄 Atualizar</button>
+          <button class="ie-btn-nav" title="Página Inicial">🏠</button>
         </div>
-        <div id="ie-msg" style="font-weight:bold; margin-top:5px; text-align:center;"></div>
       </div>
-    </div>
-  `);
+      <div class="ie-address-bar">
+        <span>Endereço:</span>
+        <div class="ie-address-input">http://www.like2000.com.br/ingressos</div>
+      </div>
+      <div class="ie-content" id="ie-event-list">
+        <div class="fl-loading">Buscando eventos ativos...</div>
+      </div>
+    </div>`;
+
+  criarJanela('janela-ie','Ingressos Explorer','ie',640,520,40,100, content);
+  renderizarEventosIE();
+}
+
+async function renderizarEventosIE() {
+  const container = document.getElementById('ie-event-list');
+  if(!container) return;
+
+  const agora = new Date().toISOString();
+  const { data, error } = await supabaseClient
+    .from('events')
+    .select('*')
+    .in('status', ['ativo', 'em_breve'])
+    .gte('event_date', agora)
+    .order('event_date', { ascending: true });
+
+  if (error) { container.innerHTML = '<div class="fl-loading">Erro ao carregar hub.</div>'; return; }
+  if (!data.length) { container.innerHTML = '<div class="fl-loading">Nenhum evento com vendas abertas no momento.</div>'; return; }
+
+  container.innerHTML = '';
+  data.forEach(ev => {
+    const card = document.createElement('div');
+    card.className = 'ie-event-card';
+    const dateStr = new Date(ev.event_date).toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
+    const badge = ev.status === 'ativo' ? '<span class="ie-badge open">🟢 Venda aberta</span>' : '<span class="ie-badge soon">🕐 Em breve</span>';
+    
+    card.innerHTML = `
+      <div class="ie-event-img-container" id="ie-img-${ev.id}">
+        <div style="width:100%; height:100%; background:#f0f0f0; display:flex; align-items:center; justify-content:center; color:#ccc;">⌛</div>
+      </div>
+      <div class="ie-event-info">
+        ${badge}
+        <div class="ie-event-name">${escapeHtml(ev.name)}</div>
+        <div class="ie-event-date">${dateStr}</div>
+        ${ev.status === 'ativo' ? `
+          <div class="ie-event-actions">
+            <button onclick="copiarLinkEventoIE('${ev.referral_url}')" class="ie-action-btn">Copiar Link</button>
+            <button onclick="window.open('${ev.referral_url}', '_blank')" class="ie-action-btn primary">Comprar Ingresso</button>
+          </div>
+          <div class="ie-event-xp-hint">+200 XP se comprarem pelo seu link · +100 XP se você comprar</div>
+        ` : ''}
+      </div>
+    `;
+    container.appendChild(card);
+    carregarPreviewEventoIE(ev.id, ev.referral_url);
+  });
+}
+
+async function carregarPreviewEventoIE(id, url) {
+  try {
+    const { data } = await supabaseClient.functions.invoke('fetch-og-image', { body: { url } });
+    const container = document.getElementById(`ie-img-${id}`);
+    if (container && data?.image) {
+      container.innerHTML = `<img src="${data.image}" style="width:100%; height:100%; object-fit:cover;">`;
+    }
+  } catch (e) { console.warn("Erro ao buscar OG image"); }
+}
+
+function copiarLinkEventoIE(url) {
+  const link = `${url}?utm_source=like2000&utm_medium=ie&utm_campaign=${currentProfile.referral_code}`;
+  copiarCupom(link);
 }
 
 // ══════════════════════════════════════════
