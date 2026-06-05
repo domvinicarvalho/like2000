@@ -2046,7 +2046,10 @@ async function trocarAvatar(event) {
 
 async function abrirWinamp() {
   fecharMenu();
-  if (webampInstance) return;
+  if (webampInstance) {
+    trazerFrente('webamp-host');
+    return;
+  }
 
   mostrarAlerta('tutorial-winamp', 'Winamp', 'winamp', 
     `Sets gravados ao vivo nos eventos da Bad Idea, playlists dedicadas de cada festa, direto aqui.\n\n` +
@@ -2097,16 +2100,21 @@ async function iniciarWebamp(host) {
     webampInstance.dispose();
   }
 
+  zTop++;
   webampInstance = new Webamp({
     initialTracks: webampTracks,
     availableSkins: [
       { url: "https://unpkg.com/webamp@1.5.0/skins/base-2.91.wsz", name: "Winamp Classic" }
     ],
-    zIndex: 2000 // Define a camada diretamente no construtor
+    zIndex: zTop
   });
 
   // Renderizar o Webamp dentro do nosso host
   await webampInstance.renderWhenReady(host);
+  host.style.zIndex = zTop;
+
+  // Trazer para frente ao clicar em qualquer parte do player
+  host.addEventListener('mousedown', () => trazerFrente('webamp-host'));
   
   // Quando o usuário fechar o Winamp pelo próprio botão "X" dele
   webampInstance.onClose(() => {
