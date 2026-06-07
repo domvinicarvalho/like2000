@@ -2519,5 +2519,35 @@ async function dispararAlertaAdmin(titulo, conteudo, icone = 'ie') {
   }
 }
 
+async function listarAlertasAdmin() {
+  try {
+    const { data, error } = await supabaseClient
+      .from('notifications')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data;
+  } catch (e) {
+    console.error("Erro ao buscar alertas:", e);
+    return [];
+  }
+}
+
+async function deletarAlertaAdmin(id) {
+  if (!confirm("Tem certeza que deseja excluir este alerta? Ele deixará de aparecer para todos os usuários imediatamente.")) return;
+  const { error } = await supabaseClient
+    .from('notifications')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    console.error("Erro ao deletar alerta:", error);
+    mostrarNotificacao("❌ Erro ao excluir alerta.");
+  } else {
+    mostrarNotificacao("✅ Alerta excluído com sucesso!");
+  }
+}
+
 // ── UTILS ────────────────────────────────────────────────────
 function escapeHtml(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}

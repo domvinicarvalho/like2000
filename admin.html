@@ -318,6 +318,8 @@
         </div>
         <button onclick="sendAlert()">Disparar Alerta</button>
       </div>
+      <h4 style="margin-top:30px;">Alertas Ativos / Histórico</h4>
+      <div id="alerts-list"></div>
     </div>
   </div>
 
@@ -356,6 +358,7 @@
       else if (sectionId === 'events') renderEvents();
       else if (sectionId === 'events-ie') renderEventsIE();
       else if (sectionId === 'configs') renderAppConfig();
+      else if (sectionId === 'alerts') renderAlerts();
     }
 
     // --- Notifications / Alerts ---
@@ -849,6 +852,45 @@
         document.getElementById('alert-mode-online').checked = true;
         document.getElementById('alert-expires-at-container').style.display = 'none';
         document.getElementById('alert-expires-at').value = '';
+        renderAlerts();
+      }
+    }
+
+    async function renderAlerts() {
+      const container = document.getElementById('alerts-list');
+      container.innerHTML = 'Carregando alertas...';
+
+      const { data, error } = await supabaseClient
+        .from('notifications')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        container.innerHTML = 'Erro ao carregar alertas.';
+        return;
+      }
+
+      let html = '<table class="admin-table"><thead><tr><th>Data</th><th>Título</th><th>Alvo</th><th>Ações</th></tr></thead><tbody>';
+      data.forEach(alert => {
+        const date = new Date(alert.created_at).toLocaleString('pt-BR');
+        html += `<tr>
+          <td>${date}</td>
+          <td><strong>${escapeHtml(alert.title)}</strong><br><small>${escapeHtml(alert.message || alert.content || '')}</small></td>
+          <td>${alert.target === 'online' ? 'Logados' : 'Todos'}</td>
+          <td class="actions"><button onclick="adminDeleteAlert('${alert.id}')" style="color:red;">Excluir</button></td>
+        </tr>`;
+      });
+      html += '</tbody></table>';
+      container.innerHTML = html;
+    }
+
+    async function adminDeleteAlert(id) {
+      if (!confirm("Excluir este alerta? Ele sumirá para todos os usuários.")) return;
+      const { error } = await supabaseClient.from('notifications').delete().eq('id', id);
+      if (error) showNotification("Erro ao excluir", "error");
+      else {
+        showNotification("Alerta removido!");
+        renderAlerts();
       }
     }
 
