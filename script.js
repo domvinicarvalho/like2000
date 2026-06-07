@@ -21,7 +21,8 @@ let cacheAmizades   = new Map(); // target_id -> status
 let wallpaperCache  = { desktop: null, mobile: null };
 let lastAppliedUrl  = null;
 let friendshipRealtime = null;
-let configRealtime = null;
+let msnRealtime = null; // Centralizador do Realtime do MSN
+let adminAlertsRealtime = null; 
 let onlineUsersRealtime = null;
 
 // ── CAPTURA DE REFERRAL ─────────────────────────────────────
@@ -656,10 +657,14 @@ async function mostrarDesktop() {
   checarLoginDiario().catch(e => console.error("Erro background:", e));
   carregarTemporada().catch(e => console.error("Erro background:", e));
   carregarCacheAmizades().catch(e => console.error("Erro background:", e));
-  iniciarRealtimeAmizades();
+  
+  // Substitui Realtime de Amizades por Polling (60 segundos)
+  setInterval(() => {
+    carregarCacheAmizades();
+    if (document.getElementById('janela-amigos')) carregarAmigos();
+  }, 60000);
 
   const isSetup = primeiroAcesso;
-  
   // Tutorial de XP (Onboarding Geral)
   if (!isSetup) {
     setTimeout(() => {
@@ -757,17 +762,10 @@ async function mostrarDesktop() {
 
   carregarWallpaper();
   
-  // Realtime para Wallpaper
-  supabaseClient.channel('wallpaper-sync')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'app_config' }, (p) => {
-      if (p.new && (p.new.key === 'desktop_wallpaper_url' || p.new.key === 'mobile_wallpaper_url')) carregarWallpaper();
-    })
-    .subscribe();
-
   if (isSetup) abrirJanelaComplemento();
 
-  // Realtime para Alertas e Notificações do Admin
-  supabaseClient.channel('admin-alerts')
+  // Mantém APENAS este canal sempre ativo
+  adminAlertsRealtime = supabaseClient.channel('admin-alerts')
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, (payload) => {
       const n = payload.new;
       console.log("🔔 Sinal de Realtime recebido:", n);
@@ -909,10 +907,18 @@ function fecharJanela(id) {
     if (id === 'tutorial-ie') localStorage.setItem('tutorial_ie_visto', 'true');
     if (id === 'tutorial-orkut') localStorage.setItem('tutorial_orkut_visto', 'true');
     
+    // Fechar canais Realtime específicos ao fechar a janela
+    if (id === 'janela-msn' && msnRealtime) {
+      supabaseClient.removeChannel(msnRealtime);
+      msnRealtime = null;
+    }
+    if (id === 'janela-fotolog' && fotologRealtime) {
+      supabaseClient.removeChannel(fotologRealtime);
+      fotologRealtime = null;
+    }
+
     j.remove();
   }
-  if(id==='janela-fotolog'&&fotologRealtime){supabaseClient.removeChannel(fotologRealtime);fotologRealtime=null;}
-  if(id==='janela-msn'&&realtimeChannel){supabaseClient.removeChannel(realtimeChannel);realtimeChannel=null;}
 }
 
 // ══════════════════════════════════════════
@@ -1018,7 +1024,7 @@ function abrirMSN() {
   tornarArrastavel(j);
   tocarSomOnline();
   document.getElementById('messageInput').addEventListener('keydown',e=>{if(e.key==='Enter')sendMessage();});
-  loadMessages(); iniciarRealtime(); carregarBannerMSN();
+  loadMessages(); iniciarRealtimeMSN(); carregarBannerMSN();
 }
 
 function atualizarMolduraStatusMSN(status) {
@@ -1155,16 +1161,15 @@ async function carregarUsuariosOnlineMSN() {
 }
 
 
-function iniciarRealtime() {
-  if(realtimeChannel)supabaseClient.removeChannel(realtimeChannel);
+function iniciarRealtimeMSN() {
+  if(msnRealtime) supabaseClient.removeChannel(msnRealtime);
   
-  // Listener para o banner e lista de usuários
-  supabaseClient.channel('msn-system')
+  // Agrupa todos os listeners do MSN em um único canal/conexão
+  msnRealtime = supabaseClient.channel('msn-combined')
+    // Listeners de Sistema (Banner e Usuários Online)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'app_config' }, carregarBannerMSN)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, carregarUsuariosOnlineMSN)
-    .subscribe();
-
-  realtimeChannel=supabaseClient.channel('chat-room')
+    // Listener de Chat
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'}, p => {
       addMessage(p.new);
       if(p.new.user_id !== currentUser.id) {
@@ -1466,34 +1471,6 @@ function iniciarRealtimeFotolog(){
 
         const btn = document.querySelector(`#post-${p.new.post_id} .fl-comment-btn`);
         if (btn) btn.textContent = `💬 ${lista.children.length}`;
-      }
-    })
-    .subscribe();
-}
-
-function iniciarRealtimeAmizades() {
-  if (friendshipRealtime) supabaseClient.removeChannel(friendshipRealtime);
-  friendshipRealtime = supabaseClient.channel('friendship-updates')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'friendships' }, async (payload) => {
-      console.log('Evento de Amizade recebido:', payload);
-      await carregarCacheAmizades();
-      if (document.getElementById('janela-amigos')) carregarAmigos();
-
-      const { eventType, new: newData } = payload;
-
-      // 1. Notificação de Solicitação Recebida
-      if (eventType === 'INSERT' && newData?.friend_id === currentUser.id) {
-        const { data: p } = await supabaseClient.from('profiles').select('nickname, avatar_url').eq('id', newData.user_id).single();
-        if (p) {
-          mostrarMSNPopup('Solicitação de Amizade', `<b>${escapeHtml(p.nickname)}</b> quer te adicionar à lista de contatos.`, p.avatar_url);
-        }
-      }
-      // 2. Notificação de Solicitação Aceita
-      else if (eventType === 'UPDATE' && newData?.user_id === currentUser.id && newData?.status === 'accepted') {
-        const { data: p } = await supabaseClient.from('profiles').select('nickname, avatar_url').eq('id', newData.friend_id).single();
-        if (p) {
-          mostrarMSNPopup('Convite Aceito', `<b>${escapeHtml(p.nickname)}</b> aceitou seu convite de amizade!`, p.avatar_url);
-        }
       }
     })
     .subscribe();
