@@ -245,20 +245,10 @@
 
             <!-- COMUNIDADES BOX -->
             <div class="box">
-              <div class="box-header">comunidades <span>(2)</span></div>
+              <div class="box-header">comunidades <span id="count-comunidades">(0)</span></div>
               <div class="box-content">
-                <div class="grid-3">
-                  <div class="grid-item">
-                    <img src="https://hjglujffcjbrmugoprjh.supabase.co/storage/v1/object/public/system/badidea_logo.png" onerror="this.src='data:image/svg+xml;charset=utf-8,%3Csvg%20viewBox%3D%220%200%2048%2048%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Crect%20width%3D%2248%22%20height%3D%2248%22%20fill%3D%22%233B5998%22%2F%3E%3C%2Fsvg%3E'">
-                    <span>Bad Idea</span>
-                  </div>
-                  <div class="grid-item">
-                    <img src="data:image/svg+xml;charset=utf-8,%3Csvg%20viewBox%3D%220%200%2048%2048%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Crect%20width%3D%2248%22%20height%3D%2248%22%20rx%3D%2210%22%20fill%3D%22%23FF6600%22%2F%3E%3Cpath%20d%3D%22M24%2C12%20C17.37%2C12%2012%2C17.37%2012%2C24%20C12%2C30.63%2017.37%2C36%2024%2C36%20C30.63%2C36%2036%2C30.63%2036%2C24%22%20fill%3D%22none%22%20stroke%3D%22white%22%20stroke-width%3D%224%22%2F%3E%3Ccircle%20cx%3D%2224%22%20cy%3D%2224%22%20r%3D%224%22%20fill%3D%22white%22%2F%3E%3C%2Fsvg%3E">
-                    <span>Like 2000</span>
-                  </div>
-                  <div class="grid-item" style="opacity:0.5">
-                    <div style="width:60px;height:60px;background:#ddd;display:flex;align-items:center;justify-content:center;margin:0 auto;border:1px solid #ccc">🔒</div>
-                    <span>Em breve</span>
+                <div class="grid-3" id="grid-comunidades">
+                  <div style="grid-column: span 3; color: #999; font-style: italic; padding: 10px 0;">carregando...</div>
                   </div>
                 </div>
               </div>
@@ -277,6 +267,39 @@
         </div>`;
         carregarAmigosPublicos(p.id);
         carregarVotos(p.id, currentUser?.id);
+        carregarComunidadesPublicas(); // Nova chamada para carregar comunidades
+    }
+
+    // Nova função para carregar e exibir comunidades
+    async function carregarComunidadesPublicas() {
+      const container = document.getElementById('grid-comunidades');
+      const countSpan = document.getElementById('count-comunidades');
+      if (!container || !countSpan) return;
+
+      const { data, error } = await supabaseClient
+        .from('communities')
+        .select('*')
+        .order('name', { ascending: true });
+
+      if (error) {
+        container.innerHTML = '<div style="grid-column: span 3; color: red; font-size: 10px;">Erro ao carregar comunidades.</div>';
+        countSpan.innerText = '(0)';
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        container.innerHTML = '<div style="grid-column: span 3; color: #999; font-style: italic; padding: 10px 0;">Nenhuma comunidade ainda.</div>';
+        countSpan.innerText = '(0)';
+        return;
+      }
+
+      container.innerHTML = data.map(c => `
+        <div class="grid-item">
+          <img src="${c.image_url || 'data:image/svg+xml;charset=utf-8,%3Csvg%20viewBox%3D%220%200%2048%2048%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Crect%20width%3D%2248%22%20height%3D%2248%22%20rx%3D%228%22%20fill%3D%22%23E8457A%22%2F%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2255%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%20font-family%3D%22Georgia%22%20font-style%3D%22italic%22%20font-weight%3D%22bold%22%20font-size%3D%2234%22%3Eo%3C%2Ftext%3E%3C%2Fsvg%3E'}" onerror="this.src='data:image/svg+xml;charset=utf-8,%3Csvg%20viewBox%3D%220%200%2048%2048%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Crect%20width%3D%2248%22%20height%3D%2248%22%20fill%3D%22%23E8457A%22%2F%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2255%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%20font-family%3D%22Georgia%22%20font-style%3D%22italic%22%20font-weight%3D%22bold%22%20font-size%3D%2234%22%3Eo%3C%2Ftext%3E%3C%2Fsvg%3E'">
+          <span>${c.name}</span>
+        </div>
+      `).join('');
+      countSpan.innerText = `(${data.length})`;
     }
 
     function atualizarVotosUI() {
