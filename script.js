@@ -1347,12 +1347,16 @@ async function carregarFeed() {
   feed.innerHTML='';
   if(!data || !data.length){feed.innerHTML='<div class="fl-loading">Nenhum post ainda. Seja o primeiro! 📸</div>';return;}
 
-  // Ordenação: primeiro verificados (is_verified), mantendo a ordem cronológica interna
+  // Ordenação: 1. Verificados, 2. Amigos, 3. Resto (mantendo a ordem cronológica interna)
   data.sort((a, b) => {
-    const aV = a.profiles?.is_verified ? 1 : 0;
-    const bV = b.profiles?.is_verified ? 1 : 0;
-    if (aV !== bV) return bV - aV;
-    return 0; // Já estão ordenados por data pela query
+    const getRank = (p) => {
+      if (p.profiles?.is_verified) return 2;
+      if (cacheAmizades.get(p.user_id) === 'accepted') return 1;
+      return 0;
+    };
+    const rankA = getRank(a);
+    const rankB = getRank(b);
+    return rankB - rankA; // Se o rank for igual, o JS mantém a ordem original (cronológica da query)
   });
 
   // Otimização: Busca todos os comentários dos posts carregados em uma única query (evita N+1)
