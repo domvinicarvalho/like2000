@@ -1339,7 +1339,7 @@ async function carregarFeed() {
   const feed=document.getElementById('fotolog-feed'); if(!feed)return;
   const {data,error}=await supabaseClient
     .from('posts')
-    .select('*, profiles:user_id(is_verified)')
+    .select('*, profiles(is_verified)')
     .order('created_at',{ascending:false})
     .limit(30);
 
