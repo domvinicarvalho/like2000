@@ -1337,10 +1337,23 @@ async function publicarPost() {
 
 async function carregarFeed() {
   const feed=document.getElementById('fotolog-feed'); if(!feed)return;
-  const {data,error}=await supabaseClient.from('posts').select('*').order('created_at',{ascending:false}).limit(30);
+  const {data,error}=await supabaseClient
+    .from('posts')
+    .select('*, profiles:user_id(is_verified)')
+    .order('created_at',{ascending:false})
+    .limit(30);
+
   if(error){feed.innerHTML='<div class="fl-loading">Erro ao carregar.</div>';return;}
   feed.innerHTML='';
   if(!data || !data.length){feed.innerHTML='<div class="fl-loading">Nenhum post ainda. Seja o primeiro! 📸</div>';return;}
+
+  // Ordenação: primeiro verificados (is_verified), mantendo a ordem cronológica interna
+  data.sort((a, b) => {
+    const aV = a.profiles?.is_verified ? 1 : 0;
+    const bV = b.profiles?.is_verified ? 1 : 0;
+    if (aV !== bV) return bV - aV;
+    return 0; // Já estão ordenados por data pela query
+  });
 
   // Otimização: Busca todos os comentários dos posts carregados em uma única query (evita N+1)
   const postIds = data.map(p => p.id);
@@ -1359,13 +1372,14 @@ async function carregarFeed() {
 function criarCardPost(post,comments){
   const card=document.createElement('div');
   card.className='fl-card'; card.id='post-'+post.id;
+  const verifiedBadge = post.profiles?.is_verified ? '<span title="Perfil Verificado (Bad Idea)" style="margin-left:4px; font-size:12px; cursor:help;">⭐</span>' : '';
   const av=post.avatar_url
     ?`<img src="${post.avatar_url}" class="fl-card-avatar" alt="">`
     :`<div class="fl-card-avatar-inicial" style="background:${post.color||'#0000cc'}">${post.nickname.charAt(0).toUpperCase()}</div>`;
   const dt=new Date(post.created_at).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
   const comHtml=comments.map(c=>`<div class="fl-comment"><span class="fl-comment-nick" style="color:${c.color||'#0000cc'}">${escapeHtml(c.nickname)}:</span> <span>${escapeHtml(c.content)}</span></div>`).join('');
   card.innerHTML=`
-    <div class="fl-card-header">${av}<div><div class="fl-card-nick" style="color:${post.color||'#0000cc'}">${escapeHtml(post.nickname)}${getBotaoAmizade(post.user_id)}</div><div class="fl-card-data">${dt}</div></div></div>
+    <div class="fl-card-header">${av}<div><div class="fl-card-nick" style="color:${post.color||'#0000cc'}">${escapeHtml(post.nickname)}${verifiedBadge}${getBotaoAmizade(post.user_id)}</div><div class="fl-card-data">${dt}</div></div></div>
     ${post.title?`<div class="fl-card-title">${escapeHtml(post.title)}</div>`:''}
     ${post.image_url?`<img src="${post.image_url}" class="fl-card-img" alt="">`:''}
     ${post.caption?`<div class="fl-card-caption">${escapeHtml(post.caption)}</div>`:''}

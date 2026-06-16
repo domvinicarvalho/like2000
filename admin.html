@@ -217,6 +217,7 @@
       <li><a href="#" id="nav-events-ie" onclick="showSection('events-ie', this)">Eventos IE</a></li>
       <li><a href="#" id="nav-configs" onclick="showSection('configs', this)">Configurações Gerais</a></li>
       <li><a href="#" id="nav-alerts" onclick="showSection('alerts', this)">Disparar Alertas</a></li>
+      <li><a href="#" id="nav-users" onclick="showSection('users', this)">Usuários</a></li>
       <li><a href="#" id="nav-communities" onclick="showSection('communities', this)">Comunidades</a></li>
     </ul>
     <a href="#" class="admin-logout-btn" onclick="adminLogout()">Sair</a>
@@ -336,6 +337,17 @@
       </div>
     </div>
 
+    <div id="users-section" class="admin-section" style="display:none;">
+      <h3>Gerenciar Usuários</h3>
+      <div class="admin-form" style="flex-direction: row; align-items: center; margin-bottom: 20px;">
+        <input type="text" id="search-user-nick" placeholder="Buscar por nickname..." style="margin-top: 0;">
+        <button onclick="renderUsers(document.getElementById('search-user-nick').value)" style="margin-top: 0; width: 150px; margin-left: 10px;">Buscar</button>
+      </div>
+      <div id="users-list">
+        <div style="font-style: italic; color: #999;">Digite um nome e clique em buscar.</div>
+      </div>
+    </div>
+
   </div>
 
   <script>
@@ -375,6 +387,7 @@
       else if (sectionId === 'configs') renderAppConfig();
       else if (sectionId === 'alerts') renderAlerts();
       else if (sectionId === 'communities') renderCommunities();
+      else if (sectionId === 'users') renderUsers();
     }
 
     // --- Notifications / Alerts ---
@@ -991,6 +1004,44 @@
       const { error } = await supabaseClient.from('communities').delete().eq('id', id);
       if (error) showNotification('Erro ao excluir', 'error');
       else { showNotification('Removida!'); renderCommunities(); }
+    }
+
+    // --- Users Management ---
+    async function renderUsers(search = '') {
+      const container = document.getElementById('users-list');
+      container.innerHTML = 'Buscando usuários...';
+
+      let query = supabaseClient.from('profiles').select('id, nickname, is_verified, avatar_url, color');
+      if (search) {
+        query = query.ilike('nickname', `%${search}%`);
+      } else {
+        query = query.eq('is_verified', true); // Se não houver busca, mostra os já verificados
+      }
+      
+      const { data, error } = await query.order('nickname').limit(20);
+
+      if (error) {
+        container.innerHTML = 'Erro ao carregar usuários.';
+        return;
+      }
+
+      let html = '<table class="admin-table"><thead><tr><th>Avatar</th><th>Nickname</th><th>⭐ Verificado</th></tr></thead><tbody>';
+      data.forEach(u => {
+        html += `<tr>
+          <td><img src="${u.avatar_url || ''}" style="width:30px;height:30px;border-radius:3px;object-fit:cover;" onerror="this.src='data:image/svg+xml;charset=utf-8,%3Csvg%20viewBox%3D%220%200%2048%2048%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Crect%20width%3D%2248%22%20height%3D%2248%22%20rx%3D%228%22%20fill%3D%22%23ccc%22%2F%3E%3C%2Fsvg%3E'"></td>
+          <td style="color:${u.color}; font-weight:bold;">${escapeHtml(u.nickname)}</td>
+          <td><input type="checkbox" onchange="toggleUserVerification('${u.id}', this.checked)" ${u.is_verified ? 'checked' : ''}></td>
+        </tr>`;
+      });
+      if (data.length === 0) html += '<tr><td colspan="3" style="text-align:center;">Nenhum usuário encontrado.</td></tr>';
+      html += '</tbody></table>';
+      container.innerHTML = html;
+    }
+
+    async function toggleUserVerification(userId, verified) {
+      const { error } = await supabaseClient.from('profiles').update({ is_verified: verified }).eq('id', userId);
+      if (error) showNotification("Erro ao atualizar", "error");
+      else showNotification(verified ? "Usuário verificado ⭐" : "Verificação removida");
     }
 
     // --- Event Listeners for Alerts Section ---
