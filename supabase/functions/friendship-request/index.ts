@@ -58,17 +58,14 @@ Deno.serve(async (req) => {
     if (action === "send") {
       const { error } = await supabase
         .from("friendships")
-        .insert({ user_id: user.id, friend_id: target_user_id, status: "pending" });
+        .upsert(
+          { user_id: user.id, friend_id: target_user_id, status: "pending", updated_at: new Date().toISOString() },
+          { onConflict: 'user_id,friend_id' }
+        );
 
       if (error) {
-        if (error.code === "23505") {
-          return new Response(
-            JSON.stringify({ error: "Solicitação já existe" }),
-            { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-        console.error("Erro ao inserir amizade (send):", error);
-        return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        console.error("Erro ao processar amizade (send):", error);
+        return new Response(JSON.stringify({ error: "Erro ao processar solicitação. Verifique se já não há um pedido pendente no sentido oposto." }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
       return new Response(JSON.stringify({ success: true }), {
