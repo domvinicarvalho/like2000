@@ -409,8 +409,11 @@
         const { data, error } = await supabaseClient.functions.invoke('friendship-request', {
           body: { target_user_id: targetId, action: 'send' }
         });
-        if (error) alert('Erro ao enviar.');
-        else alert('Solicitação de amizade enviada!');
+        if (error) {
+          const details = await error.context?.json().catch(() => ({}));
+          console.error('Erro na função:', error, details);
+          alert('Erro ao enviar: ' + (details.error || error.message));
+        } else alert('Solicitação de amizade enviada!');
       } catch (e) { alert('Erro na conexão.'); }
     }
 
