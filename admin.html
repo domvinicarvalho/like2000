@@ -217,6 +217,7 @@
       <li><a href="#" id="nav-events-ie" onclick="showSection('events-ie', this)">Eventos IE</a></li>
       <li><a href="#" id="nav-configs" onclick="showSection('configs', this)">Configurações Gerais</a></li>
       <li><a href="#" id="nav-alerts" onclick="showSection('alerts', this)">Disparar Alertas</a></li>
+      <li><a href="#" id="nav-communities" onclick="showSection('communities', this)">Comunidades</a></li>
     </ul>
     <a href="#" class="admin-logout-btn" onclick="adminLogout()">Sair</a>
   </div>
@@ -321,6 +322,20 @@
       <h4 style="margin-top:30px;">Alertas Ativos / Histórico</h4>
       <div id="alerts-list"></div>
     </div>
+
+    <div id="communities-section" class="admin-section" style="display:none;">
+      <h3>Gerenciar Comunidades (Orkut)</h3>
+      <div id="communities-list"></div>
+      <h4>Criar Nova Comunidade</h4>
+      <div class="admin-form">
+        <label for="new-comm-name">Nome da Comunidade:</label>
+        <input type="text" id="new-comm-name" placeholder="Nome da Comunidade">
+        <label for="new-comm-file">Imagem (Upload):</label>
+        <input type="file" id="new-comm-file" accept="image/*">
+        <button onclick="adminCreateCommunity()">Criar Comunidade</button>
+      </div>
+    </div>
+
   </div>
 
   <script>
@@ -359,6 +374,7 @@
       else if (sectionId === 'events-ie') renderEventsIE();
       else if (sectionId === 'configs') renderAppConfig();
       else if (sectionId === 'alerts') renderAlerts();
+      else if (sectionId === 'communities') renderCommunities();
     }
 
     // --- Notifications / Alerts ---
@@ -892,6 +908,89 @@
         showNotification("Alerta removido!");
         renderAlerts();
       }
+    }
+
+    // --- Communities CRUD ---
+    async function renderCommunities() {
+      const container = document.getElementById('communities-list');
+      container.innerHTML = 'Carregando comunidades...';
+
+      const { data, error } = await supabaseClient.from('communities').select('*').order('name', { ascending: true });
+
+      if (error) {
+        container.innerHTML = `<div style="color:red;">Erro ao carregar comunidades: ${error.message}</div>`;
+        return;
+      }
+
+      let html = `
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Imagem</th>
+              <th>Nome</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+      data.forEach(c => {
+        html += `
+          <tr>
+            <td>
+              <img src="${c.image_url || ''}" style="width:40px; height:40px; object-fit:cover; border:1px solid #ccc; border-radius:4px;" onerror="this.src='data:image/svg+xml;charset=utf-8,%3Csvg%20viewBox%3D%220%200%2048%2048%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Crect%20width%3D%2248%22%20height%3D%2248%22%20rx%3D%228%22%20fill%3D%22%23E8457A%22%2F%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2255%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%20font-family%3D%22Georgia%22%20font-style%3D%22italic%22%20font-weight%3D%22bold%22%20font-size%3D%2234%22%3Eo%3C%2Ftext%3E%3C%2Fsvg%3E'">
+            </td>
+            <td><input type="text" id="comm-name-${c.id}" value="${escapeHtml(c.name)}" style="width:100%;"></td>
+            <td class="actions">
+              <div style="display:flex; flex-direction:column; gap:4px;">
+                <input type="file" id="comm-file-${c.id}" accept="image/*" style="font-size:10px;">
+                <div>
+                  <button onclick="adminUpdateCommunity('${c.id}')">Salvar</button>
+                  <button onclick="adminDeleteCommunity('${c.id}')" style="color:red;">Excluir</button>
+                </div>
+              </div>
+            </td>
+          </tr>
+        `;
+      });
+      html += `</tbody></table>`;
+      container.innerHTML = html;
+    }
+
+    async function adminCreateCommunity() {
+      const name = document.getElementById('new-comm-name').value.trim();
+      const file = document.getElementById('new-comm-file').files[0];
+      if (!name) { showNotification('O nome é obrigatório.', 'error'); return; }
+      showNotification('Criando comunidade...');
+      let imageUrl = null;
+      if (file) {
+        const compressed = await comprimirImagem(file, 400);
+        imageUrl = await uploadToCloudinary(compressed, 'communities');
+      }
+      const { error } = await supabaseClient.from('communities').insert([{ name, image_url: imageUrl }]);
+      if (error) showNotification('Erro: ' + error.message, 'error');
+      else { showNotification('Comunidade criada!'); document.getElementById('new-comm-name').value = ''; document.getElementById('new-comm-file').value = ''; renderCommunities(); }
+    }
+
+    async function adminUpdateCommunity(id) {
+      const name = document.getElementById(`comm-name-${id}`).value.trim();
+      const file = document.getElementById(`comm-file-${id}`).files[0];
+      if (!name) { showNotification('Nome obrigatório', 'error'); return; }
+      showNotification('Atualizando...');
+      let payload = { name };
+      if (file) {
+        const compressed = await comprimirImagem(file, 400);
+        payload.image_url = await uploadToCloudinary(compressed, 'communities');
+      }
+      const { error } = await supabaseClient.from('communities').update(payload).eq('id', id);
+      if (error) showNotification('Erro ao atualizar', 'error');
+      else { showNotification('Atualizada!'); renderCommunities(); }
+    }
+
+    async function adminDeleteCommunity(id) {
+      if (!confirm('Deseja excluir esta comunidade?')) return;
+      const { error } = await supabaseClient.from('communities').delete().eq('id', id);
+      if (error) showNotification('Erro ao excluir', 'error');
+      else { showNotification('Removida!'); renderCommunities(); }
     }
 
     // --- Event Listeners for Alerts Section ---
