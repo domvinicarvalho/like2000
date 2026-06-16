@@ -167,13 +167,15 @@
       for(let l of LEVELS) { if (l.min > p.xp) { nextMin = l.min; break; } }
       const xpPct = Math.min(100, (p.xp / nextMin) * 100);
 
+      const verifiedBadge = p.is_verified ? '<span title="Perfil Verificado (Bad Idea)" style="margin-left:4px; font-size:14px; cursor:help;">⭐</span>' : '';
+
       document.getElementById('main-content').innerHTML = `
         <div class="container">
           <!-- COLUNA ESQUERDA -->
           <div class="col-esquerda">
             <div class="profile-pic-container">
               <img src="${p.avatar_url || 'https://www.gravatar.com/avatar/000?d=mp'}" class="profile-pic">
-              <span class="side-name">${p.nickname}</span>
+              <span class="side-name">${p.nickname}${verifiedBadge}</span>
               <div class="side-meta">${p.city || 'não informado'}<br>${p.identidade_sexual || ''}</div>
             </div>
             
@@ -196,7 +198,7 @@
           <!-- COLUNA CENTRO -->
           <div class="col-centro">
             <div class="col-centro-card">
-              <div class="main-name">${p.nickname}</div>
+              <div class="main-name">${p.nickname}${verifiedBadge}</div>
               <div class="stats-line">
                 recados <span>0</span> | fotos <span>0</span> | vídeos <span>0</span> | fãs <span>0</span>
               </div>
