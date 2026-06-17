@@ -242,6 +242,53 @@ async function fazerLogin() {
   await verificarPerfil();
 }
 
+// ── RECUPERAÇÃO DE SENHA ─────────────────────────────────────
+async function recuperarSenha() {
+  const email = document.getElementById('login-email').value.trim();
+  const msg = document.getElementById('msg-login');
+  
+  if (!email) {
+    msg.style.color = '#ffaaaa';
+    msg.textContent = 'Digite seu e-mail acima primeiro.';
+    return;
+  }
+
+  msg.style.color = '#ffddaa';
+  msg.textContent = 'Enviando link de recuperação...';
+
+  const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin,
+  });
+
+  if (error) {
+    msg.style.color = '#ffaaaa';
+    msg.textContent = 'Erro: ' + error.message;
+  } else {
+    msg.style.color = '#aaffaa';
+    msg.textContent = '📧 Link enviado! Verifique seu e-mail.';
+  }
+}
+
+// Monitorar se o usuário veio pelo link de recuperação
+supabaseClient.auth.onAuthStateChange(async (event, session) => {
+  if (event === 'PASSWORD_RECOVERY') {
+    mostrarNotificacao("Defina sua nova senha agora.");
+    abrirJanelaTrocaSenha();
+  }
+});
+
+function abrirJanelaTrocaSenha() {
+  const content = `
+    <div class="up-field-group">
+      <p style="font-size:11px; color:#333; margin-bottom:10px;">Digite sua nova senha abaixo:</p>
+      <label>Nova Senha:</label>
+      <input type="password" id="nova-senha-recuperacao" placeholder="Mínimo 6 caracteres">
+      <button class="up-btn-save" onclick="salvarNovaSenha('nova-senha-recuperacao')">ATUALIZAR SENHA</button>
+    </div>
+  `;
+  criarJanela('janela-reset-pw', 'Redefinir Senha', 'ie', 300, 200, 100, 100, content);
+}
+
 // ── STATUS ───────────────────────────────────────────────────
 async function mudarStatus(novoStatus) {
   if (!currentUser) return;
@@ -1838,6 +1885,15 @@ async function abrirPerfil() {
           <div class="up-cupom-label">🎟️ Seu cupom de indicação</div>
           <div class="up-cupom-code" style="font-size:16px;">${escapeHtml(ref)}</div>
           <button class="up-cupom-copy" onclick="copiarCupom('${escapeHtml(ref)}')">📋 Copiar Cupom</button>
+        </div>
+      </div>
+
+      <!-- Seção de Segurança -->
+      <div class="up-ranking-box" style="padding:12px; margin-top:0; border-top:none;">
+        <div style="font-weight:bold; color:#1F4E89; margin-bottom:8px; font-size:11px;">Segurança</div>
+        <div style="display:flex; gap:10px; align-items:flex-end;">
+          <div style="flex:1;"><label style="font-size:10px; color:#666;">Nova Senha:</label><input type="password" id="up-new-pw" style="width:100%; padding:4px; border:1px solid #7f9db9;"></div>
+          <button onclick="salvarNovaSenha('up-new-pw')" style="padding:5px 10px; font-size:10px; cursor:pointer; background:#ece9d8; border:1px solid #7f9db9;">Alterar Senha</button>
         </div>
       </div>
 
