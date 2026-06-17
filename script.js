@@ -36,11 +36,11 @@ let webampInstance = null;
 
 // ── NÍVEIS ───────────────────────────────────────────────────
 const LEVELS = [
-  { name:'Rookie',         min:0    },
-  { name:'Insider',        min:100  },
-  { name:'Cult Member',    min:300  },
-  { name:'Legend',         min:700  },
-  { name:'Bad Idea Elite', min:1500 },
+  { name:'🥉 TV Globinho',         min:0    },
+  { name:'🥈 Capa da Capricho',    min:400  },
+  { name:'🥈 Estrela da Malhação', min:1200 },
+  { name:'🥇 Top Top MTV',         min:2500 },
+  { name:'👑 Lenda 2000',          min:4000 },
 ];
 function calcLevel(xp) {
   let l = LEVELS[0].name;
@@ -355,7 +355,7 @@ async function verificarPerfil() {
     currentProfile = data; 
     primeiroAcesso = false;
   } else { 
-    currentProfile = { xp: 0, level: 'Rookie', nickname: 'Novo Usuário', color: '#ffffff' };
+    currentProfile = { xp: 0, level: '🥉 TV Globinho', nickname: 'Novo Usuário', color: '#ffffff' };
     primeiroAcesso = true;
   }
   mostrarBoot();
@@ -551,7 +551,7 @@ async function salvarPerfilCompleto() {
     // o erro será capturado no catch abaixo.
     const { error } = await supabaseClient.from('profiles').upsert({
       id: currentUser.id, nickname: nick, color: corSelecionada,
-      avatar_url: avatarUrl, xp: 0, level: 'Rookie', referral_code: ref,
+      avatar_url: avatarUrl, xp: 0, level: '🥉 TV Globinho', referral_code: ref,
       birth_date: nascRaw, city: cidade, terms_accepted_at: agora,
       referred_by: referredBy
     }, { onConflict: 'id' });
@@ -736,7 +736,7 @@ async function mostrarDesktop() {
   // Tutorial de XP (Onboarding Geral)
   if (!isSetup) {
     setTimeout(() => {
-      const txtXP = `Bem-vinde à Like 2000!\n\nAqui você acumula XP e compete pelo ranking da temporada, com prêmios reais para os campeões!\n\nComo ganhar XP:\n- Adicionar amigos → +10 XP (mútuo)\n- Compartilhar evento da Bad Idea no Instagram → +50 XP\n- Postar no Fotolog → +10 XP\n- Comentar em posts → +5 XP\n- Login diário → +3 XP (dobra a cada 10 dias consecutivos)\n- Comprar ingresso para os eventos da Bad Idea → +200 XP\n- Fazer check-in em eventos da Bad Idea → +100 XP\n- Indicar pessoas para comprar ingresso com o seu cupom → +200 XP\n\nAo final de cada temporada de 45 dias, o top 10 ganha prêmios reais.\nSeu cupom de indicação está no "Meu Perfil", compartilhe!`;
+      const txtXP = `Bem-vinde à Like 2000!\n\nAqui você acumula XP e compete pelo ranking da temporada, com prêmios reais para os campeões!\n\nComo ganhar XP:\n- Adicionar amigos → +10 XP (mútuo)\n- Compartilhar evento ou tarefa diária (print) → +50 XP\n- Postar no Fotolog → +10 XP\n- Comentar em posts → +5 XP (máx 50 XP/dia)\n- Login diário → +3 XP (doubla a cada 10 dias consecutivos)\n- Amigo se cadastrar pelo seu link → +100 XP\n- Comprar ingresso antecipado pelo link → +200 XP\n- Amigo comprar ingresso pelo seu link → +200 XP\n- Fazer check-in em eventos da Bad Idea → +100 XP\n\nAo final de cada temporada, o top 10 ganha prêmios reais.\nSeu cupom de indicação está no "Meu Perfil", compartilhe!`;
       mostrarAlerta('tutorial-xp', 'Bem-vinde à Like 2000', 'ie', txtXP, 'tutorial_xp_visto');
     }, 1500);
   }
@@ -766,7 +766,7 @@ async function mostrarDesktop() {
           </div>
           <div>
             <div class="start-menu-nick" style="color:${currentProfile?.color || '#fff'}">${escapeHtml(currentProfile?.nickname || 'Usuário')}</div>
-            <div style="font-size:11px;color:#aac4ff">⭐ ${currentProfile?.xp || 0} XP · ${currentProfile?.level || 'Rookie'}</div>
+            <div style="font-size:11px;color:#aac4ff">⭐ ${currentProfile?.xp || 0} XP · ${currentProfile?.level || '🥉 TV Globinho'}</div>
             <div style="margin-top:4px;">
             <select class="status-select" id="start-menu-status-select" onchange="mudarStatus(this.value)">
                 <option value="online" ${currentProfile.status === 'online' ? 'selected' : ''}>🟢 Online</option>
@@ -817,7 +817,7 @@ async function mostrarDesktop() {
 
       <div class="taskbar" id="taskbar">
         <div class="start" onclick="toggleMenu(event)">iniciar</div>
-        <div class="taskbar-xp" id="taskbar-xp">⭐ ${currentProfile?.xp || 0} XP · ${currentProfile?.level || 'Rookie'}</div>
+        <div class="taskbar-xp" id="taskbar-xp">⭐ ${currentProfile?.xp || 0} XP · ${currentProfile?.level || '🥉 TV Globinho'}</div>
         <div class="taskbar-right"><div class="clock" id="clock">00:00</div></div>
       </div>
     </div>`;
@@ -1315,7 +1315,7 @@ function abrirFotolog() {
         <div class="fotolog-meu-perfil">
           ${avHtml}
           <div class="fl-nick" style="color:${currentProfile.color}">${escapeHtml(currentProfile.nickname)}</div>
-          <div class="fl-level" id="fl-xp-display">⭐ ${currentProfile.xp||0} XP · ${currentProfile.level||'Rookie'}</div>
+          <div class="fl-level" id="fl-xp-display">⭐ ${currentProfile.xp||0} XP · ${currentProfile.level||'🥉 TV Globinho'}</div>
           <div class="fl-cupom">🎟️ ${escapeHtml(currentProfile.referral_code||'')}</div>
         </div>
         <div class="fl-post-box">
@@ -1856,13 +1856,13 @@ async function abrirPerfil() {
   const nick = currentProfile.nickname || '';
 
   // barra de progresso até próximo nível
-  const levels = [{name:'Rookie',min:0},{name:'Insider',min:100},{name:'Cult Member',min:300},{name:'Legend',min:700},{name:'Bad Idea Elite',min:1500}];
-  let proxMin=1500, atualMin=0;
+  const levels = [{name:'🥉 TV Globinho',min:0},{name:'🥈 Capa da Capricho',min:400},{name:'🥈 Estrela da Malhação',min:1200},{name:'🥇 Top Top MTV',min:2500},{name:'👑 Lenda 2000',min:4000}];
+  let proxMin=4000, atualMin=0;
   for(let i=0;i<levels.length;i++){
     if(xp>=levels[i].min) atualMin=levels[i].min;
     if(levels[i].min>xp){ proxMin=levels[i].min; break; }
   }
-  const pct = level==='Bad Idea Elite' ? 100 : Math.round((xp-atualMin)/(proxMin-atualMin)*100);
+  const pct = level==='👑 Lenda 2000' ? 100 : Math.round((xp-atualMin)/(proxMin-atualMin)*100);
 
   j.innerHTML=`
     <div class="xp-titlebar">
@@ -1890,7 +1890,7 @@ async function abrirPerfil() {
             <div class="up-barra-bg">
               <div class="up-barra-fill" style="width:${pct}%"></div>
             </div>
-            <div class="up-barra-txt">${level==='Bad Idea Elite'?'Nível máximo!':xp+' / '+proxMin+' XP para '+levels[levels.findIndex(l=>l.min===proxMin)].name}</div>
+            <div class="up-barra-txt">${level==='👑 Lenda 2000'?'Nível máximo!':xp+' / '+proxMin+' XP para '+levels[levels.findIndex(l=>l.min===proxMin)].name}</div>
           </div>
         </div>
       </div>
@@ -2043,7 +2043,7 @@ async function carregarRanking() {
       ${av}
       <div class="up-rank-info">
         <span class="up-rank-nick" style="color:${p.color||'#0000cc'}">${escapeHtml(p.nickname)}</span>
-        <span class="up-rank-level">${escapeHtml(p.level||'Rookie')}</span>
+        <span class="up-rank-level">${escapeHtml(p.level||'🥉 TV Globinho')}</span>
       </div>
       <div class="up-rank-xp">⭐ ${p.xp||0}</div>
     </div>`;
@@ -2077,7 +2077,7 @@ async function carregarRankingTemporada() {
       ${av}
       <div class="up-rank-info">
         <span class="up-rank-nick" style="color:${p.color||'#0000cc'}">${escapeHtml(p.nickname)}</span>
-        <span class="up-rank-level">${escapeHtml(p.level||'Rookie')}</span>
+        <span class="up-rank-level">${escapeHtml(p.level||'🥉 TV Globinho')}</span>
       </div>
       <div class="up-rank-xp" style="color:#1464d8;">⭐ ${p.xp||0}</div>
     </div>`;

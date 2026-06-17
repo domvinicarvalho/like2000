@@ -1,7 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const XP_SHARE = 50;
-const XP_TASK_DEFAULT = 10;
+const XP_TASK_DEFAULT = 50;
 
 Deno.serve(async (req) => {
   // Validação de Segurança: Garante que apenas o sistema (via cron/service_role) dispare o crédito
