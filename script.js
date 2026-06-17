@@ -269,6 +269,27 @@ async function recuperarSenha() {
   }
 }
 
+async function salvarNovaSenha(inputId) {
+  const novaSenha = document.getElementById(inputId).value;
+  if (!novaSenha || novaSenha.length < 6) {
+    mostrarNotificacao('A nova senha deve ter pelo menos 6 caracteres.');
+    return;
+  }
+
+  try {
+    const { error } = await supabaseClient.auth.updateUser({
+      password: novaSenha,
+    });
+
+    if (error) {
+      mostrarNotificacao('Erro ao atualizar senha: ' + error.message);
+    } else {
+      mostrarNotificacao('✅ Senha atualizada com sucesso!');
+      document.getElementById(inputId).value = ''; // Limpa o campo
+      if (inputId === 'nova-senha-recuperacao') fecharJanela('janela-reset-pw'); // Fecha a janela de recuperação se for o caso
+    }
+  } catch (e) { console.error('Erro ao salvar nova senha:', e); mostrarNotificacao('Erro inesperado ao atualizar senha.'); }
+}
 // Monitorar se o usuário veio pelo link de recuperação
 supabaseClient.auth.onAuthStateChange(async (event, session) => {
   if (event === 'PASSWORD_RECOVERY') {
