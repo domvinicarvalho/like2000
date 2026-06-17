@@ -736,7 +736,7 @@ async function mostrarDesktop() {
   // Tutorial de XP (Onboarding Geral)
   if (!isSetup) {
     setTimeout(() => {
-      const txtXP = `Bem-vinde à Like 2000!\n\nAqui você acumula XP e compete pelo ranking da temporada, com prêmios reais para os campeões!\n\nComo ganhar XP:\n- Adicionar amigos → +10 XP (mútuo)\n- Compartilhar evento ou tarefa diária (print) → +50 XP\n- Postar no Fotolog → +10 XP\n- Comentar em posts → +5 XP (máx 50 XP/dia)\n- Login diário → +3 XP (doubla a cada 10 dias consecutivos)\n- Amigo se cadastrar pelo seu link → +100 XP\n- Comprar ingresso antecipado pelo link → +200 XP\n- Amigo comprar ingresso pelo seu link → +200 XP\n- Fazer check-in em eventos da Bad Idea → +100 XP\n\nAo final de cada temporada, o top 10 ganha prêmios reais.\nSeu cupom de indicação está no "Meu Perfil", compartilhe!`;
+      const txtXP = `🖥️ Bem-vinde à Like 2000!\n\nVocê acabou de chegar nos anos 2000! Agora é hora de acumular XP e chegar ao topo do ranking, com prêmios reais pra quem chegar lá!\n\n🏆 Convide seus amigos — é onde mais vale:\n- Amigo se cadastrou pelo seu link → +100 XP\n- Amigo comprou ingresso pelo seu link → +200 XP\n\n⭐ Outras formas de ganhar XP:\n- Comprar ingresso antecipado → +200 XP\n- Fazer check-in no evento → +100 XP\n- Compartilhar evento (print) → +50 XP\n- Postar no Fotolog → +10 XP\n- Adicionar amigos → +10 XP\n- Comentar em posts → +5 XP\n- Login diário → +3 XP (dobra a cada 10 dias!)\n\nSeu link de indicação está em Meu Perfil. Compartilha agora e já começa na frente! 🚀`;
       mostrarAlerta('tutorial-xp', 'Bem-vinde à Like 2000', 'ie', txtXP, 'tutorial_xp_visto');
     }, 1500);
   }
