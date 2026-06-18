@@ -1992,6 +1992,66 @@ function abrirRanking() {
         </div>
       </div>
       
+      <!-- Seção Como ganhar XP -->
+      <div class="up-ranking-box" style="margin-top:12px;">
+        <div class="up-ranking-title">⭐ Como ganhar XP</div>
+        <div style="padding:12px; font-size:11px; color:#333; line-height:1.6; background:#fff;">
+          <div style="font-weight:bold; margin-bottom:8px; color:#cc4400;">Indicações (em destaque):</div>
+          <ul style="list-style:none; padding-left:10px; margin-bottom:12px;">
+            <li>Amigo comprou ingresso pelo seu link → <span style="font-weight:bold;">+200 XP</span></li>
+            <li>Amigo se cadastrou pelo seu link → <span style="font-weight:bold;">+100 XP</span></li>
+          </ul>
+          <div style="font-weight:bold; margin-bottom:8px; color:#333;">Outras formas:</div>
+          <ul style="list-style:none; padding-left:10px;">
+            <li>Comprar ingresso antecipado pelo link → <span style="font-weight:bold;">+200 XP</span></li>
+            <li>Check-in no evento → <span style="font-weight:bold;">+100 XP</span></li>
+            <li>Compartilhar evento (print) → <span style="font-weight:bold;">+50 XP</span></li>
+            <li>Tarefa diária (print) → <span style="font-weight:bold;">+50 XP</span></li>
+            <li>Adicionar amigo → <span style="font-weight:bold;">+10 XP</span></li>
+            <li>Postar no Fotolog → <span style="font-weight:bold;">+10 XP</span></li>
+            <li>Comentar em post → <span style="font-weight:bold;">+5 XP</span></li>
+            <li>Login diário → <span style="font-weight:bold;">+3 XP</span> (dobra a cada 10 dias)</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Seção Níveis da Temporada -->
+      <div class="up-ranking-box" style="margin-top:12px;">
+        <div class="up-ranking-title">🏅 Níveis da Temporada</div>
+        <div style="padding:12px; background:#fff;">
+          <table style="width:100%; border-collapse:collapse; font-size:11px;">
+            <thead>
+              <tr style="background:#f0f0e8; border-bottom:1px solid #ccc;">
+                <th style="padding:6px; text-align:left; color:#555;">XP Mínimo</th>
+                <th style="padding:6px; text-align:left; color:#555;">Nível</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom:1px solid #eee;">
+                <td style="padding:6px;">0 XP</td>
+                <td style="padding:6px;">🥉 TV Globinho</td>
+              </tr>
+              <tr style="border-bottom:1px solid #eee;">
+                <td style="padding:6px;">400 XP</td>
+                <td style="padding:6px;">🥈 Capa da Capricho</td>
+              </tr>
+              <tr style="border-bottom:1px solid #eee;">
+                <td style="padding:6px;">1.200 XP</td>
+                <td style="padding:6px;">🥈 Estrela da Malhação</td>
+              </tr>
+              <tr style="border-bottom:1px solid #eee;">
+                <td style="padding:6px;">2.500 XP</td>
+                <td style="padding:6px;">🥇 Top Top MTV</td>
+              </tr>
+              <tr>
+                <td style="padding:6px;">4.000 XP</td>
+                <td style="padding:6px;">👑 Lenda 2000</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <div style="height:20px;"></div>
     </div>
   `;
