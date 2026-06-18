@@ -1895,18 +1895,18 @@ async function abrirPerfil() {
         </div>
       </div>
 
-      <!-- Link do Perfil e Cupom -->
-      <div style="display:flex; gap:10px; padding:0 12px;">
-        <div class="up-cupom-box" style="flex:1; margin:12px 0;">
-          <div class="up-cupom-label">🔗 Seu Perfil Público</div>
-          <div style="font-size:10px; font-family:monospace; background:#f0f0e8; padding:4px; margin:4px 0; border:1px solid #ccc; word-break:break-all;">like2000.vercel.app/perfil.html?u=${nick}</div>
-          <button class="up-cupom-copy" onclick="copiarCupom('https://like2000.vercel.app/perfil.html?u=${nick}')">📋 Copiar Link</button>
-        </div>
-        <div class="up-cupom-box" style="flex:1; margin:12px 0;">
-          <div class="up-cupom-label">🎟️ Seu cupom de indicação</div>
-          <div class="up-cupom-code" style="font-size:16px;">${escapeHtml(ref)}</div>
-          <button class="up-cupom-copy" onclick="copiarCupom('${escapeHtml(ref)}')">📋 Copiar Cupom</button>
-        </div>
+      <!-- Seção de Convite (Destaque) -->
+      <div class="up-cupom-box" style="margin:12px; border: 2px dashed #ffaa66; background: #fffdf5;">
+        <div style="font-size:14px; font-weight:bold; color:#cc4400;">🔗 Convide seus amigos e ganhe XP</div>
+        <div style="font-size:10px; color:#666; margin-bottom:8px;">+100 XP por cada amigo que se cadastrar pelo seu link</div>
+        <div style="font-size:11px; font-family:monospace; background:#f0f0e8; padding:8px; border:1px solid #ccc; word-break:break-all; width:100%; text-align:center;">like2000.com.br?utm_source=share&utm_medium=perfil&utm_campaign=${ref}</div>
+        <button class="up-cupom-copy" style="width:100%; padding:8px; font-size:12px; margin-top:5px; font-weight:bold;" onclick="copiarCupom('https://like2000.com.br?utm_source=share&utm_medium=perfil&utm_campaign=${ref}')">🚀 Copiar Link de Convite</button>
+      </div>
+
+      <!-- Link do Perfil Orkut (Discreto) -->
+      <div style="display: flex; align-items: center; justify-content: space-between; background: #e8e0d0; margin: 0 12px 12px; padding: 6px 10px; border-radius: 4px; border: 1px solid #c0b090;">
+        <div style="font-size:10px; color:#555;"><strong>Perfil Orkut:</strong> like2000.vercel.app/perfil.html?u=${nick}</div>
+        <button class="task-btn mini" style="margin:0;" onclick="copiarCupom('https://like2000.vercel.app/perfil.html?u=${nick}')">Copiar</button>
       </div>
 
       <!-- Seção de Segurança -->
