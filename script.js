@@ -1996,7 +1996,7 @@ function abrirRanking() {
       <div class="up-ranking-box" style="margin-top:12px;">
         <div class="up-ranking-title">⭐ Como ganhar XP</div>
         <div style="padding:12px; font-size:11px; color:#333; line-height:1.6; background:#fff;">
-          <div style="font-weight:bold; margin-bottom:8px; color:#cc4400;">Indicações (em destaque):</div>
+          <div style="font-weight:bold; margin-bottom:8px; color:#cc4400;">Indicações:</div>
           <ul style="list-style:none; padding-left:10px; margin-bottom:12px;">
             <li>Amigo comprou ingresso pelo seu link → <span style="font-weight:bold;">+200 XP</span></li>
             <li>Amigo se cadastrou pelo seu link → <span style="font-weight:bold;">+100 XP</span></li>
