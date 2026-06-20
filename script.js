@@ -2166,6 +2166,7 @@ async function carregarPremiosTemporada() {
       'season_prize_top1_desc',
       'season_prize_top1_image',
       'season_prize_top1_logo',
+      'season_prize_top1_link',
       'season_prize_top2_title',
       'season_prize_top2_desc',
       'season_prize_top3_title',
@@ -2180,6 +2181,7 @@ async function carregarPremiosTemporada() {
     const top1Desc = configMap.get('season_prize_top1_desc') || 'Prêmio para o Campeão da Temporada.';
     const top1Image = configMap.get('season_prize_top1_image') || '';
     const top1Logo = configMap.get('season_prize_top1_logo') || '';
+    const top1Link = configMap.get('season_prize_top1_link') || '';
 
     const top2Title = configMap.get('season_prize_top2_title') || 'A confirmar';
     const top2Desc = configMap.get('season_prize_top2_desc') || 'Tatuagem exclusiva.';
@@ -2190,7 +2192,7 @@ async function carregarPremiosTemporada() {
     placeholder.innerHTML = `
       <div class="season-prizes-container">
         <!-- Card Top 1 (Anchor) -->
-        <div class="prize-card top1">
+        <div class="prize-card top1" ${top1Link ? `style="cursor: pointer;" onclick="window.open('${escapeHtml(top1Link)}', '_blank')"` : ''}>
           <div class="prize-card-header">
             <span class="prize-tag">🏆 Campeão (Top 1)</span>
             ${top1Logo ? `<img src="${escapeHtml(top1Logo)}" style="height: 20px; object-fit: contain; max-width: 80px;" alt="Selo">` : ''}
