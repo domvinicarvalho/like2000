@@ -1978,6 +1978,15 @@ function abrirRanking() {
       ${temporadaAtiva ? `
       <div class="up-ranking-box" style="margin-top:12px; border-color:#4a90e8;">
         <div class="up-ranking-title" style="background:linear-gradient(to bottom,#4a90e8,#1464d8); color:white;">
+          🏆 Prêmios da Temporada
+        </div>
+        <div id="season-prizes-placeholder">
+          <div class="up-ranking-loading">carregando prêmios...</div>
+        </div>
+      </div>
+
+      <div class="up-ranking-box" style="margin-top:12px; border-color:#4a90e8;">
+        <div class="up-ranking-title" style="background:linear-gradient(to bottom,#4a90e8,#1464d8); color:white;">
           Temporada: ${escapeHtml(temporadaAtiva.nome)} (Top 10)
         </div>
         <div class="up-ranking-lista" id="up-ranking-temporada">
@@ -2059,7 +2068,10 @@ function abrirRanking() {
   const j = criarJanela('janela-ranking', 'Ranking da Temporada', 'amigos', 480, 520, 60, 100, content);
   if(!j) return;
   carregarRanking();
-  if(temporadaAtiva) carregarRankingTemporada();
+  if(temporadaAtiva) {
+    carregarRankingTemporada();
+    carregarPremiosTemporada();
+  }
 }
 
 async function salvarInfoOrkut() {
@@ -2142,6 +2154,77 @@ async function carregarRankingTemporada() {
       <div class="up-rank-xp" style="color:#1464d8;">⭐ ${p.xp||0}</div>
     </div>`;
   }).join('');
+}
+
+async function carregarPremiosTemporada() {
+  const placeholder = document.getElementById('season-prizes-placeholder');
+  if (!placeholder || !temporadaAtiva) return;
+
+  try {
+    const keys = [
+      'season_prize_top1_title',
+      'season_prize_top1_desc',
+      'season_prize_top1_image',
+      'season_prize_top1_logo',
+      'season_prize_top2_title',
+      'season_prize_top2_desc',
+      'season_prize_top3_title',
+      'season_prize_top3_desc'
+    ];
+    const { data, error } = await supabaseClient.from('app_config').select('*').in('key', keys);
+    if (error) throw error;
+
+    const configMap = new Map(data?.map(i => [i.key, i.value]) || []);
+
+    const top1Title = configMap.get('season_prize_top1_title') || 'A confirmar';
+    const top1Desc = configMap.get('season_prize_top1_desc') || 'Prêmio para o Campeão da Temporada.';
+    const top1Image = configMap.get('season_prize_top1_image') || '';
+    const top1Logo = configMap.get('season_prize_top1_logo') || '';
+
+    const top2Title = configMap.get('season_prize_top2_title') || 'A confirmar';
+    const top2Desc = configMap.get('season_prize_top2_desc') || 'Tatuagem exclusiva.';
+
+    const top3Title = configMap.get('season_prize_top3_title') || 'A confirmar';
+    const top3Desc = configMap.get('season_prize_top3_desc') || 'Prêmios do Top 3 ao Top 10.';
+
+    placeholder.innerHTML = `
+      <div class="season-prizes-container">
+        <!-- Card Top 1 (Anchor) -->
+        <div class="prize-card top1">
+          <div class="prize-card-header">
+            <span class="prize-tag">🏆 Campeão (Top 1)</span>
+            ${top1Logo ? `<img src="${escapeHtml(top1Logo)}" style="height: 20px; object-fit: contain; max-width: 80px;" alt="Selo">` : ''}
+          </div>
+          <div class="prize-title">${escapeHtml(top1Title)}</div>
+          <div class="prize-desc" style="white-space: pre-wrap;">${escapeHtml(top1Desc)}</div>
+          ${top1Image ? `
+          <div class="prize-image-wrap">
+            <img src="${escapeHtml(top1Image)}" alt="Prêmio Top 1">
+          </div>` : ''}
+        </div>
+
+        <!-- Cards Top 2 and Top 3-10 side-by-side -->
+        <div class="prize-grid-secondary">
+          <!-- Card Top 2 -->
+          <div class="prize-card top2">
+            <span class="prize-tag-secondary">🥈 Vice-Campeão (Top 2)</span>
+            <div class="prize-title-secondary">${escapeHtml(top2Title)}</div>
+            <div class="prize-desc-secondary" style="white-space: pre-wrap;">${escapeHtml(top2Desc)}</div>
+          </div>
+          
+          <!-- Card Top 3-10 -->
+          <div class="prize-card top3">
+            <span class="prize-tag-secondary">🥉 Top 3 ao Top 10</span>
+            <div class="prize-title-secondary">${escapeHtml(top3Title)}</div>
+            <div class="prize-desc-secondary" style="white-space: pre-wrap;">${escapeHtml(top3Desc)}</div>
+          </div>
+        </div>
+      </div>
+    `;
+  } catch (e) {
+    console.error("Erro ao carregar prêmios da temporada:", e);
+    placeholder.innerHTML = `<div class="up-ranking-loading" style="color: red;">Erro ao carregar prêmios.</div>`;
+  }
 }
 
 function copiarCupom(codigo) {
@@ -2391,8 +2474,20 @@ function abrirTarefas() {
   fecharMenu();
   if(document.getElementById('janela-tarefas')){trazerFrente('janela-tarefas');return;}
 
+  const promoText = temporadaAtiva 
+    ? `Complete as tarefas para acumular XP e disputar os prêmios da <strong>${escapeHtml(temporadaAtiva.nome)}</strong>! Clique para ver os prêmios e o ranking.`
+    : `Complete as tarefas para acumular XP e disputar os prêmios da temporada! Clique para ver os prêmios e o ranking.`;
+
   const content = `
     <div style="display:flex; flex-direction:column; height:100%;">
+      <div class="season-promo-banner" onclick="fecharJanela('janela-tarefas'); abrirRanking();">
+        <div style="font-size:18px; line-height:1; flex-shrink:0;">🏆</div>
+        <div style="flex:1; font-family:Tahoma,sans-serif;">
+          <div style="font-size:11px; font-weight:bold; color:#cc4400; margin-bottom:2px;">Suba no Ranking!</div>
+          <div style="font-size:9px; color:#554411; line-height:1.3;">${promoText}</div>
+        </div>
+        <div style="font-size:11px; color:#cc4400; font-weight:bold; flex-shrink:0;">➔</div>
+      </div>
       <div class="task-tabs">
         <div class="task-tab active" id="tab-t-diarias" onclick="alternarTabsTarefas('diarias')">Recompensas Diárias</div>
         <div class="task-tab" id="tab-t-eventos" onclick="alternarTabsTarefas('eventos')">Compartilhar Eventos</div>

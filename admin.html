@@ -792,35 +792,108 @@
       }
     }
 
-    const CONFIG_KEYS = ['desktop_wallpaper_url', 'mobile_wallpaper_url', 'msn_banner_url'];
+    const CONFIG_KEYS = [
+      'desktop_wallpaper_url',
+      'mobile_wallpaper_url',
+      'msn_banner_url',
+      'season_prize_top1_title',
+      'season_prize_top1_desc',
+      'season_prize_top1_image',
+      'season_prize_top1_logo',
+      'season_prize_top2_title',
+      'season_prize_top2_desc',
+      'season_prize_top3_title',
+      'season_prize_top3_desc'
+    ];
+
+    const CONFIG_DEFAULTS = {
+      'season_prize_top1_title': '1 ingresso para o show do Iron Maiden em São Paulo',
+      'season_prize_top1_desc': 'A SafePass vai premiar o Campeão da Temporada com 1 ingresso para o show do Iron Maiden em São Paulo (Allianz Parque, 25/10/2026). O selo da SafePass garante a autenticidade do seu prêmio.',
+      'season_prize_top1_image': 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?q=80&w=1000',
+      'season_prize_top1_logo': 'https://placehold.co/120x40/003c74/ffffff?text=SafePass',
+      'season_prize_top2_title': 'Tatuagem Exclusiva',
+      'season_prize_top2_desc': 'Tatuagem exclusiva com a renomada tatuadora Carla Franskowiak.',
+      'season_prize_top3_title': 'Prêmios do Top 3 ao Top 10',
+      'season_prize_top3_desc': 'Prêmios a confirmar em breve. Fique atento às nossas atualizações!'
+    };
 
     async function renderAppConfig() {
       const container = document.getElementById('app-configs-list');
       container.innerHTML = 'Carregando configurações...';
 
-      const { data, error } = await supabaseClient.from('app_config').select('*').in('key', CONFIG_KEYS);
+      let { data, error } = await supabaseClient.from('app_config').select('*').in('key', CONFIG_KEYS);
 
       if (error) {
         container.innerHTML = `<div style="color:red;">Erro ao carregar configurações: ${error.message}</div>`;
         return;
       }
 
+      // Auto-inicializar chaves que não existirem no banco com os valores padrões
+      const existingKeys = new Set(data.map(item => item.key));
+      const missingKeys = CONFIG_KEYS.filter(key => !existingKeys.has(key) && CONFIG_DEFAULTS[key] !== undefined);
+
+      if (missingKeys.length > 0) {
+        const rowsToInsert = missingKeys.map(key => ({ key, value: CONFIG_DEFAULTS[key] }));
+        const { error: insertError } = await supabaseClient.from('app_config').upsert(rowsToInsert, { onConflict: 'key' });
+        if (!insertError) {
+          const refetched = await supabaseClient.from('app_config').select('*').in('key', CONFIG_KEYS);
+          if (!refetched.error) {
+            data = refetched.data;
+          }
+        } else {
+          console.error("Erro ao auto-inicializar chaves de prêmios:", insertError);
+        }
+      }
+
       const configMap = new Map(data.map(item => [item.key, item.value]));
 
-      let html = '';
+      container.innerHTML = '';
       CONFIG_KEYS.forEach(key => {
         const value = configMap.get(key) || '';
-        html += `
-          <div class="config-item">
-            <label>${key.replace(/_/g, ' ').toUpperCase()}:</label>
-            <input type="url" id="config-${key}" value="${escapeHtml(value)}" placeholder="https://...">
-            <input type="file" id="file-${key}" accept="image/*" style="display:none" onchange="handleConfigUpload('${key}', event)">
-            <button onclick="document.getElementById('file-${key}').click()" style="background-color:#f0ad4e; border:none; color:white; padding:6px 12px; border-radius:3px; cursor:pointer;">📤 Upload</button>
-            <button onclick="saveAppConfig('${key}')">Salvar</button>
-          </div>
+        const item = document.createElement('div');
+        item.className = 'config-item';
+        item.style.display = 'flex';
+        item.style.flexDirection = 'column';
+        item.style.alignItems = 'flex-start';
+        item.style.borderBottom = '1px solid #ddd';
+        item.style.paddingBottom = '15px';
+        item.style.marginBottom = '15px';
+        item.style.gap = '5px';
+        item.style.width = '100%';
+
+        const labelText = key.replace(/_/g, ' ').toUpperCase();
+        let inputHtml = '';
+
+        if (key.endsWith('_desc') || key.endsWith('_description')) {
+          inputHtml = `
+            <textarea id="config-${key}" rows="3" style="width:100%; font-family:inherit; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box; font-size:12px;">${escapeHtml(value)}</textarea>
+            <button onclick="saveAppConfig('${key}')" style="margin-top:5px; background-color:#2e6da4; color:white; border:none; padding:6px 12px; border-radius:3px; cursor:pointer;">Salvar</button>
+          `;
+        } else if (key.endsWith('_title') || key.endsWith('_name')) {
+          inputHtml = `
+            <input type="text" id="config-${key}" value="${escapeHtml(value)}" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box; font-size:12px;">
+            <button onclick="saveAppConfig('${key}')" style="margin-top:5px; background-color:#2e6da4; color:white; border:none; padding:6px 12px; border-radius:3px; cursor:pointer;">Salvar</button>
+          `;
+        } else {
+          // URLs e Imagens
+          const isImageUrl = key.endsWith('_image') || key.endsWith('_logo') || key.endsWith('_url');
+          inputHtml = `
+            <div style="display:flex; gap:10px; width:100%;">
+              <input type="url" id="config-${key}" value="${escapeHtml(value)}" placeholder="https://..." style="flex-grow:1; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box; font-size:12px;">
+              <input type="file" id="file-${key}" accept="image/*" style="display:none" onchange="handleConfigUpload('${key}', event)">
+              ${isImageUrl ? `<button onclick="document.getElementById('file-${key}').click()" style="background-color:#f0ad4e; border:none; color:white; padding:6px 12px; border-radius:3px; cursor:pointer;">📤 Upload</button>` : ''}
+              <button onclick="saveAppConfig('${key}')" style="background-color:#2e6da4; color:white; border:none; padding:6px 12px; border-radius:3px; cursor:pointer;">Salvar</button>
+            </div>
+            ${isImageUrl && value ? `<div style="margin-top: 5px;"><img src="${escapeHtml(value)}" style="max-height:80px; border:1px solid #ccc; border-radius:4px;"></div>` : ''}
+          `;
+        }
+
+        item.innerHTML = `
+          <label style="font-weight:bold; font-size:12px; color:#2e6da4; display:block;">${labelText}:</label>
+          ${inputHtml}
         `;
+        container.appendChild(item);
       });
-      container.innerHTML = html;
     }
 
     async function saveAppConfig(key) {
