@@ -219,6 +219,7 @@
       <li><a href="#" id="nav-alerts" onclick="showSection('alerts', this)">Disparar Alertas</a></li>
       <li><a href="#" id="nav-users" onclick="showSection('users', this)">Usuários</a></li>
       <li><a href="#" id="nav-communities" onclick="showSection('communities', this)">Comunidades</a></li>
+      <li><a href="#" id="nav-badges" onclick="showSection('badges', this)">Badges</a></li>
     </ul>
     <a href="#" class="admin-logout-btn" onclick="adminLogout()">Sair</a>
   </div>
@@ -337,6 +338,65 @@
       </div>
     </div>
 
+    <div id="badges-section" class="admin-section" style="display:none;">
+      <h3>Gerenciar Badges</h3>
+
+      <h4>Criar / Editar Badge</h4>
+      <div class="admin-form">
+        <label for="new-badge-name">Nome da Badge:</label>
+        <input type="text" id="new-badge-name" placeholder="Ex: Apoiador da Temporada">
+
+        <label for="new-badge-color">Cor (fundo):</label>
+        <input type="color" id="new-badge-color" value="#FFD700" style="width:60px; height:36px; padding:2px; cursor:pointer;">
+
+        <label>Ícone:</label>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <input type="text" id="new-badge-icon-emoji" placeholder="🏆 (emoji)" value="🏆" style="width:80px;">
+          <span style="color:#999;">ou</span>
+          <input type="file" id="new-badge-icon-file" accept="image/*" style="font-size:11px; flex:1;">
+        </div>
+
+        <div style="margin-top:10px; padding:12px; background:#fff; border:2px dashed #ccc; border-radius:8px; text-align:center;">
+          <label style="font-weight:normal; font-size:12px; color:#666;">Prévia:</label>
+          <div id="badge-preview" style="margin-top:6px;">
+            <span class="badge-chip" style="display:inline-flex; align-items:center; gap:4px; padding:3px 8px; border-radius:12px; font-size:11px; font-weight:bold; background:#FFD700; color:#333;">
+              <span class="badge-icon">🏆</span>
+              <span class="badge-name">Nome da Badge</span>
+            </span>
+          </div>
+        </div>
+
+        <input type="hidden" id="editing-badge-id" value="">
+        <button onclick="adminSaveBadge()" id="btn-save-badge">Criar Badge</button>
+      </div>
+
+      <h4 style="margin-top:30px;">Badges Existentes</h4>
+      <div id="badges-list"></div>
+
+      <h4 style="margin-top:40px;">Atribuir / Remover Badge de Usuário</h4>
+      <div class="admin-form">
+        <label for="assign-user-search">Buscar usuário por nickname:</label>
+        <div style="display:flex; gap:10px;">
+          <input type="text" id="assign-user-search" placeholder="Digite o nickname..." style="flex:1;">
+          <button onclick="buscarUsuarioParaBadge()" style="width:auto; margin-top:0;">Buscar</button>
+        </div>
+        <div id="assign-user-result" style="margin-top:10px;"></div>
+
+        <div id="assign-badge-controls" style="display:none; margin-top:15px; border-top:1px solid #ddd; padding-top:15px;">
+          <label>Selecionar Badge:</label>
+          <select id="assign-badge-select" style="width:100%;"></select>
+          <div style="display:flex; gap:10px; margin-top:10px;">
+            <button onclick="atribuirBadgeParaUsuario()" style="background-color:#5cb85c;">Atribuir Badge</button>
+            <button onclick="removerBadgeDoUsuario()" style="background-color:#d9534f;">Remover Badge</button>
+          </div>
+          <div id="assign-user-current-badges" style="margin-top:15px;">
+            <label style="font-weight:bold;">Badges atuais do usuário:</label>
+            <div id="assign-user-badges-list" style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div id="users-section" class="admin-section" style="display:none;">
       <h3>Gerenciar Usuários</h3>
       <div class="admin-form" style="flex-direction: row; align-items: center; margin-bottom: 20px;">
@@ -388,6 +448,7 @@
       else if (sectionId === 'alerts') renderAlerts();
       else if (sectionId === 'communities') renderCommunities();
       else if (sectionId === 'users') renderUsers();
+      else if (sectionId === 'badges') { autoCriarBadgesIniciais(); renderBadges(); }
     }
 
     // --- Notifications / Alerts ---
@@ -1129,13 +1190,341 @@
       });
     });
 
+    // ────────────────────────────────────────────
+    //  BADGE MANAGEMENT
+    // ────────────────────────────────────────────
+
+    // Live preview for badge creation
+    document.addEventListener('DOMContentLoaded', () => {
+      const nameInput = document.getElementById('new-badge-name');
+      const colorInput = document.getElementById('new-badge-color');
+      const iconInput = document.getElementById('new-badge-icon-emoji');
+
+      if (nameInput && colorInput && iconInput) {
+        function updatePreview() {
+          const preview = document.getElementById('badge-preview');
+          if (!preview) return;
+          const name = nameInput.value || 'Nome da Badge';
+          const color = colorInput.value || '#FFD700';
+          const icon = iconInput.value || '🏆';
+          preview.innerHTML = `<span class="badge-chip" style="display:inline-flex; align-items:center; gap:4px; padding:3px 8px; border-radius:12px; font-size:11px; font-weight:bold; background:${color}; color:#333;">
+            <span class="badge-icon">${escapeHtml(icon)}</span>
+            <span class="badge-name">${escapeHtml(name)}</span>
+          </span>`;
+        }
+        nameInput.addEventListener('input', updatePreview);
+        colorInput.addEventListener('input', updatePreview);
+        iconInput.addEventListener('input', updatePreview);
+      }
+    });
+
+    // Auto-create launch badges if they don't exist
+    async function autoCriarBadgesIniciais() {
+      const launchBadges = [
+        { name: 'Apoiador da Temporada', color: '#FFD700', icon_url: '🏆', badge_type: 'emoji' },
+        { name: 'Festa Parceira', color: '#E84393', icon_url: '🎉', badge_type: 'emoji' }
+      ];
+
+      for (const badge of launchBadges) {
+        const { data: existing } = await supabaseClient.from('badges').select('id').eq('name', badge.name).maybeSingle();
+        if (!existing) {
+          await supabaseClient.from('badges').insert(badge);
+        }
+      }
+    }
+
+    async function adminSaveBadge() {
+      const name = document.getElementById('new-badge-name').value.trim();
+      const color = document.getElementById('new-badge-color').value;
+      const iconEmoji = document.getElementById('new-badge-icon-emoji').value.trim();
+      const fileInput = document.getElementById('new-badge-icon-file');
+      const editingId = document.getElementById('editing-badge-id').value;
+      const btn = document.getElementById('btn-save-badge');
+
+      if (!name) { showNotification('Digite um nome para a badge.', 'error'); return; }
+
+      let icon_url = iconEmoji || '🏆';
+      let badge_type = 'emoji';
+
+      // If user uploaded a file, upload to Cloudinary
+      if (fileInput.files && fileInput.files[0]) {
+        btn.textContent = 'Enviando imagem...';
+        btn.disabled = true;
+        try {
+          const compressed = await comprimirImagem(fileInput.files[0], 200);
+          icon_url = await uploadToCloudinary(compressed, 'badges');
+          badge_type = 'image';
+        } catch (e) {
+          showNotification('Erro no upload: ' + e.message, 'error');
+          btn.textContent = editingId ? 'Salvar Badge' : 'Criar Badge';
+          btn.disabled = false;
+          return;
+        }
+      }
+
+      btn.textContent = 'Salvando...';
+      btn.disabled = true;
+
+      if (editingId) {
+        // Update existing
+        const { error } = await supabaseClient.from('badges').update({
+          name, color, icon_url, badge_type
+        }).eq('id', editingId);
+
+        if (error) {
+          showNotification('Erro ao atualizar: ' + error.message, 'error');
+        } else {
+          showNotification('Badge atualizada!');
+          limparFormBadge();
+          renderBadges();
+        }
+      } else {
+        // Create new
+        const { error } = await supabaseClient.from('badges').insert({
+          name, color, icon_url, badge_type
+        });
+
+        if (error) {
+          showNotification('Erro ao criar: ' + error.message, 'error');
+        } else {
+          showNotification('Badge criada!');
+          limparFormBadge();
+          renderBadges();
+        }
+      }
+
+      btn.textContent = editingId ? 'Salvar Badge' : 'Criar Badge';
+      btn.disabled = false;
+    }
+
+    function limparFormBadge() {
+      document.getElementById('new-badge-name').value = '';
+      document.getElementById('new-badge-color').value = '#FFD700';
+      document.getElementById('new-badge-icon-emoji').value = '🏆';
+      document.getElementById('new-badge-icon-file').value = '';
+      document.getElementById('editing-badge-id').value = '';
+      document.getElementById('btn-save-badge').textContent = 'Criar Badge';
+      // Reset preview
+      const preview = document.getElementById('badge-preview');
+      if (preview) {
+        preview.innerHTML = `<span class="badge-chip" style="display:inline-flex; align-items:center; gap:4px; padding:3px 8px; border-radius:12px; font-size:11px; font-weight:bold; background:#FFD700; color:#333;">
+          <span class="badge-icon">🏆</span>
+          <span class="badge-name">Nome da Badge</span>
+        </span>`;
+      }
+    }
+
+    function badgeChipHtml(badge) {
+      const icon = badge.badge_type === 'image'
+        ? `<img src="${badge.icon_url}" style="width:14px;height:14px;object-fit:contain;">`
+        : `<span>${badge.icon_url}</span>`;
+      return `<span class="badge-chip" style="display:inline-flex; align-items:center; gap:4px; padding:3px 8px; border-radius:12px; font-size:11px; font-weight:bold; background:${badge.color}; color:#333;">
+        ${icon}
+        <span>${escapeHtml(badge.name)}</span>
+      </span>`;
+    }
+
+    async function renderBadges() {
+      const container = document.getElementById('badges-list');
+      if (!container) return;
+      container.innerHTML = 'Carregando badges...';
+
+      const { data, error } = await supabaseClient.from('badges').select('*').order('name');
+
+      if (error) {
+        container.innerHTML = `<div style="color:red;">Erro: ${error.message}</div>`;
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        container.innerHTML = '<div style="color:#999; font-style:italic;">Nenhuma badge criada ainda.</div>';
+        return;
+      }
+
+      let html = `<table class="admin-table">
+        <thead><tr><th>Badge</th><th>Nome</th><th>Cor</th><th>Ícone</th><th>Ações</th></tr></thead><tbody>`;
+
+      data.forEach(b => {
+        html += `<tr>
+          <td>${badgeChipHtml(b)}</td>
+          <td>${escapeHtml(b.name)}</td>
+          <td><span style="display:inline-block;width:30px;height:18px;background:${b.color};border:1px solid #ccc;border-radius:3px;"></span> ${b.color}</td>
+          <td>${b.badge_type === 'image' ? `<img src="${b.icon_url}" style="width:24px;height:24px;object-fit:cover;border-radius:3px;">` : b.icon_url}</td>
+          <td class="actions">
+            <button onclick="editarBadge('${b.id}')">✏️ Editar</button>
+            <button onclick="excluirBadge('${b.id}')" style="color:red;">🗑️ Excluir</button>
+          </td>
+        </tr>`;
+      });
+
+      html += '</tbody></table>';
+      container.innerHTML = html;
+
+      // Also populate the assign badge dropdown
+      atualizarSelectBadges(data);
+    }
+
+    function atualizarSelectBadges(badges) {
+      const select = document.getElementById('assign-badge-select');
+      if (!select) return;
+      select.innerHTML = badges.map(b =>
+        `<option value="${b.id}">${b.icon_url} ${escapeHtml(b.name)}</option>`
+      ).join('');
+    }
+
+    async function editarBadge(badgeId) {
+      const { data, error } = await supabaseClient.from('badges').select('*').eq('id', badgeId).single();
+      if (error || !data) { showNotification('Erro ao carregar badge.', 'error'); return; }
+
+      document.getElementById('new-badge-name').value = data.name;
+      document.getElementById('new-badge-color').value = data.color;
+      document.getElementById('new-badge-icon-emoji').value = data.badge_type === 'emoji' ? data.icon_url : '🏆';
+      document.getElementById('new-badge-icon-file').value = '';
+      document.getElementById('editing-badge-id').value = badgeId;
+      document.getElementById('btn-save-badge').textContent = 'Salvar Badge';
+
+      // Update preview
+      const preview = document.getElementById('badge-preview');
+      if (preview) {
+        preview.innerHTML = badgeChipHtml(data);
+      }
+
+      // Scroll to form
+      document.getElementById('new-badge-name').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    async function excluirBadge(badgeId) {
+      if (!confirm('Tem certeza que deseja excluir esta badge?')) return;
+
+      // First remove all user assignments for this badge
+      await supabaseClient.from('user_badges').delete().eq('badge_id', badgeId);
+
+      const { error } = await supabaseClient.from('badges').delete().eq('id', badgeId);
+      if (error) {
+        showNotification('Erro ao excluir: ' + error.message, 'error');
+      } else {
+        showNotification('Badge excluída!');
+        renderBadges();
+      }
+    }
+
+    // ── ASSIGN / REMOVE BADGE FROM USER ──
+
+    let usuarioBadgeSelecionado = null;
+
+    async function buscarUsuarioParaBadge() {
+      const nick = document.getElementById('assign-user-search').value.trim();
+      const resultDiv = document.getElementById('assign-user-result');
+      const controlsDiv = document.getElementById('assign-badge-controls');
+
+      if (!nick) { showNotification('Digite um nickname.', 'error'); return; }
+
+      resultDiv.innerHTML = 'Buscando...';
+      controlsDiv.style.display = 'none';
+      usuarioBadgeSelecionado = null;
+
+      const { data, error } = await supabaseClient.from('profiles').select('id, nickname, avatar_url, color').ilike('nickname', nick).single();
+
+      if (error || !data) {
+        resultDiv.innerHTML = '<div style="color:red; font-size:12px;">Usuário não encontrado.</div>';
+        return;
+      }
+
+      usuarioBadgeSelecionado = data;
+
+      const av = data.avatar_url
+        ? `<img src="${data.avatar_url}" style="width:32px;height:32px;border-radius:4px;object-fit:cover;border:1px solid #ccc;">`
+        : `<div style="width:32px;height:32px;border-radius:4px;background:${data.color};color:white;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:14px;border:1px solid #ccc;">${data.nickname[0].toUpperCase()}</div>`;
+
+      resultDiv.innerHTML = `<div style="display:flex;align-items:center;gap:10px;padding:8px;background:#fff;border:1px solid #ddd;border-radius:4px;">
+        ${av}
+        <span style="font-weight:bold;color:${data.color};">${escapeHtml(data.nickname)}</span>
+        <span style="color:#999;font-size:11px;">(ID: ${data.id.slice(0, 8)}...)</span>
+      </div>`;
+
+      controlsDiv.style.display = 'block';
+      await carregarBadgesDoUsuario(data.id);
+      carregarListaBadgesSelect();
+    }
+
+    async function carregarListaBadgesSelect() {
+      const { data } = await supabaseClient.from('badges').select('*').order('name');
+      if (data) atualizarSelectBadges(data);
+    }
+
+    async function carregarBadgesDoUsuario(userId) {
+      const container = document.getElementById('assign-user-badges-list');
+      if (!container) return;
+
+      // Get badge IDs assigned to this user
+      const { data: userBadges } = await supabaseClient.from('user_badges').select('badge_id').eq('user_id', userId);
+
+      if (!userBadges || userBadges.length === 0) {
+        container.innerHTML = '<div style="color:#999; font-size:12px; font-style:italic;">Nenhuma badge atribuída.</div>';
+        return;
+      }
+
+      const badgeIds = userBadges.map(ub => ub.badge_id);
+
+      const { data: badges } = await supabaseClient.from('badges').select('*').in('id', badgeIds);
+
+      if (!badges || badges.length === 0) {
+        container.innerHTML = '<div style="color:#999; font-size:12px; font-style:italic;">Nenhuma badge atribuída.</div>';
+        return;
+      }
+
+      container.innerHTML = badges.map(b => badgeChipHtml(b)).join('');
+    }
+
+    async function atribuirBadgeParaUsuario() {
+      if (!usuarioBadgeSelecionado) { showNotification('Busque um usuário primeiro.', 'error'); return; }
+
+      const badgeId = document.getElementById('assign-badge-select').value;
+      if (!badgeId) { showNotification('Selecione uma badge.', 'error'); return; }
+
+      const { error } = await supabaseClient.from('user_badges').insert({
+        user_id: usuarioBadgeSelecionado.id,
+        badge_id: badgeId,
+        assigned_by: ADMIN_USER_ID
+      });
+
+      if (error) {
+        if (error.code === '23505') {
+          showNotification('Usuário já possui esta badge.', 'error');
+        } else {
+          showNotification('Erro ao atribuir: ' + error.message, 'error');
+        }
+      } else {
+        showNotification('Badge atribuída com sucesso!');
+        await carregarBadgesDoUsuario(usuarioBadgeSelecionado.id);
+      }
+    }
+
+    async function removerBadgeDoUsuario() {
+      if (!usuarioBadgeSelecionado) { showNotification('Busque um usuário primeiro.', 'error'); return; }
+
+      const badgeId = document.getElementById('assign-badge-select').value;
+      if (!badgeId) { showNotification('Selecione uma badge.', 'error'); return; }
+
+      const { error } = await supabaseClient.from('user_badges').delete()
+        .eq('user_id', usuarioBadgeSelecionado.id)
+        .eq('badge_id', badgeId);
+
+      if (error) {
+        showNotification('Erro ao remover: ' + error.message, 'error');
+      } else {
+        showNotification('Badge removida do usuário!');
+        await carregarBadgesDoUsuario(usuarioBadgeSelecionado.id);
+      }
+    }
+
     // --- Utility ---
     function escapeHtml(text) {
       const map = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
+        '&': '&',
+        '<': '<',
+        '>': '>',
+        '"': '"',
         "'": '&#039;'
       };
       return text.replace(/[&<>"']/g, function(m) { return map[m]; });
@@ -1143,6 +1532,7 @@
 
     // --- Init ---
     async function initAdminPanel() {
+      await autoCriarBadgesIniciais();
       showSection('daily-tasks', document.getElementById('nav-daily-tasks'));
     }
 

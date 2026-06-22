@@ -1034,3 +1034,55 @@ body { width:100vw; height:100vh; overflow:hidden; }
 .season-promo-banner:hover {
   background: linear-gradient(to right, #fffde5, #ffefa8);
 }
+
+/* ══════════════════════════════════════════
+   BADGES
+══════════════════════════════════════════ */
+.badge-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: bold;
+  line-height: 1.3;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.badge-chip .badge-icon {
+  font-size: 11px;
+}
+.badge-chip img {
+  width: 12px;
+  height: 12px;
+  object-fit: contain;
+}
+
+/* XP Stamp style (retrô/selo) */
+.badge-stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: bold;
+  box-shadow: inset -1px -1px 0 rgba(0,0,0,0.2), inset 1px 1px 0 rgba(255,255,255,0.4);
+  border: 1px solid rgba(0,0,0,0.15);
+  line-height: 1.3;
+}
+.badge-stamp .badge-icon {
+  font-size: 12px;
+}
+.badge-stamp img {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+}
+.badge-stamp-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}

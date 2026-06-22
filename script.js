@@ -691,6 +691,50 @@ async function checarLoginDiario() {
   }
 }
 
+// ── BADGES ─────────────────────────────────────────────────────
+async function carregarBadgesUsuario(userId) {
+  try {
+    const { data: userBadges } = await supabaseClient.from('user_badges').select('badge_id').eq('user_id', userId);
+    if (!userBadges || userBadges.length === 0) return [];
+
+    const badgeIds = userBadges.map(ub => ub.badge_id);
+    const { data: badges } = await supabaseClient.from('badges').select('*').in('id', badgeIds);
+    return badges || [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function badgeChipHtml(badge) {
+  const icon = badge.badge_type === 'image'
+    ? `<img src="${badge.icon_url}" alt="">`
+    : `<span class="badge-icon">${badge.icon_url}</span>`;
+  return `<span class="badge-chip" style="background:${badge.color}; color:${textColorForBg(badge.color)};">
+    ${icon}
+    <span>${escapeHtml(badge.name)}</span>
+  </span>`;
+}
+
+function badgeStampHtml(badge) {
+  const icon = badge.badge_type === 'image'
+    ? `<img src="${badge.icon_url}" alt="">`
+    : `<span class="badge-icon">${badge.icon_url}</span>`;
+  return `<span class="badge-stamp" style="background:${badge.color}; color:${textColorForBg(badge.color)};">
+    ${icon}
+    <span>${escapeHtml(badge.name)}</span>
+  </span>`;
+}
+
+function textColorForBg(hex) {
+  // Simple luminance check for readable text
+  const c = hex.replace('#', '');
+  const r = parseInt(c.substring(0,2), 16);
+  const g = parseInt(c.substring(2,4), 16);
+  const b = parseInt(c.substring(4,6), 16);
+  const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return lum > 0.5 ? '#333' : '#fff';
+}
+
 // ── AMIZADES CACHE ───────────────────────────────────────────
 async function carregarCacheAmizades() {
   try {
@@ -836,7 +880,6 @@ async function mostrarDesktop() {
   adminAlertsRealtime = supabaseClient.channel('admin-alerts')
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, (payload) => {
       const n = payload.new;
-      console.log("🔔 Sinal de Realtime recebido:", n);
       if (n && (n.active === true || n.active === undefined)) {
         // Tenta pegar o texto de 'content' ou 'message' para evitar o undefined
         const textoAlerta = n.content || n.message || n.text || "";
@@ -1015,7 +1058,6 @@ function abrirMSN() {
   j.style.cssText = `width:720px;height:520px;top:40px;left:60px;z-index:${zTop}`;
 
   // DEPLOY_FORCE_2026
-  console.log('MOBILE CHECK:', window.innerWidth, j.style.cssText);
 
   j.innerHTML=`
     <div class="xp-titlebar">
@@ -1450,8 +1492,14 @@ function criarCardPost(post,comments){
     :`<div class="fl-card-avatar-inicial" style="background:${post.color||'#0000cc'}">${post.nickname.charAt(0).toUpperCase()}</div>`;
   const dt=new Date(post.created_at).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
   const comHtml=comments.map(c=>`<div class="fl-comment"><span class="fl-comment-nick" style="color:${c.color||'#0000cc'}">${escapeHtml(c.nickname)}:</span> <span>${escapeHtml(c.content)}</span></div>`).join('');
+  
+  // Badges are loaded async and appended later via a data-badges attribute
+  const badgeHtml = post._badges && post._badges.length > 0
+    ? `<span class="badge-stamp-container" style="display:inline-flex; gap:2px; margin-left:4px;">${post._badges.map(b => badgeChipHtml(b)).join('')}</span>`
+    : '';
+    
   card.innerHTML=`
-    <div class="fl-card-header">${av}<div><div class="fl-card-nick" style="color:${post.color||'#0000cc'}">${escapeHtml(post.nickname)}${verifiedBadge}${getBotaoAmizade(post.user_id)}</div><div class="fl-card-data">${dt}</div></div></div>
+    <div class="fl-card-header">${av}<div><div class="fl-card-nick" style="color:${post.color||'#0000cc'}">${escapeHtml(post.nickname)}${verifiedBadge}${badgeHtml}${getBotaoAmizade(post.user_id)}</div><div class="fl-card-data">${dt}</div></div></div>
     ${post.title?`<div class="fl-card-title">${escapeHtml(post.title)}</div>`:''}
     ${post.image_url?`<img src="${post.image_url}" class="fl-card-img" alt="">`:''}
     ${post.caption?`<div class="fl-card-caption">${escapeHtml(post.caption)}</div>`:''}
@@ -1467,6 +1515,18 @@ function criarCardPost(post,comments){
         <button onclick="enviarComentario(${post.id})">ok</button>
       </div>
     </div>`;
+    
+  // Load badges async for this post author
+  if (post.user_id && !post._badges) {
+    carregarBadgesUsuario(post.user_id).then(badges => {
+      post._badges = badges;
+      const nickEl = card.querySelector('.fl-card-nick');
+      if (nickEl && badges.length > 0) {
+        nickEl.innerHTML += badges.map(b => badgeChipHtml(b)).join('');
+      }
+    });
+  }
+    
   return card;
 }
 
@@ -2713,7 +2773,6 @@ async function checkAndDisplayNotifications() {
       .order('created_at', { ascending: false });
 
     if (error || !data) return;
-    console.log(`🔎 Notificações ativas encontradas: ${data.length}`);
 
     data.forEach(n => {
       // A função mostrarAlerta já lida com a persistência (não repetir alerta fechado) via storageKey
@@ -2735,7 +2794,6 @@ async function dispararAlertaAdmin(titulo, conteudo, icone = 'ie') {
     return;
   }
   try {
-    console.log("🚀 Disparando alerta com:", { titulo, conteudo, icone });
     const { error } = await supabaseClient
       .from('notifications')
       .insert([{ title: titulo, content: conteudo, icon: icone, active: true }]);
