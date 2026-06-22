@@ -212,6 +212,9 @@ window.addEventListener('load', async () => {
   const { data: { session } } = await supabaseClient.auth.getSession();
   if (session) { 
     currentUser = session.user; 
+    // Toca o som de startup imediatamente para OAuth (Google Auth) 
+    // pois após o redirect OAuth o som pode não disparar em mostrarDesktop()
+    tocarSomStartup();
     setTimeout(verificarPerfil, 500); 
   }
 });
@@ -627,7 +630,7 @@ function mostrarBoot() {
     <div class="boot-screen" id="boot-screen">
       <img src="bliss.jpg"
         class="boot-logo" alt="XP" onerror="this.style.display='none'">
-      <div class="boot-titulo">Microsoft Windows XP</div>
+      <div class="boot-titulo">Like 2000 Time Machine</div>
       <div class="boot-sub">Professional</div>
       <div class="boot-barra-container">
         <div class="boot-barra" id="boot-barra"></div>
