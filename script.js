@@ -351,6 +351,20 @@ async function fazerCadastro() {
 let primeiroAcesso = false;
 async function verificarPerfil() {
   const { data } = await supabaseClient.from('profiles').select('*').eq('id', currentUser.id).maybeSingle();
+  
+  // Check if user is banned
+  if (data && data.banned === true) {
+    await supabaseClient.auth.signOut();
+    document.body.innerHTML = `
+      <div style="display:flex; align-items:center; justify-content:center; height:100vh; background:#000; color:#ff4444; font-family:Tahoma,sans-serif; flex-direction:column; gap:20px;">
+        <h1 style="font-size:48px;">🚫</h1>
+        <h2>Você foi banido da Like 2000</h2>
+        <p style="color:#aaa; font-size:14px;">Esta conta não tem mais acesso à plataforma.</p>
+        <button onclick="location.reload()" style="padding:10px 20px; background:#333; color:#fff; border:1px solid #ff4444; border-radius:4px; cursor:pointer;">Voltar</button>
+      </div>`;
+    return;
+  }
+  
   if (data && data.nickname) { 
     currentProfile = data; 
     primeiroAcesso = false;

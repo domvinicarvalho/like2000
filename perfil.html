@@ -531,12 +531,18 @@
       const motivo = prompt("Motivo da denúncia contra " + nick + ":");
       if (!motivo) return;
       const { data: { session } } = await supabaseClient.auth.getSession();
-      const { error } = await supabaseClient.from('notifications').insert({
-        type: 'report',
-        user_id: session?.user?.id || null,
-        content: `Denúncia contra ${nick}: ${motivo}`
+      if (!session) { alert("Você precisa estar logado para denunciar."); return; }
+      const { error } = await supabaseClient.from('reports').insert({
+        reporter_id: session.user.id,
+        reported_nickname: nick,
+        motivo: motivo
       });
-      if (!error) alert("Denúncia enviada para moderação.");
+      if (!error) {
+        alert("✅ Denúncia enviada para moderação. Obrigado!");
+      } else {
+        console.error("Erro ao enviar denúncia:", error);
+        alert("Erro ao enviar denúncia. Tente novamente.");
+      }
     }
 
     init();

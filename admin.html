@@ -406,6 +406,12 @@
       <div id="users-list">
         <div style="font-style: italic; color: #999;">Digite um nome e clique em buscar.</div>
       </div>
+
+      <!-- Seção de Denúncias -->
+      <h4 style="margin-top:30px; color:#cc0000;">🚨 Denúncias Recebidas</h4>
+      <div id="reports-list" style="margin-top:15px;">
+        <div style="font-style: italic; color: #999;">Carregando denúncias...</div>
+      </div>
     </div>
 
   </div>
@@ -1179,6 +1185,123 @@
       if (error) showNotification("Erro ao atualizar", "error");
       else showNotification(verified ? "Usuário verificado ⭐" : "Verificação removida");
     }
+
+    // ── REPORTS (Denúncias) ──
+    async function renderReports() {
+      const container = document.getElementById('reports-list');
+      if (!container) return;
+      container.innerHTML = 'Carregando denúncias...';
+
+      const { data, error } = await supabaseClient
+        .from('reports')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        container.innerHTML = `<div style="color:red;">Erro ao carregar denúncias: ${error.message}</div>`;
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        container.innerHTML = '<div style="color:#999; font-style:italic;">Nenhuma denúncia recebida.</div>';
+        return;
+      }
+
+      let html = `<table class="admin-table">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Quem Denunciou</th>
+            <th>Denunciado</th>
+            <th>Motivo</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>`;
+
+      for (const r of data) {
+        // Busca o nickname do denunciante
+        let reporterNick = 'Desconhecido';
+        if (r.reporter_id) {
+          const { data: reporter } = await supabaseClient.from('profiles').select('nickname').eq('id', r.reporter_id).maybeSingle();
+          if (reporter) reporterNick = reporter.nickname;
+        }
+
+        const date = new Date(r.created_at).toLocaleString('pt-BR');
+        const statusColor = r.status === 'pending' ? '#cc0000' : r.status === 'resolved' ? '#5cb85c' : '#999';
+        const statusLabel = r.status === 'pending' ? 'Pendente' : r.status === 'resolved' ? 'Resolvido' : 'Arquivado';
+
+        // Busca o ID do usuário denunciado para poder banir
+        const { data: reportedUser } = await supabaseClient.from('profiles').select('id, banned').ilike('nickname', r.reported_nickname).maybeSingle();
+
+        html += `<tr style="background:${r.status === 'pending' ? '#fff5f5' : ''}">
+          <td style="font-size:10px;">${date}</td>
+          <td>${escapeHtml(reporterNick)}</td>
+          <td style="font-weight:bold;">${escapeHtml(r.reported_nickname)}</td>
+          <td style="max-width:250px; word-break:break-word;">${escapeHtml(r.motivo)}</td>
+          <td><span style="color:${statusColor}; font-weight:bold;">${statusLabel}</span></td>
+          <td class="actions" style="white-space:nowrap;">
+            ${r.status === 'pending' ? `
+              <button onclick="resolveReport(${r.id})" style="background:#5cb85c; color:white; border:none;">✅ Resolver</button>
+              <button onclick="dismissReport(${r.id})" style="background:#999; color:white; border:none;">⏭️ Arquivar</button>
+              ${reportedUser && reportedUser.id ? (reportedUser.banned ? `<span style="color:#999;font-size:10px;">🚫 Banido</span>` : `<button onclick="banUser('${reportedUser.id}', '${escapeHtml(r.reported_nickname)}')" style="background:#d9534f; color:white; border:none;">🚫 Banir</button>`) : ''}
+            ` : ''}
+          </td>
+        </tr>`;
+      }
+
+      html += '</tbody></table>';
+      container.innerHTML = html;
+    }
+
+    async function resolveReport(reportId) {
+      const { error } = await supabaseClient.from('reports').update({ status: 'resolved' }).eq('id', reportId);
+      if (error) { showNotification('Erro ao resolver denúncia.', 'error'); }
+      else { showNotification('✅ Denúncia resolvida!'); renderReports(); }
+    }
+
+    async function dismissReport(reportId) {
+      const { error } = await supabaseClient.from('reports').update({ status: 'dismissed' }).eq('id', reportId);
+      if (error) { showNotification('Erro ao arquivar denúncia.', 'error'); }
+      else { showNotification('⏭️ Denúncia arquivada.'); renderReports(); }
+    }
+
+    async function banUser(userId, nickname) {
+      if (!confirm(`Tem certeza que deseja BANIR o usuário "${nickname}"?`)) return;
+      if (!confirm(`⚠️ Essa ação impedirá o login do usuário "${nickname}" permanentemente. Confirma?`)) return;
+
+      // Set banned = true and set status to offline
+      const { error } = await supabaseClient.from('profiles').update({ banned: true, status: 'offline' }).eq('id', userId);
+      if (error) {
+        showNotification('Erro ao banir usuário.', 'error');
+        console.error(error);
+      } else {
+        showNotification(`🚫 Usuário "${nickname}" banido com sucesso!`);
+        // Also mark related reports as resolved
+        await supabaseClient.from('reports').update({ status: 'resolved' }).eq('reported_nickname', nickname).eq('status', 'pending');
+        renderReports();
+      }
+    }
+
+    // Update the showSection to also render reports when users section is shown
+    // Hook into the existing renderUsers call
+    const _originalShowSection = showSection;
+    showSection = function(sectionId, element) {
+      document.querySelectorAll('.admin-section').forEach(sec => sec.style.display = 'none');
+      document.getElementById(sectionId + '-section').style.display = 'block';
+      document.querySelectorAll('#admin-sidebar ul li a').forEach(link => link.classList.remove('active'));
+      element.classList.add('active');
+
+      if (sectionId === 'daily-tasks') renderDailyTasks();
+      else if (sectionId === 'events') renderEvents();
+      else if (sectionId === 'events-ie') renderEventsIE();
+      else if (sectionId === 'configs') renderAppConfig();
+      else if (sectionId === 'alerts') renderAlerts();
+      else if (sectionId === 'communities') renderCommunities();
+      else if (sectionId === 'users') { renderUsers(); renderReports(); }
+      else if (sectionId === 'badges') { autoCriarBadgesIniciais(); renderBadges(); }
+    };
 
     // --- Event Listeners for Alerts Section ---
     document.addEventListener('DOMContentLoaded', () => {
