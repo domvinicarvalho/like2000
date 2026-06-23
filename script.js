@@ -2581,7 +2581,8 @@ async function carregarBadgeEventoIE(eventId, badgeId) {
 }
 
 function copiarLinkEventoIE(url) {
-  const link = `${url}?utm_source=like2000&utm_medium=ie&utm_campaign=${currentProfile.referral_code}`;
+  const cupom = currentProfile?.referral_code || currentProfile?.referral_code || '';
+  const link = `${url}${url.includes('?') ? '&' : '?'}utm_source=like2000&utm_medium=ie&utm_campaign=${cupom}`;
   copiarCupom(link);
 }
 
