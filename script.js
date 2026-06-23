@@ -2544,7 +2544,7 @@ async function renderizarEventosIE() {
             <button onclick="copiarLinkEventoIE('${ev.referral_url}')" class="ie-action-btn">Copiar Link</button>
             <button onclick="window.open('${ev.referral_url}', '_blank')" class="ie-action-btn primary">Comprar Ingresso</button>
           </div>
-          <div class="ie-event-xp-hint">+${ev.xp_referral || 200} XP se comprarem pelo seu link · +200 XP se você comprar</div>
+          <div class="ie-event-xp-hint">+${ev.xp_referral || 200} XP se comprarem pelo seu link · +${ev.xp_purchase || 200} XP se você comprar</div>
         ` : ''}
       </div>
     `;
@@ -2563,7 +2563,9 @@ async function carregarPreviewEventoIE(id, url) {
     const { data } = await supabaseClient.functions.invoke('fetch-og-image', { body: { url } });
     const container = document.getElementById(`ie-img-${id}`);
     if (container && data?.image) {
-      container.innerHTML = `<img src="${data.image}" style="width:100%; height:100%; object-fit:cover;">`;
+      container.innerHTML = `<img src="${data.image}" alt="">`;
+    } else {
+      // Keep placeholder if no image found
     }
   } catch (e) { console.warn("Erro ao buscar OG image"); }
 }

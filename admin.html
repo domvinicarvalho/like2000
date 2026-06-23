@@ -269,8 +269,10 @@
         <input type="date" id="new-event-date">
         <label for="new-event-instagram-url">URL do Post no Instagram (opcional):</label>
         <input type="url" id="new-event-instagram-url" placeholder="https://instagram.com/p/...">
-        <label for="new-event-xp-referral">XP por ingresso indicado:</label>
+        <label for="new-event-xp-referral">XP por indicação:</label>
         <input type="number" id="new-event-xp-referral" value="200">
+        <label for="new-event-xp-purchase">XP por compra própria:</label>
+        <input type="number" id="new-event-xp-purchase" value="200">
         <label for="new-event-badge">Badge do evento (opcional):</label>
         <select id="new-event-badge" style="width:100%;">
           <option value="">Nenhuma</option>
@@ -344,8 +346,10 @@
           <option value="ativo">Ativo (Venda aberta)</option>
           <option value="encerrado">Encerrado</option>
         </select>
-        <label for="new-ie-event-xp-referral">XP por ingresso indicado:</label>
+        <label for="new-ie-event-xp-referral">XP por indicação:</label>
         <input type="number" id="new-ie-event-xp-referral" value="200">
+        <label for="new-ie-event-xp-purchase">XP por compra própria:</label>
+        <input type="number" id="new-ie-event-xp-purchase" value="200">
         <label for="new-ie-event-badge">Badge do evento (opcional):</label>
         <select id="new-ie-event-badge" style="width:100%;">
           <option value="">Nenhuma</option>
@@ -354,7 +358,10 @@
           <input type="checkbox" id="new-ie-event-share-active">
           <label for="new-ie-event-share-active">Ativar também para Compartilhamento</label>
         </div>
-        <button onclick="adminCreateEventIE()">Salvar Evento</button>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <button onclick="adminCreateEventIE()" id="btn-save-ie-event">Salvar Evento</button>
+          <button onclick="cancelarEdicaoIE()" id="btn-cancel-ie-edit" style="display:none; background:#999; margin-top:10px;">Cancelar Edição</button>
+        </div>
       </div>
     </div>
 
@@ -677,6 +684,79 @@
     }
 
     // --- Events CRUD ---
+    async function editarEventoIE(eventId) {
+      const { data, error } = await supabaseClient.from('events').select('*').eq('id', eventId).single();
+      if (error || !data) { showNotification('Erro ao carregar evento.', 'error'); return; }
+      preencherFormIE(data);
+    }
+
+    // ── EDITING STATE FOR IE EVENTS ──
+    let editingEventIdIE = null;
+
+    function preencherFormIE(event) {
+      document.getElementById('new-ie-event-name').value = event.name || '';
+      document.getElementById('new-ie-event-referral-url').value = event.referral_url || '';
+      document.getElementById('new-ie-event-date').value = event.event_date ? event.event_date.slice(0, 16) : '';
+      document.getElementById('new-ie-event-status').value = event.status || 'em_breve';
+      document.getElementById('new-ie-event-xp-referral').value = event.xp_referral || 200;
+      document.getElementById('new-ie-event-xp-purchase').value = event.xp_purchase || 200;
+      document.getElementById('new-ie-event-share-active').checked = event.share_active || false;
+      // Set badge select
+      const badgeSelect = document.getElementById('new-ie-event-badge');
+      if (badgeSelect) badgeSelect.value = event.badge_id || '';
+      editingEventIdIE = event.id;
+      document.getElementById('btn-save-ie-event').textContent = 'Atualizar Evento';
+      document.getElementById('btn-cancel-ie-edit').style.display = 'inline-block';
+      document.getElementById('new-ie-event-name').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function cancelarEdicaoIE() {
+      editingEventIdIE = null;
+      document.getElementById('new-ie-event-name').value = '';
+      document.getElementById('new-ie-event-referral-url').value = '';
+      document.getElementById('new-ie-event-date').value = '';
+      document.getElementById('new-ie-event-status').value = 'em_breve';
+      document.getElementById('new-ie-event-xp-referral').value = '200';
+      document.getElementById('new-ie-event-xp-purchase').value = '200';
+      document.getElementById('new-ie-event-share-active').checked = false;
+      document.getElementById('new-ie-event-badge').value = '';
+      document.getElementById('btn-save-ie-event').textContent = 'Salvar Evento';
+      document.getElementById('btn-cancel-ie-edit').style.display = 'none';
+    }
+
+    // ── EDITING STATE FOR SHARE EVENTS ──
+    let editingEventId = null;
+
+    function preencherFormEvent(event) {
+      document.getElementById('new-event-name').value = event.name || '';
+      document.getElementById('new-event-referral-url').value = event.referral_url || '';
+      document.getElementById('new-event-date').value = event.event_date ? event.event_date.split('T')[0] : '';
+      document.getElementById('new-event-instagram-url').value = event.instagram_post_url || '';
+      document.getElementById('new-event-xp-referral').value = event.xp_referral || 200;
+      document.getElementById('new-event-xp-purchase').value = event.xp_purchase || 200;
+      document.getElementById('new-event-share-active').checked = event.share_active || false;
+      const badgeSelect = document.getElementById('new-event-badge');
+      if (badgeSelect) badgeSelect.value = event.badge_id || '';
+      editingEventId = event.id;
+      document.getElementById('btn-save-event').textContent = 'Atualizar Evento';
+      document.getElementById('btn-cancel-event-edit').style.display = 'inline-block';
+      document.getElementById('new-event-name').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function cancelarEdicaoEvent() {
+      editingEventId = null;
+      document.getElementById('new-event-name').value = '';
+      document.getElementById('new-event-referral-url').value = '';
+      document.getElementById('new-event-date').value = '';
+      document.getElementById('new-event-instagram-url').value = '';
+      document.getElementById('new-event-xp-referral').value = '200';
+      document.getElementById('new-event-xp-purchase').value = '200';
+      document.getElementById('new-event-share-active').checked = true;
+      document.getElementById('new-event-badge').value = '';
+      document.getElementById('btn-save-event').textContent = 'Criar Evento';
+      document.getElementById('btn-cancel-event-edit').style.display = 'none';
+    }
+
     async function renderEvents() {
       const container = document.getElementById('events-list');
       container.innerHTML = 'Carregando eventos...';
@@ -700,7 +780,8 @@
               <th>Data</th>
               <th>URL Referência</th>
               <th>URL Instagram</th>
-              <th>XP Ref</th>
+              <th>XP Indicação</th>
+              <th>XP Compra</th>
               <th>Badge</th>
               <th>Ativo</th>
               <th>Ações</th>
@@ -720,6 +801,7 @@
             <td><input type="url" id="event-referral-url-${event.id}" value="${escapeHtml(event.referral_url || '')}" style="width:100%;"></td>
             <td><input type="url" id="event-instagram-url-${event.id}" value="${escapeHtml(event.instagram_post_url || '')}" style="width:100%;"></td>
             <td><input type="number" id="event-xp-referral-${event.id}" value="${event.xp_referral || 200}" style="width:60px;"></td>
+            <td><input type="number" id="event-xp-purchase-${event.id}" value="${event.xp_purchase || 200}" style="width:60px;"></td>
             <td><select id="event-badge-${event.id}" style="width:100px;">${badgeOpts}</select></td>
             <td><input type="checkbox" id="event-share-active-${event.id}" ${event.share_active ? 'checked' : ''}></td>
             <td class="actions">
@@ -740,6 +822,7 @@
       const instagram_post_url = document.getElementById('new-event-instagram-url').value;
       const share_active = document.getElementById('new-event-share-active').checked;
       const xp_referral = parseInt(document.getElementById('new-event-xp-referral').value) || 200;
+      const xp_purchase = parseInt(document.getElementById('new-event-xp-purchase').value) || 200;
       const badge_id = document.getElementById('new-event-badge').value || null;
 
       if (!name || !referral_url || !event_date) {
@@ -747,8 +830,19 @@
         return;
       }
 
+      if (editingEventId) {
+        const { error } = await supabaseClient.from('events').update({
+          name, referral_url, event_date, instagram_post_url, share_active, xp_referral, xp_purchase, badge_id
+        }).eq('id', editingEventId);
+        if (error) { alert('Erro: ' + error.message); return; }
+        showNotification('Evento atualizado!');
+        cancelarEdicaoEvent();
+        renderEvents();
+        return;
+      }
+
       const { error } = await supabaseClient.from('events').insert({
-        name, referral_url, event_date, instagram_post_url, share_active, xp_referral, badge_id
+        name, referral_url, event_date, instagram_post_url, share_active, xp_referral, xp_purchase, badge_id
       });
 
       if (error) {
@@ -756,11 +850,7 @@
         alert(`Erro ao criar evento: ${error.message}\nCertifique-se de que a data está preenchida.`);
       } else {
         showNotification('Evento criado com sucesso!');
-        document.getElementById('new-event-name').value = '';
-        document.getElementById('new-event-referral-url').value = '';
-        document.getElementById('new-event-date').value = '';
-        document.getElementById('new-event-instagram-url').value = '';
-        document.getElementById('new-event-share-active').checked = true;
+        cancelarEdicaoEvent();
         renderEvents();
       }
     }
@@ -772,6 +862,7 @@
       const instagram_post_url = document.getElementById(`event-instagram-url-${eventId}`).value;
       const share_active = document.getElementById(`event-share-active-${eventId}`).checked;
       const xp_referral = parseInt(document.getElementById(`event-xp-referral-${eventId}`)?.value) || 200;
+      const xp_purchase = parseInt(document.getElementById(`event-xp-purchase-${eventId}`)?.value) || 200;
       const badge_id = document.getElementById(`event-badge-${eventId}`)?.value || null;
 
       if (!name || !referral_url || !event_date) {
@@ -780,7 +871,7 @@
       }
 
       const { error } = await supabaseClient.from('events').update({
-        name, referral_url, event_date, instagram_post_url, share_active, xp_referral, badge_id
+        name, referral_url, event_date, instagram_post_url, share_active, xp_referral, xp_purchase, badge_id
       }).eq('id', eventId);
 
       if (error) {
@@ -806,6 +897,8 @@
               <th>Nome</th>
               <th>Data</th>
               <th>Status</th>
+              <th>XP Indicação</th>
+              <th>XP Compra</th>
               <th>Ações</th>
             </tr>
           </thead>
@@ -823,8 +916,11 @@
                 <option value="encerrado" ${event.status === 'encerrado' ? 'selected' : ''}>Encerrado</option>
               </select>
             </td>
-            <td class="actions">
+            <td><input type="number" id="ie-xp-ref-${event.id}" value="${event.xp_referral || 200}" style="width:60px;"></td>
+            <td><input type="number" id="ie-xp-pur-${event.id}" value="${event.xp_purchase || 200}" style="width:60px;"></td>
+            <td class="actions" style="white-space:nowrap;">
               <button onclick="adminUpdateEventIE('${event.id}')">Salvar</button>
+              <button onclick='editarEventoIE("${event.id}")' style="background:#5cb85c; color:white;">✏️ Editar</button>
               <button onclick="adminDeleteEvent('${event.id}')">Excluir</button>
             </td>
           </tr>
@@ -841,6 +937,7 @@
       const status = document.getElementById('new-ie-event-status').value;
       const share_active = document.getElementById('new-ie-event-share-active').checked;
       const xp_referral = parseInt(document.getElementById('new-ie-event-xp-referral').value) || 200;
+      const xp_purchase = parseInt(document.getElementById('new-ie-event-xp-purchase').value) || 200;
       const badge_id = document.getElementById('new-ie-event-badge').value || null;
 
       if (!name || !referral_url || !event_date) {
@@ -848,17 +945,26 @@
         return;
       }
 
+      if (editingEventIdIE) {
+        const { error } = await supabaseClient.from('events').update({
+          name, referral_url, event_date, status, share_active, xp_referral, xp_purchase, badge_id
+        }).eq('id', editingEventIdIE);
+        if (error) { alert('Erro: ' + error.message); return; }
+        showNotification('Evento atualizado!');
+        cancelarEdicaoIE();
+        renderEventsIE();
+        return;
+      }
+
       const { error } = await supabaseClient.from('events').insert({
-        name, referral_url, event_date, status, share_active, xp_referral, badge_id
+        name, referral_url, event_date, status, share_active, xp_referral, xp_purchase, badge_id
       });
 
       if (error) {
         alert(`Erro: ${error.message}`);
       } else {
         showNotification('Evento criado!');
-        document.getElementById('new-ie-event-name').value = '';
-        document.getElementById('new-ie-event-referral-url').value = '';
-        document.getElementById('new-ie-event-date').value = '';
+        cancelarEdicaoIE();
         renderEventsIE();
       }
     }
@@ -867,9 +973,11 @@
       const name = document.getElementById(`ie-name-${eventId}`).value;
       const event_date = document.getElementById(`ie-date-${eventId}`).value;
       const status = document.getElementById(`ie-status-${eventId}`).value;
+      const xp_referral = parseInt(document.getElementById(`ie-xp-ref-${eventId}`)?.value) || 200;
+      const xp_purchase = parseInt(document.getElementById(`ie-xp-pur-${eventId}`)?.value) || 200;
 
       const { error } = await supabaseClient.from('events').update({
-        name, event_date, status
+        name, event_date, status, xp_referral, xp_purchase
       }).eq('id', eventId);
 
       if (error) {
