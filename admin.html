@@ -259,6 +259,12 @@
         <input type="date" id="new-event-date">
         <label for="new-event-instagram-url">URL do Post no Instagram (opcional):</label>
         <input type="url" id="new-event-instagram-url" placeholder="https://instagram.com/p/...">
+        <label for="new-event-xp-referral">XP por ingresso indicado:</label>
+        <input type="number" id="new-event-xp-referral" value="200">
+        <label for="new-event-badge">Badge do evento (opcional):</label>
+        <select id="new-event-badge" style="width:100%;">
+          <option value="">Nenhuma</option>
+        </select>
         <div>
           <input type="checkbox" id="new-event-share-active" checked>
           <label for="new-event-share-active">Ativo para Compartilhamento</label>
@@ -283,6 +289,12 @@
           <option value="em_breve">Em breve</option>
           <option value="ativo">Ativo (Venda aberta)</option>
           <option value="encerrado">Encerrado</option>
+        </select>
+        <label for="new-ie-event-xp-referral">XP por ingresso indicado:</label>
+        <input type="number" id="new-ie-event-xp-referral" value="200">
+        <label for="new-ie-event-badge">Badge do evento (opcional):</label>
+        <select id="new-ie-event-badge" style="width:100%;">
+          <option value="">Nenhuma</option>
         </select>
         <div>
           <input type="checkbox" id="new-ie-event-share-active">
@@ -448,8 +460,8 @@
 
       // Carrega dados para a seção selecionada
       if (sectionId === 'daily-tasks') renderDailyTasks();
-      else if (sectionId === 'events') renderEvents();
-      else if (sectionId === 'events-ie') renderEventsIE();
+      else if (sectionId === 'events') { carregarBadgesSelect(); renderEvents(); }
+      else if (sectionId === 'events-ie') { carregarBadgesSelect(); renderEventsIE(); }
       else if (sectionId === 'configs') renderAppConfig();
       else if (sectionId === 'alerts') renderAlerts();
       else if (sectionId === 'communities') renderCommunities();
@@ -594,6 +606,22 @@
       }
     }
 
+    // ── BADGE SELECT POPULATOR ──
+    async function carregarBadgesSelect() {
+      const { data } = await supabaseClient.from('badges').select('id, name, icon_url').order('name');
+      const selects = ['new-event-badge', 'new-ie-event-badge'];
+      selects.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.innerHTML = '<option value="">Nenhuma</option>';
+        if (data) {
+          data.forEach(b => {
+            el.innerHTML += `<option value="${b.id}">${b.icon_url} ${escapeHtml(b.name)}</option>`;
+          });
+        }
+      });
+    }
+
     // --- Events CRUD ---
     async function renderEvents() {
       const container = document.getElementById('events-list');
@@ -606,6 +634,9 @@
         return;
       }
 
+      // Load badges for badge select drop-downs in the table
+      const { data: allBadges } = await supabaseClient.from('badges').select('id, name, icon_url').order('name');
+
       let html = `
         <table class="admin-table">
           <thead>
@@ -615,6 +646,8 @@
               <th>Data</th>
               <th>URL Referência</th>
               <th>URL Instagram</th>
+              <th>XP Ref</th>
+              <th>Badge</th>
               <th>Ativo</th>
               <th>Ações</th>
             </tr>
@@ -622,6 +655,9 @@
           <tbody>
       `;
       data.forEach(event => {
+        const badgeOpts = '<option value="">Nenhuma</option>' + (allBadges || []).map(b =>
+          `<option value="${b.id}" ${event.badge_id === b.id ? 'selected' : ''}>${b.icon_url} ${escapeHtml(b.name)}</option>`
+        ).join('');
         html += `
           <tr>
             <td>${event.id}</td>
@@ -629,6 +665,8 @@
             <td><input type="date" id="event-date-${event.id}" value="${event.event_date ? event.event_date.split('T')[0] : ''}"></td>
             <td><input type="url" id="event-referral-url-${event.id}" value="${escapeHtml(event.referral_url || '')}" style="width:100%;"></td>
             <td><input type="url" id="event-instagram-url-${event.id}" value="${escapeHtml(event.instagram_post_url || '')}" style="width:100%;"></td>
+            <td><input type="number" id="event-xp-referral-${event.id}" value="${event.xp_referral || 200}" style="width:60px;"></td>
+            <td><select id="event-badge-${event.id}" style="width:100px;">${badgeOpts}</select></td>
             <td><input type="checkbox" id="event-share-active-${event.id}" ${event.share_active ? 'checked' : ''}></td>
             <td class="actions">
               <button onclick="adminUpdateEvent('${event.id}')">Salvar</button>
@@ -647,6 +685,8 @@
       const event_date = document.getElementById('new-event-date').value;
       const instagram_post_url = document.getElementById('new-event-instagram-url').value;
       const share_active = document.getElementById('new-event-share-active').checked;
+      const xp_referral = parseInt(document.getElementById('new-event-xp-referral').value) || 200;
+      const badge_id = document.getElementById('new-event-badge').value || null;
 
       if (!name || !referral_url || !event_date) {
         showNotification('Preencha nome, link e data do evento.', 'error');
@@ -654,7 +694,7 @@
       }
 
       const { error } = await supabaseClient.from('events').insert({
-        name, referral_url, event_date, instagram_post_url, share_active
+        name, referral_url, event_date, instagram_post_url, share_active, xp_referral, badge_id
       });
 
       if (error) {
@@ -677,6 +717,8 @@
       const event_date = document.getElementById(`event-date-${eventId}`).value;
       const instagram_post_url = document.getElementById(`event-instagram-url-${eventId}`).value;
       const share_active = document.getElementById(`event-share-active-${eventId}`).checked;
+      const xp_referral = parseInt(document.getElementById(`event-xp-referral-${eventId}`)?.value) || 200;
+      const badge_id = document.getElementById(`event-badge-${eventId}`)?.value || null;
 
       if (!name || !referral_url || !event_date) {
         showNotification('Preencha nome, link e data.', 'error');
@@ -684,7 +726,7 @@
       }
 
       const { error } = await supabaseClient.from('events').update({
-        name, referral_url, event_date, instagram_post_url, share_active
+        name, referral_url, event_date, instagram_post_url, share_active, xp_referral, badge_id
       }).eq('id', eventId);
 
       if (error) {
@@ -744,6 +786,8 @@
       const event_date = document.getElementById('new-ie-event-date').value;
       const status = document.getElementById('new-ie-event-status').value;
       const share_active = document.getElementById('new-ie-event-share-active').checked;
+      const xp_referral = parseInt(document.getElementById('new-ie-event-xp-referral').value) || 200;
+      const badge_id = document.getElementById('new-ie-event-badge').value || null;
 
       if (!name || !referral_url || !event_date) {
         showNotification('Preencha nome, link e data.', 'error');
@@ -751,7 +795,7 @@
       }
 
       const { error } = await supabaseClient.from('events').insert({
-        name, referral_url, event_date, status, share_active
+        name, referral_url, event_date, status, share_active, xp_referral, badge_id
       });
 
       if (error) {

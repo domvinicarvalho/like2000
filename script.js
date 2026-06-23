@@ -2529,27 +2529,32 @@ async function renderizarEventosIE() {
     const card = document.createElement('div');
     card.className = 'ie-event-card';
     const dateStr = new Date(ev.event_date).toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
-    const badge = ev.status === 'ativo' ? '<span class="ie-badge open">🟢 Venda aberta</span>' : '<span class="ie-badge soon">🕐 Em breve</span>';
+    const statusBadge = ev.status === 'ativo' ? '<span class="ie-badge open">🟢 Venda aberta</span>' : '<span class="ie-badge soon">🕐 Em breve</span>';
     
     card.innerHTML = `
       <div class="ie-event-img-container" id="ie-img-${ev.id}">
         <div style="width:100%; height:100%; background:#f0f0f0; display:flex; align-items:center; justify-content:center; color:#ccc;">⌛</div>
       </div>
       <div class="ie-event-info">
-        ${badge}
-        <div class="ie-event-name">${escapeHtml(ev.name)}</div>
+        ${statusBadge}
+        <div class="ie-event-name">${escapeHtml(ev.name)} <span id="ie-badge-tag-${ev.id}"></span></div>
         <div class="ie-event-date">${dateStr}</div>
         ${ev.status === 'ativo' ? `
           <div class="ie-event-actions">
             <button onclick="copiarLinkEventoIE('${ev.referral_url}')" class="ie-action-btn">Copiar Link</button>
             <button onclick="window.open('${ev.referral_url}', '_blank')" class="ie-action-btn primary">Comprar Ingresso</button>
           </div>
-          <div class="ie-event-xp-hint">+200 XP se comprarem pelo seu link · +100 XP se você comprar</div>
+          <div class="ie-event-xp-hint">+${ev.xp_referral || 200} XP se comprarem pelo seu link · +200 XP se você comprar</div>
         ` : ''}
       </div>
     `;
     container.appendChild(card);
     carregarPreviewEventoIE(ev.id, ev.referral_url);
+    
+    // Load event badge if set
+    if (ev.badge_id) {
+      carregarBadgeEventoIE(ev.id, ev.badge_id);
+    }
   });
 }
 
@@ -2561,6 +2566,18 @@ async function carregarPreviewEventoIE(id, url) {
       container.innerHTML = `<img src="${data.image}" style="width:100%; height:100%; object-fit:cover;">`;
     }
   } catch (e) { console.warn("Erro ao buscar OG image"); }
+}
+
+async function carregarBadgeEventoIE(eventId, badgeId) {
+  try {
+    const { data } = await supabaseClient.from('badges').select('*').eq('id', badgeId).single();
+    if (data) {
+      const el = document.getElementById(`ie-badge-tag-${eventId}`);
+      if (el) {
+        el.innerHTML = badgeChipHtml(data);
+      }
+    }
+  } catch (e) { console.warn("Erro ao carregar badge do evento"); }
 }
 
 function copiarLinkEventoIE(url) {
