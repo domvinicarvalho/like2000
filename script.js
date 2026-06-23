@@ -2518,11 +2518,17 @@ async function renderizarEventosIE() {
     .from('events')
     .select('*')
     .in('status', ['ativo', 'em_breve'])
-    .gte('event_date', agora)
-    .order('event_date', { ascending: true });
+    .gte('event_date', agora);
 
   if (error) { container.innerHTML = '<div class="fl-loading">Erro ao carregar hub.</div>'; return; }
   if (!data.length) { container.innerHTML = '<div class="fl-loading">Nenhum evento com vendas abertas no momento.</div>'; return; }
+
+  // Sort: destaque first, then by event_date ascending
+  data.sort((a, b) => {
+    if (a.destaque && !b.destaque) return -1;
+    if (!a.destaque && b.destaque) return 1;
+    return new Date(a.event_date) - new Date(b.event_date);
+  });
 
   container.innerHTML = '';
   data.forEach(ev => {
@@ -2531,11 +2537,17 @@ async function renderizarEventosIE() {
     const dateStr = new Date(ev.event_date).toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
     const statusBadge = ev.status === 'ativo' ? '<span class="ie-badge open">🟢 Venda aberta</span>' : '<span class="ie-badge soon">🕐 Em breve</span>';
     
+    // Use image_url from DB (manual upload) if available, else auto-preview
+    const imgContent = ev.image_url
+      ? `<img src="${ev.image_url}" alt="" style="width:100%;height:100%;object-fit:cover;">`
+      : `<div style="width:100%;height:100%;background:#f0f0f0;display:flex;align-items:center;justify-content:center;color:#ccc;" id="ie-img-${ev.id}"><span>⌛</span></div>`;
+    
     card.innerHTML = `
-      <div class="ie-event-img-container" id="ie-img-${ev.id}">
-        <div style="width:100%; height:100%; background:#f0f0f0; display:flex; align-items:center; justify-content:center; color:#ccc;">⌛</div>
+      <div class="ie-event-img-container">
+        ${imgContent}
       </div>
       <div class="ie-event-info">
+        ${ev.destaque ? '<span class="ie-badge soon" style="background:#ffcc00; color:#333;">⭐ Destaque</span>' : ''}
         ${statusBadge}
         <div class="ie-event-name">${escapeHtml(ev.name)} <span id="ie-badge-tag-${ev.id}"></span></div>
         <div class="ie-event-date">${dateStr}</div>
@@ -2549,7 +2561,11 @@ async function renderizarEventosIE() {
       </div>
     `;
     container.appendChild(card);
-    carregarPreviewEventoIE(ev.id, ev.referral_url);
+    
+    // Only fetch auto-preview if no manual image was set
+    if (!ev.image_url) {
+      carregarPreviewEventoIE(ev.id, ev.referral_url);
+    }
     
     // Load event badge if set
     if (ev.badge_id) {
