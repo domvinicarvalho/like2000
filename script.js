@@ -1366,10 +1366,12 @@ async function sendMessage() {
   }]);
 }
 async function loadMessages() {
-  const {data}=await supabaseClient.from('messages').select('*').order('id',{ascending:true}).limit(100);
+  // Busca as últimas 100 mensagens do banco (ordem decrescente, limit 100)
+  const {data}=await supabaseClient.from('messages').select('*').order('id',{ascending:false}).limit(100);
   const c=document.getElementById('messages'); if(!c||!data)return;
   c.innerHTML=`<div class="msg-system">— Bem-vindo ao LIKE 2000 —</div><div class="msg-system">${escapeHtml(currentProfile.nickname)} entrou na sala</div>`;
-  data.forEach(m=>addMessage(m));
+  // Inverte para exibir na ordem cronológica correta
+  data.reverse().forEach(m=>addMessage(m));
 }
 function addMessage(msg) {
   const c=document.getElementById('messages'); if(!c)return;
