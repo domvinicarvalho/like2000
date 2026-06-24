@@ -386,6 +386,40 @@
     <div id="configs-section" class="admin-section" style="display:none;">
       <h3>Configurações Gerais</h3>
       <div id="app-configs-list"></div>
+
+      <!-- ── LIMPAR HISTÓRICO DO MSN ── -->
+      <h4 style="margin-top:30px;">Limpeza do Chat MSN</h4>
+      <div style="border:1px solid #ddd; border-radius:8px; padding:20px; background:#fff5f5; margin-bottom:30px;">
+        <p style="font-size:13px; color:#cc0000; margin-bottom:10px;">
+          ⚠️ Esta ação apaga <strong>TODAS</strong> as mensagens do chat MSN do banco de dados.
+          XP, perfis, amizades, badges e todos os outros dados permanecem intactos.
+        </p>
+        <button onclick="confirmarLimpezaMSN()" style="padding:10px 20px; background-color:#d9534f; color:white; border:none; border-radius:5px; cursor:pointer; font-size:14px; font-weight:bold;">
+          🗑️ Limpar histórico do MSN
+        </button>
+        <div id="msn-clear-status" style="margin-top:10px; font-size:12px;"></div>
+      </div>
+
+      <!-- ── GERENCIAMENTO DE TEMPORADA ── -->
+      <h4 style="margin-top:30px;">Gerenciamento de Temporada</h4>
+      <div id="season-management-area" style="border:1px solid #ddd; border-radius:8px; padding:20px; background:#f9f9f9;">
+        <div id="season-status" style="margin-bottom:15px; font-size:13px;">
+          <em>Carregando informações da temporada...</em>
+        </div>
+
+        <div id="season-create-form" class="admin-form" style="border-top:1px solid #eee; padding-top:20px;">
+          <label style="font-weight:bold; font-size:13px; color:#2e6da4;">Criar Nova Temporada</label>
+          <label for="new-season-name">Nome da Temporada:</label>
+          <input type="text" id="new-season-name" placeholder="Ex: Temporada Inverno 2026">
+          <label for="new-season-start">Data de Início:</label>
+          <input type="date" id="new-season-start">
+          <label for="new-season-end">Data de Fim:</label>
+          <input type="date" id="new-season-end">
+          <button onclick="criarTemporada()" style="background-color:#5cb85c; color:white; border:none; padding:10px 15px; border-radius:5px; cursor:pointer; font-size:14px;">➕ Criar Temporada</button>
+        </div>
+
+        <div id="season-list" style="margin-top:20px;"></div>
+      </div>
     </div>
 
     <div id="alerts-section" class="admin-section" style="display:none;">
@@ -541,7 +575,7 @@
       if (sectionId === 'daily-tasks') renderDailyTasks();
       else if (sectionId === 'events') { carregarBadgesSelect(); renderEvents(); }
       else if (sectionId === 'events-ie') { carregarBadgesSelect(); renderEventsIE(); }
-      else if (sectionId === 'configs') renderAppConfig();
+      else if (sectionId === 'configs') { renderAppConfig(); carregarInfoTemporada(); }
       else if (sectionId === 'alerts') renderAlerts();
       else if (sectionId === 'communities') renderCommunities();
       else if (sectionId === 'users') renderUsers();
@@ -1558,7 +1592,7 @@
       if (sectionId === 'daily-tasks') renderDailyTasks();
       else if (sectionId === 'events') renderEvents();
       else if (sectionId === 'events-ie') renderEventsIE();
-      else if (sectionId === 'configs') renderAppConfig();
+      else if (sectionId === 'configs') { renderAppConfig(); carregarInfoTemporada(); }
       else if (sectionId === 'alerts') renderAlerts();
       else if (sectionId === 'communities') renderCommunities();
       else if (sectionId === 'users') { renderUsers(); renderReports(); }
@@ -1900,6 +1934,229 @@
       } else {
         showNotification('Badge removida do usuário!');
         await carregarBadgesDoUsuario(usuarioBadgeSelecionado.id);
+      }
+    }
+
+    // ────────────────────────────────────────────
+    //  MSN CLEAR HISTORY
+    // ────────────────────────────────────────────
+    async function confirmarLimpezaMSN() {
+      if (!confirm('Tem certeza que deseja apagar TODAS as mensagens do chat MSN?')) return;
+      if (!confirm('⚠️ ESSA AÇÃO É IRREVERSÍVEL! Todas as mensagens do chat serão perdidas permanentemente. Confirma?')) return;
+
+      const statusEl = document.getElementById('msn-clear-status');
+      statusEl.innerHTML = '<span style="color:#333;">Apagando histórico do MSN...</span>';
+      statusEl.style.color = '#333';
+
+      try {
+        const { error, count } = await supabaseClient
+          .from('messages')
+          .delete()
+          .neq('id', 0); // Deletes all rows
+
+        if (error) {
+          console.error("Erro ao limpar MSN:", error);
+          statusEl.innerHTML = `<span style="color:#cc0000;">❌ Erro ao limpar: ${escapeHtml(error.message)}</span>`;
+          return;
+        }
+
+        statusEl.innerHTML = '<span style="color:#008800;">✅ Histórico do MSN limpo com sucesso! O chat está vazio.</span>';
+        showNotification('✅ Histórico do MSN limpo!');
+      } catch (e) {
+        console.error("Erro ao limpar MSN:", e);
+        statusEl.innerHTML = `<span style="color:#cc0000;">❌ Erro ao limpar: ${escapeHtml(e.message || 'Erro desconhecido')}</span>`;
+      }
+    }
+
+    // ────────────────────────────────────────────
+    //  SEASON MANAGEMENT
+    // ────────────────────────────────────────────
+
+    async function carregarInfoTemporada() {
+      const statusEl = document.getElementById('season-status');
+      const listaEl = document.getElementById('season-list');
+      if (!statusEl) return;
+
+      statusEl.innerHTML = '<em>Carregando informações da temporada...</em>';
+
+      // Get current active season
+      const { data: activeSeason, error: activeError } = await supabaseClient
+        .from('seasons')
+        .select('*')
+        .eq('status', 'active')
+        .maybeSingle();
+
+      if (activeError) {
+        statusEl.innerHTML = `<span style="color:#cc0000;">Erro ao carregar temporada ativa.</span>`;
+        return;
+      }
+
+      if (activeSeason) {
+        const inicio = new Date(activeSeason.start_date).toLocaleDateString('pt-BR');
+        const fim = new Date(activeSeason.end_date).toLocaleDateString('pt-BR');
+        statusEl.innerHTML = `
+          <div style="padding:12px; background:#e8f5e9; border:1px solid #a5d6a7; border-radius:6px;">
+            <div style="font-weight:bold; font-size:14px; color:#2e7d32;">✅ Temporada Ativa</div>
+            <div style="margin-top:6px; font-size:13px;">
+              <strong>Nome:</strong> ${escapeHtml(activeSeason.name)}<br>
+              <strong>Início:</strong> ${inicio}<br>
+              <strong>Fim:</strong> ${fim}<br>
+              <strong>ID:</strong> ${activeSeason.id}
+            </div>
+            <button onclick="alternarStatusTemporada('${activeSeason.id}', 'inactive')" 
+                    style="margin-top:10px; padding:8px 14px; background-color:#d9534f; color:white; border:none; border-radius:4px; cursor:pointer; font-size:12px;">
+              🔴 Desativar Temporada
+            </button>
+          </div>
+        `;
+      } else {
+        statusEl.innerHTML = `
+          <div style="padding:12px; background:#fff3e0; border:1px solid #ffcc80; border-radius:6px;">
+            <span style="font-size:13px; color:#e65100;">⚠️ Nenhuma temporada ativa no momento.</span>
+            <div style="margin-top:6px; font-size:12px; color:#888;">
+              Crie uma nova temporada abaixo e depois ative-a com um clique.
+            </div>
+          </div>
+        `;
+      }
+
+      // Render the list of all seasons
+      await renderizarListaTemporadas();
+    }
+
+    async function renderizarListaTemporadas() {
+      const listaEl = document.getElementById('season-list');
+      if (!listaEl) return;
+
+      const { data, error } = await supabaseClient
+        .from('seasons')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        listaEl.innerHTML = `<div style="color:#cc0000; font-size:12px;">Erro ao carregar temporadas.</div>`;
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        listaEl.innerHTML = '<div style="font-style:italic; color:#999; font-size:12px;">Nenhuma temporada cadastrada ainda.</div>';
+        return;
+      }
+
+      let html = `
+        <h5 style="margin-top:15px; font-size:13px; color:#2e6da4;">Temporadas Cadastradas</h5>
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Início</th>
+              <th>Fim</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      data.forEach(s => {
+        const inicio = new Date(s.start_date).toLocaleDateString('pt-BR');
+        const fim = new Date(s.end_date).toLocaleDateString('pt-BR');
+        const statusLabel = s.status === 'active' 
+          ? '<span style="color:#2e7d32; font-weight:bold;">🟢 Ativa</span>' 
+          : '<span style="color:#999;">⚪ Inativa</span>';
+
+        html += `
+          <tr>
+            <td><strong>${escapeHtml(s.name)}</strong></td>
+            <td>${inicio}</td>
+            <td>${fim}</td>
+            <td>${statusLabel}</td>
+            <td class="actions">
+              ${s.status === 'active' 
+                ? `<button onclick="alternarStatusTemporada('${s.id}', 'inactive')" style="background:#d9534f; color:white; border:none;">🔴 Desativar</button>`
+                : `<button onclick="alternarStatusTemporada('${s.id}', 'active')" style="background:#5cb85c; color:white; border:none;">🟢 Ativar</button>`
+              }
+            </td>
+          </tr>
+        `;
+      });
+
+      html += '</tbody></table>';
+      listaEl.innerHTML = html;
+    }
+
+    async function criarTemporada() {
+      const name = document.getElementById('new-season-name').value.trim();
+      const start = document.getElementById('new-season-start').value;
+      const end = document.getElementById('new-season-end').value;
+
+      if (!name || !start || !end) {
+        showNotification('Preencha nome, data de início e data de fim.', 'error');
+        return;
+      }
+
+      const startDate = new Date(start);
+      const endDate = new Date(end);
+
+      if (endDate <= startDate) {
+        showNotification('A data de fim deve ser posterior à data de início.', 'error');
+        return;
+      }
+
+      const { error } = await supabaseClient.from('seasons').insert({
+        name: name,
+        start_date: startDate.toISOString(),
+        end_date: endDate.toISOString(),
+        status: 'inactive' // New seasons start inactive
+      });
+
+      if (error) {
+        console.error("Erro ao criar temporada:", error);
+        showNotification(`Erro ao criar temporada: ${error.message}`, 'error');
+      } else {
+        showNotification('✅ Temporada criada com sucesso!');
+        // Clear form
+        document.getElementById('new-season-name').value = '';
+        document.getElementById('new-season-start').value = '';
+        document.getElementById('new-season-end').value = '';
+        // Refresh
+        await carregarInfoTemporada();
+      }
+    }
+
+    async function alternarStatusTemporada(seasonId, newStatus) {
+      const seasonName = document.querySelector(`#season-list tr td:first-child`)?.textContent || 'Temporada';
+      
+      if (newStatus === 'active') {
+        if (!confirm('Ao ativar esta temporada, a temporada atualmente ativa (se houver) será desativada automaticamente. Confirma?')) return;
+      } else {
+        if (!confirm('Desativar esta temporada? Ela ficará inativa no sistema.')) return;
+      }
+
+      // If activating, first deactivate all seasons
+      if (newStatus === 'active') {
+        const { error: deactivateError } = await supabaseClient
+          .from('seasons')
+          .update({ status: 'inactive' })
+          .eq('status', 'active');
+
+        if (deactivateError) {
+          showNotification('Erro ao desativar temporadas anteriores.', 'error');
+          return;
+        }
+      }
+
+      // Now set the target season status
+      const { error } = await supabaseClient
+        .from('seasons')
+        .update({ status: newStatus })
+        .eq('id', seasonId);
+
+      if (error) {
+        showNotification(`Erro ao alterar status: ${error.message}`, 'error');
+      } else {
+        showNotification(newStatus === 'active' ? '✅ Temporada ativada!' : '⏸️ Temporada desativada!');
+        await carregarInfoTemporada();
       }
     }
 
