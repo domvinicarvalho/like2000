@@ -99,7 +99,18 @@ body { width:100vw; height:100vh; overflow:hidden; }
   position:relative; overflow:hidden;
   transition: background-image 0.5s ease-in-out; /* Adicionado para uma transição suave */
 }
-.icons { padding:14px 10px; display:flex; flex-direction:column; gap:8px; }
+.icons {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  bottom: 48px; /* space for taskbar */
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 6px 16px;
+  padding: 4px;
+}
 .icon {
   width:72px; display:flex; flex-direction:column; align-items:center; color:white;
   cursor:pointer; text-shadow:1px 1px 2px black,0 0 4px black; gap:4px;
@@ -889,6 +900,7 @@ body { width:100vw; height:100vh; overflow:hidden; }
 }
 .ie-action-btn.primary { background: #316ac5; color: white; border-color: #0831a0; font-weight: bold; }
 .ie-event-xp-hint { font-size: 9px; color: #999; margin-top: 4px; font-style: italic; }
+.ie-event-xp-warning { font-size: 10px; color: #cc6600; margin-top: 6px; font-style: italic; border-top: 1px dashed #e0d0b0; padding-top: 6px; }
 
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 

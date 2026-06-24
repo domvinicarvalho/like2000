@@ -862,6 +862,7 @@ async function mostrarDesktop() {
         <div class="icon" onclick="trazerFrente('janela-amigos');abrirAmigos()">${iconTag('amigos')}<span>Meus Amigos</span></div>
         <div class="icon" onclick="trazerFrente('janela-orkut');abrirOrkut()">${iconTag('orkut')}<span>Orkut</span></div>
         <div class="icon" onclick="trazerFrente('janela-tarefas');abrirTarefas()">${iconTag('tarefas')}<span>Tarefas</span></div>
+        <div class="icon" onclick="trazerFrente('janela-ranking');abrirRanking()"><img src="data:image/svg+xml;charset=utf-8,${encodeURIComponent('<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><rect width="48" height="48" rx="6" fill="#FFD700"/><path d="M24 6 L28 18 L40 18 L30 26 L34 40 L24 32 L14 40 L18 26 L8 18 L20 18 Z" fill="#FF8C00" stroke="#CC6600" stroke-width="1"/></svg>')}" style="width:48px;height:48px;object-fit:contain" alt="ranking"><span>Ranking</span></div>
       </div>
 
       <div class="start-menu" id="start-menu">
@@ -2032,6 +2033,16 @@ async function abrirPerfil() {
         <button class="task-btn mini" style="margin:0;" onclick="copiarCupom('https://like2000.vercel.app/perfil.html?u=${nick}')">Copiar</button>
       </div>
 
+      <!-- Seção de Nickname -->
+      <div class="up-ranking-box" style="padding:12px; margin-top:0; border-top:none;">
+        <div style="font-weight:bold; color:#1F4E89; margin-bottom:8px; font-size:11px;">Alterar Nickname</div>
+        <div style="display:flex; gap:10px; align-items:flex-end;">
+          <div style="flex:1;"><label style="font-size:10px; color:#666;">Novo Nickname:</label><input type="text" id="up-nickname-input" maxlength="20" value="${escapeHtml(currentProfile.nickname)}" style="width:100%; padding:4px; border:1px solid #7f9db9;"></div>
+          <button onclick="alterarNickname()" style="padding:5px 10px; font-size:10px; cursor:pointer; background:#ece9d8; border:1px solid #7f9db9;">Alterar Nickname</button>
+        </div>
+        <div id="up-nickname-msg" style="font-size:10px; color:#888; margin-top:4px;"></div>
+      </div>
+
       <!-- Seção de Segurança -->
       <div class="up-ranking-box" style="padding:12px; margin-top:0; border-top:none;">
         <div style="font-weight:bold; color:#1F4E89; margin-bottom:8px; font-size:11px;">Segurança</div>
@@ -2195,6 +2206,77 @@ function abrirRanking() {
     carregarRankingTemporada();
     carregarPremiosTemporada();
   }
+}
+
+async function alterarNickname() {
+  const msg = document.getElementById('up-nickname-msg');
+  const input = document.getElementById('up-nickname-input');
+  if (!input) return;
+  const novoNick = input.value.trim();
+
+  if (!novoNick || novoNick.length < 2) {
+    msg.style.color = '#cc0000';
+    msg.textContent = 'O nickname deve ter pelo menos 2 caracteres.';
+    return;
+  }
+
+  if (novoNick.toLowerCase() === currentProfile.nickname.toLowerCase()) {
+    msg.style.color = '#888';
+    msg.textContent = 'Este já é seu nickname atual.';
+    return;
+  }
+
+  // Verifica se o nickname já está em uso
+  const { data: existente, error: buscaError } = await supabaseClient
+    .from('profiles')
+    .select('id')
+    .ilike('nickname', novoNick)
+    .maybeSingle();
+
+  if (buscaError) {
+    msg.style.color = '#cc0000';
+    msg.textContent = 'Erro ao verificar disponibilidade.';
+    return;
+  }
+
+  if (existente) {
+    msg.style.color = '#cc0000';
+    msg.textContent = '❌ Este nickname já está em uso por outro usuário. Escolha outro.';
+    return;
+  }
+
+  // Atualiza o nickname no banco
+  const { error: updateError } = await supabaseClient
+    .from('profiles')
+    .update({ nickname: novoNick })
+    .eq('id', currentUser.id);
+
+  if (updateError) {
+    msg.style.color = '#cc0000';
+    msg.textContent = 'Erro ao atualizar nickname: ' + (updateError.message || 'Tente novamente.');
+    return;
+  }
+
+  // Atualiza a variável local
+  currentProfile.nickname = novoNick;
+
+  // Atualiza o nome na barra de tarefas
+  const nickEl = document.querySelector('.start-menu-nick');
+  if (nickEl) nickEl.textContent = novoNick;
+
+  // Atualiza na janela de perfil (cabeçalho)
+  const upNick = document.querySelector('.up-nick');
+  if (upNick) upNick.textContent = novoNick;
+
+  // Atualiza o link do perfil Orkut na janela
+  const orkutLink = document.querySelector('.up-ranking-box:first-of-type + div');
+  // Rebuild specific elements if needed
+
+  msg.style.color = '#008800';
+  msg.textContent = '✅ Nickname alterado com sucesso!';
+
+  // Recarrega a página após 1.5s para refletir em todos os lugares
+  setTimeout(() => location.reload(), 1500);
 }
 
 async function salvarInfoOrkut() {
@@ -2557,6 +2639,7 @@ async function renderizarEventosIE() {
             <button onclick="window.open('${ev.referral_url}', '_blank')" class="ie-action-btn primary">Comprar Ingresso</button>
           </div>
           <div class="ie-event-xp-hint">+${ev.xp_referral || 200} XP se comprarem pelo seu link · +${ev.xp_purchase || 200} XP se você comprar</div>
+          <div class="ie-event-xp-warning">⏳ O XP será creditado alguns dias após o término do evento.</div>
         ` : ''}
       </div>
     `;
