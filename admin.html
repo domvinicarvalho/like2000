@@ -1974,12 +1974,12 @@
 
     async function carregarInfoTemporada() {
       const statusEl = document.getElementById('season-status');
-      const listaEl = document.getElementById('season-list');
+      const seasonListEl = document.getElementById('season-list');
       if (!statusEl) return;
 
       statusEl.innerHTML = '<em>Carregando informações da temporada...</em>';
 
-      // Get current active season
+      // Get current active season - the table only allows 'active' rows
       const { data: activeSeason, error: activeError } = await supabaseClient
         .from('seasons')
         .select('*')
@@ -2003,9 +2003,9 @@
               <strong>Fim:</strong> ${fim}<br>
               <strong>ID:</strong> ${activeSeason.id}
             </div>
-            <button onclick="alternarStatusTemporada('${activeSeason.id}', 'inactive')" 
+            <button onclick="desativarTemporada('${activeSeason.id}')" 
                     style="margin-top:10px; padding:8px 14px; background-color:#d9534f; color:white; border:none; border-radius:4px; cursor:pointer; font-size:12px;">
-              🔴 Desativar Temporada
+              🗑️ Remover Temporada Ativa
             </button>
           </div>
         `;
@@ -2014,37 +2014,30 @@
           <div style="padding:12px; background:#fff3e0; border:1px solid #ffcc80; border-radius:6px;">
             <span style="font-size:13px; color:#e65100;">⚠️ Nenhuma temporada ativa no momento.</span>
             <div style="margin-top:6px; font-size:12px; color:#888;">
-              Crie uma nova temporada abaixo e depois ative-a com um clique.
+              Crie uma nova temporada abaixo e ela já será ativada automaticamente.
             </div>
           </div>
         `;
       }
 
-      // Render the list of all seasons
-      await renderizarListaTemporadas();
+      // Show the current (single) active season in the list
+      await renderizarListaTemporadas(activeSeason);
     }
 
-    async function renderizarListaTemporadas() {
+    async function renderizarListaTemporadas(activeSeason) {
       const listaEl = document.getElementById('season-list');
       if (!listaEl) return;
 
-      const { data, error } = await supabaseClient
-        .from('seasons')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        listaEl.innerHTML = `<div style="color:#cc0000; font-size:12px;">Erro ao carregar temporadas.</div>`;
-        return;
-      }
-
-      if (!data || data.length === 0) {
+      if (!activeSeason) {
         listaEl.innerHTML = '<div style="font-style:italic; color:#999; font-size:12px;">Nenhuma temporada cadastrada ainda.</div>';
         return;
       }
 
-      let html = `
-        <h5 style="margin-top:15px; font-size:13px; color:#2e6da4;">Temporadas Cadastradas</h5>
+      const inicio = new Date(activeSeason.start_date).toLocaleDateString('pt-BR');
+      const fim = new Date(activeSeason.end_date).toLocaleDateString('pt-BR');
+
+      listaEl.innerHTML = `
+        <h5 style="margin-top:15px; font-size:13px; color:#2e6da4;">Temporada Atual</h5>
         <table class="admin-table">
           <thead>
             <tr>
@@ -2056,33 +2049,18 @@
             </tr>
           </thead>
           <tbody>
+            <tr>
+              <td><strong>${escapeHtml(activeSeason.name)}</strong></td>
+              <td>${inicio}</td>
+              <td>${fim}</td>
+              <td><span style="color:#2e7d32; font-weight:bold;">🟢 Ativa</span></td>
+              <td class="actions">
+                <button onclick="desativarTemporada('${activeSeason.id}')" style="background:#d9534f; color:white; border:none;">🗑️ Remover</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       `;
-
-      data.forEach(s => {
-        const inicio = new Date(s.start_date).toLocaleDateString('pt-BR');
-        const fim = new Date(s.end_date).toLocaleDateString('pt-BR');
-        const statusLabel = s.status === 'active' 
-          ? '<span style="color:#2e7d32; font-weight:bold;">🟢 Ativa</span>' 
-          : '<span style="color:#999;">⚪ Inativa</span>';
-
-        html += `
-          <tr>
-            <td><strong>${escapeHtml(s.name)}</strong></td>
-            <td>${inicio}</td>
-            <td>${fim}</td>
-            <td>${statusLabel}</td>
-            <td class="actions">
-              ${s.status === 'active' 
-                ? `<button onclick="alternarStatusTemporada('${s.id}', 'inactive')" style="background:#d9534f; color:white; border:none;">🔴 Desativar</button>`
-                : `<button onclick="alternarStatusTemporada('${s.id}', 'active')" style="background:#5cb85c; color:white; border:none;">🟢 Ativar</button>`
-              }
-            </td>
-          </tr>
-        `;
-      });
-
-      html += '</tbody></table>';
-      listaEl.innerHTML = html;
     }
 
     async function criarTemporada() {
@@ -2103,18 +2081,45 @@
         return;
       }
 
+      // The existing seasons table ONLY allows status='active' (CHECK constraint)
+      // and has a UNIQUE constraint (seasons_one_active) allowing only one active row.
+      // So we need to:
+      // 1. Delete any existing active season
+      // 2. Insert the new one with status='active'
+
+      // First check if there's already an active season
+      const { data: existingActive } = await supabaseClient
+        .from('seasons')
+        .select('id')
+        .eq('status', 'active')
+        .maybeSingle();
+
+      if (existingActive) {
+        // Delete the existing active season first
+        const { error: deleteError } = await supabaseClient
+          .from('seasons')
+          .delete()
+          .eq('id', existingActive.id);
+
+        if (deleteError) {
+          showNotification('Erro ao remover temporada anterior.', 'error');
+          return;
+        }
+      }
+
+      // Now insert the new season with status='active' (the only allowed value)
       const { error } = await supabaseClient.from('seasons').insert({
         name: name,
         start_date: startDate.toISOString(),
         end_date: endDate.toISOString(),
-        status: 'inactive' // New seasons start inactive
+        status: 'active' // Table only accepts 'active' as valid status
       });
 
       if (error) {
         console.error("Erro ao criar temporada:", error);
         showNotification(`Erro ao criar temporada: ${error.message}`, 'error');
       } else {
-        showNotification('✅ Temporada criada com sucesso!');
+        showNotification('✅ Temporada criada e ativada com sucesso!');
         // Clear form
         document.getElementById('new-season-name').value = '';
         document.getElementById('new-season-start').value = '';
@@ -2124,38 +2129,20 @@
       }
     }
 
-    async function alternarStatusTemporada(seasonId, newStatus) {
-      const seasonName = document.querySelector(`#season-list tr td:first-child`)?.textContent || 'Temporada';
-      
-      if (newStatus === 'active') {
-        if (!confirm('Ao ativar esta temporada, a temporada atualmente ativa (se houver) será desativada automaticamente. Confirma?')) return;
-      } else {
-        if (!confirm('Desativar esta temporada? Ela ficará inativa no sistema.')) return;
-      }
+    async function desativarTemporada(seasonId) {
+      if (!confirm('Remover esta temporada? Isso a excluirá permanentemente do sistema.')) return;
 
-      // If activating, first deactivate all seasons
-      if (newStatus === 'active') {
-        const { error: deactivateError } = await supabaseClient
-          .from('seasons')
-          .update({ status: 'inactive' })
-          .eq('status', 'active');
-
-        if (deactivateError) {
-          showNotification('Erro ao desativar temporadas anteriores.', 'error');
-          return;
-        }
-      }
-
-      // Now set the target season status
+      // The table only has status='active' and no 'inactive' option.
+      // "Desativar" means deleting the row entirely.
       const { error } = await supabaseClient
         .from('seasons')
-        .update({ status: newStatus })
+        .delete()
         .eq('id', seasonId);
 
       if (error) {
-        showNotification(`Erro ao alterar status: ${error.message}`, 'error');
+        showNotification(`Erro ao remover temporada: ${error.message}`, 'error');
       } else {
-        showNotification(newStatus === 'active' ? '✅ Temporada ativada!' : '⏸️ Temporada desativada!');
+        showNotification('⏸️ Temporada removida!');
         await carregarInfoTemporada();
       }
     }
