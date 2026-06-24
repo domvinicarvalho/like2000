@@ -16,6 +16,7 @@ let unreadMessages  = 0;
 let docTitleBase    = 'LIKE 2000';
 let titleFlashInterval = null;
 let temporadaAtiva  = null;
+let seasonRankingInterval = null;
 let fotologPostFile = null;
 let cacheAmizades   = new Map(); // target_id -> status
 let wallpaperCache  = { desktop: null, mobile: null };
@@ -707,6 +708,18 @@ async function adicionarXP(qtd, motivo) {
   if (el) el.textContent = `⭐ ${novoXP} XP · ${novoLevel}`;
   if (novoLevel!==lvAntes) mostrarNotificacao(`🎉 Subiu para ${novoLevel}!`);
   else mostrarNotificacao(`+${qtd} XP — ${motivo}`);
+  
+  // Record XP transaction for season ranking
+  try {
+    await supabaseClient.from('xp_transactions').insert({
+      user_id: currentUser.id,
+      amount: qtd,
+      reason: motivo || ''
+    });
+  } catch (e) {
+    // Silently fail if xp_transactions table doesn't exist yet
+    console.warn("xp_transactions not available:", e.message);
+  }
 }
 function mostrarNotificacao(txt) {
   const n = document.createElement('div');
@@ -2104,12 +2117,26 @@ function abrirRanking() {
   fecharMenu();
   if(document.getElementById('janela-ranking')){trazerFrente('janela-ranking');return;}
   
+  // Start auto-refresh timer for season ranking (every 1 hour = 3600000ms)
+  if (seasonRankingInterval) clearInterval(seasonRankingInterval);
+  seasonRankingInterval = setInterval(() => {
+    if (document.getElementById('up-ranking-temporada') && temporadaAtiva) {
+      carregarRankingTemporada();
+    }
+  }, 3600000);
+
   const content = `
     <div class="up-body">
       <div style="padding:16px; background:linear-gradient(to bottom,#3a6ec8,#1a4aac); color:white; text-align:center;">
         <div style="font-size:18px; font-weight:bold; text-shadow:1px 1px 2px rgba(0,0,0,0.5);">🏆 QUADRO DE HONRA</div>
         <div style="font-size:11px; opacity:0.8;">Os usuários mais ativos da Like 2000</div>
       </div>
+
+      ${temporadaAtiva ? `
+      <div style="text-align:right; padding:4px 8px;">
+        <button onclick="carregarRankingTemporada()" style="cursor:pointer; background:transparent; border:1px solid #4a90e8; color:#4a90e8; border-radius:3px; padding:2px 8px; font-size:10px;">🔄 Atualizar Ranking da Temporada</button>
+      </div>
+      ` : ''}
 
       ${temporadaAtiva ? `
       <div class="up-ranking-box" style="margin-top:12px; border-color:#4a90e8;">
@@ -2332,35 +2359,130 @@ async function carregarRanking() {
 async function carregarRankingTemporada() {
   const lista = document.getElementById('up-ranking-temporada');
   if(!lista || !temporadaAtiva) return;
-  
-  // Tenta buscar da tabela de snapshots da temporada, se não existir, mostra os top globais
-  const {data, error} = await supabaseClient
-    .from('season_snapshots')
-    .select('nickname, color, avatar_url, xp, level')
-    .eq('season_id', temporadaAtiva.id)
-    .order('xp', {ascending:false})
-    .limit(10);
 
-  if(error || !data || data.length === 0){
-    lista.innerHTML = '<div class="up-ranking-loading" style="font-style:italic;">Nenhum registro nesta temporada ainda.</div>';
+  // Get season start date from the active season
+  const { data: season, error: seasonError } = await supabaseClient
+    .from('seasons')
+    .select('start_date')
+    .eq('id', temporadaAtiva.id)
+    .single();
+
+  if (seasonError || !season) {
+    lista.innerHTML = '<div class="up-ranking-loading" style="font-style:italic;">Erro ao carregar dados da temporada.</div>';
     return;
   }
-  
-  lista.innerHTML = data.map((p,i)=>{
-    const av = p.avatar_url
-      ?`<img src="${p.avatar_url}" class="up-rank-avatar" alt="">`
-      :`<div class="up-rank-avatar-inicial" style="background:${p.color||'#0000cc'}">${p.nickname.charAt(0).toUpperCase()}</div>`;
-    const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':`<span class="up-rank-num" style="font-size:10px">${i+1}</span>`;
-    return `<div class="up-rank-row">
-      <div class="up-rank-medal">${medal}</div>
-      ${av}
-      <div class="up-rank-info">
-        <span class="up-rank-nick" style="color:${p.color||'#0000cc'}">${escapeHtml(p.nickname)}</span>
-        <span class="up-rank-level">${escapeHtml(p.level||'🥉 TV Globinho')}</span>
-      </div>
-      <div class="up-rank-xp" style="color:#1464d8;">⭐ ${p.xp||0}</div>
-    </div>`;
-  }).join('');
+
+  // Get XP earned by each user since the season start date
+  // We need to use a raw query or aggregate approach since Supabase JS doesn't support GROUP BY across tables
+  // Strategy: 1) Get all profiles with their total XP, 2) We'll use the xp_transactions table to filter by season
+  // Since xp_transactions records every XP change since the feature was deployed,
+  // we sum amount grouped by user_id since the season start
+  try {
+    // Query to get season XP per user
+    const { data: xpData, error: xpError } = await supabaseClient
+      .from('xp_transactions')
+      .select('user_id, amount')
+      .gte('created_at', season.start_date);
+
+    if (xpError) throw xpError;
+
+    if (!xpData || xpData.length === 0) {
+      // Fallback: show general ranking but labeled as season ranking
+      const { data: fallback } = await supabaseClient
+        .from('profiles')
+        .select('nickname, color, avatar_url, xp, level')
+        .order('xp', { ascending: false })
+        .limit(10);
+
+      if (fallback && fallback.length > 0) {
+        lista.innerHTML = `<div class="up-ranking-loading" style="font-style:italic; font-size:10px;">XP da temporada começando a ser contabilizado. Mostrando ranking geral:</div>` +
+          fallback.map((p, i) => {
+            const av = p.avatar_url
+              ? `<img src="${p.avatar_url}" class="up-rank-avatar" alt="">`
+              : `<div class="up-rank-avatar-inicial" style="background:${p.color || '#0000cc'}">${p.nickname.charAt(0).toUpperCase()}</div>`;
+            const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `<span class="up-rank-num" style="font-size:10px">${i + 1}</span>`;
+            return `<div class="up-rank-row">
+              <div class="up-rank-medal">${medal}</div>
+              ${av}
+              <div class="up-rank-info">
+                <span class="up-rank-nick" style="color:${p.color || '#0000cc'}">${escapeHtml(p.nickname)}</span>
+                <span class="up-rank-level">${escapeHtml(p.level || '🥉 TV Globinho')}</span>
+              </div>
+              <div class="up-rank-xp" style="color:#1464d8;">⭐ ${p.xp || 0}</div>
+            </div>`;
+          }).join('');
+      } else {
+        lista.innerHTML = '<div class="up-ranking-loading" style="font-style:italic;">Nenhum XP registrado nesta temporada ainda. Complete tarefas para aparecer aqui!</div>';
+      }
+      return;
+    }
+
+    // Group by user_id and sum amounts
+    const xpMap = new Map();
+    const userIds = [];
+    xpData.forEach(t => {
+      if (t.user_id) {
+        if (!xpMap.has(t.user_id)) {
+          xpMap.set(t.user_id, 0);
+          userIds.push(t.user_id);
+        }
+        xpMap.set(t.user_id, xpMap.get(t.user_id) + t.amount);
+      }
+    });
+
+    // Get user profiles for the ranking display
+    const { data: profiles, error: profilesError } = await supabaseClient
+      .from('profiles')
+      .select('id, nickname, color, avatar_url, level')
+      .in('id', userIds);
+
+    if (profilesError) throw profilesError;
+
+    // Build ranking array
+    const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+    const ranking = [];
+    xpMap.forEach((xp, userId) => {
+      const profile = profileMap.get(userId);
+      if (profile) {
+        ranking.push({
+          nickname: profile.nickname,
+          color: profile.color,
+          avatar_url: profile.avatar_url,
+          level: profile.level,
+          xp: xp
+        });
+      }
+    });
+
+    // Sort by XP descending
+    ranking.sort((a, b) => b.xp - a.xp);
+    const top10 = ranking.slice(0, 10);
+
+    if (top10.length === 0) {
+      lista.innerHTML = '<div class="up-ranking-loading" style="font-style:italic;">Nenhum XP registrado nesta temporada ainda. Complete tarefas para aparecer aqui!</div>';
+      return;
+    }
+
+    lista.innerHTML = top10.map((p, i) => {
+      const av = p.avatar_url
+        ? `<img src="${p.avatar_url}" class="up-rank-avatar" alt="">`
+        : `<div class="up-rank-avatar-inicial" style="background:${p.color || '#0000cc'}">${p.nickname.charAt(0).toUpperCase()}</div>`;
+      const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `<span class="up-rank-num" style="font-size:10px">${i + 1}</span>`;
+      const mine = p.nickname === currentProfile?.nickname;
+      return `<div class="up-rank-row ${mine ? 'mine' : ''}">
+        <div class="up-rank-medal">${medal}</div>
+        ${av}
+        <div class="up-rank-info">
+          <span class="up-rank-nick" style="color:${p.color || '#0000cc'}">${escapeHtml(p.nickname)}</span>
+          <span class="up-rank-level">${escapeHtml(p.level || '🥉 TV Globinho')}</span>
+        </div>
+        <div class="up-rank-xp" style="color:#1464d8;">⭐ ${p.xp}</div>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    console.error("Erro ao carregar ranking da temporada:", e);
+    lista.innerHTML = '<div class="up-ranking-loading" style="font-style:italic;">Erro ao carregar ranking da temporada.</div>';
+  }
 }
 
 async function carregarPremiosTemporada() {
