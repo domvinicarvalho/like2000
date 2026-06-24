@@ -2392,7 +2392,7 @@ async function carregarPremiosTemporada() {
     const top2Desc = configMap.get('season_prize_top2_desc') || 'Tatuagem exclusiva.';
 
     const top3Title = configMap.get('season_prize_top3_title') || 'A confirmar';
-    const top3Desc = configMap.get('season_prize_top3_desc') || 'Prêmios do Top 3 ao Top 10.';
+    const top3Desc = configMap.get('season_prize_top3_desc') || 'Prêmios do Top 3.';
 
     placeholder.innerHTML = `
       <div class="season-prizes-container">
@@ -2421,7 +2421,7 @@ async function carregarPremiosTemporada() {
           
           <!-- Card Top 3-10 -->
           <div class="prize-card top3">
-            <span class="prize-tag-secondary">🥉 Top 3 ao Top 10</span>
+            <span class="prize-tag-secondary">🥉 Top 3</span>
             <div class="prize-title-secondary">${escapeHtml(top3Title)}</div>
             <div class="prize-desc-secondary" style="white-space: pre-wrap;">${escapeHtml(top3Desc)}</div>
           </div>
