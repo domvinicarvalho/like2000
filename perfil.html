@@ -300,6 +300,7 @@
               <div class="menu-item disabled">📷 fotos</div>
               <div class="menu-item disabled">🎥 vídeos</div>
               <div class="menu-item disabled">💬 depoimentos</div>
+              ${isMe ? `<div class="menu-item" onclick="abrirEdicaoPerfil()" style="cursor:pointer; border-top:1px solid #C5D5E8; margin-top:5px; padding-top:8px; color:#E8457A; font-weight:bold;">✏️ Editar Perfil</div>` : ''}
             </div>
             <div class="report-link" onclick="denunciar('${p.nickname}')">denunciar conteúdo impróprio</div>
           </div>
@@ -542,6 +543,21 @@
       } else {
         console.error("Erro ao enviar denúncia:", error);
         alert("Erro ao enviar denúncia. Tente novamente.");
+      }
+    }
+
+    function abrirEdicaoPerfil() {
+      // Tenta chamar a função abrirPerfil() na janela pai (index.html)
+      try {
+        if (window.parent && window.parent.abrirPerfil) {
+          window.parent.abrirPerfil();
+        } else if (window.opener && window.opener.abrirPerfil) {
+          window.opener.abrirPerfil();
+        } else {
+          alert("Abra o menu Iniciar > Meu Perfil para editar suas informações.");
+        }
+      } catch (e) {
+        alert("Abra o menu Iniciar > Meu Perfil para editar suas informações.");
       }
     }
 

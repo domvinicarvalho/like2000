@@ -67,6 +67,25 @@
     margin-bottom: 15px !important;
   }
 
+  /* ── WORD BREAK PARA TEXTOS DENTRO DAS JANELAS ──────────── */
+  .xp-body,
+  #janela-msn .msg-conteudo,
+  #janela-msn .msg-text,
+  #janela-msn .nick,
+  #janela-fotolog .fl-card-caption,
+  #janela-fotolog .fl-card-title,
+  #janela-tarefas .task-desc,
+  #janela-tarefas .task-title,
+  #janela-ranking .up-rank-nick,
+  .up-body,
+  .ie-event-name,
+  .ie-event-info {
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    overflow-x: hidden !important;
+    max-width: 100% !important;
+  }
+
   /* MSN, FOTOLOG e ORKUT — Do topo até a barra de tarefas com altura fixa */
   #janela-msn, #janela-fotolog, #janela-orkut {
     height: calc(100vh - 38px - env(safe-area-inset-bottom)) !important;

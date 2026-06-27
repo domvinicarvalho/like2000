@@ -1395,7 +1395,8 @@ function addMessage(msg) {
     :`<div class="msg-avatar-inicial" style="background:${cor}">${msg.nickname.charAt(0).toUpperCase()}</div>`;
   const p=document.createElement('div');
   p.className=mine?'msg-bloco minha':'msg-bloco';
-  p.innerHTML=`${av}<div class="msg-conteudo"><span class="nick" style="color:${cor}">${escapeHtml(msg.nickname)}${getBotaoAmizade(msg.user_id)}</span><span class="msg-text">${escapeHtml(msg.message)}</span></div>`;
+  const nickClick = mine ? '' : ` onclick="abrirOrkutPorNick('${escapeHtml(msg.nickname)}')" style="cursor:pointer"`;
+  p.innerHTML=`${av}<div class="msg-conteudo"><span class="nick" style="color:${cor}"${nickClick}>${escapeHtml(msg.nickname)}${getBotaoAmizade(msg.user_id)}</span><span class="msg-text">${escapeHtml(msg.message)}</span></div>`;
   c.appendChild(p); c.scrollTop=c.scrollHeight;
 }
 function inserirEmote(e){const i=document.getElementById('messageInput');if(!i)return;i.value+=e;i.focus();}
@@ -2833,6 +2834,28 @@ function abrirOrkut() {
   `;
 
   criarJanela('janela-orkut', 'Orkut', 'orkut', 850, 600, 30, 30, content);
+}
+
+// ── ABRIR PERFIL ORKUT DE OUTRO USUÁRIO VIA NICKNAME ─────────
+function abrirOrkutPorNick(nickname) {
+  fecharMenu();
+  const encoded = encodeURIComponent(nickname);
+  const url = `perfil.html?u=${encoded}`;
+  
+  // Procura janela existente, se não existir cria
+  let existing = document.querySelector(`#janela-orkut`);
+  if (existing) {
+    // Atualiza o iframe para o novo perfil
+    const iframe = existing.querySelector('iframe');
+    if (iframe) iframe.src = url;
+    trazerFrente('janela-orkut');
+    return;
+  }
+  
+  const content = `
+    <iframe src="${url}" style="width:100%; height:100%; border:none; background:white;"></iframe>
+  `;
+  criarJanela('janela-orkut', `Orkut - ${nickname}`, 'orkut', 850, 600, 30, 30, content);
 }
 
 // ══════════════════════════════════════════
