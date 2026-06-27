@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&display=swap');
 
-* { margin:0; padding:0; box-sizing:border-box; font-family:Tahoma,'Noto Sans',sans-serif; word-break:break-word; overflow-wrap:break-word; }
+* { margin:0; padding:0; box-sizing:border-box; font-family:Tahoma,'Noto Sans',sans-serif; }
 body { width:100vw; height:100vh; overflow:hidden; }
 
 /* ══════════════════════════════════════════
@@ -606,6 +606,31 @@ body { width:100vw; height:100vh; overflow:hidden; }
   background: #f0f0f0; border: 1px solid #999; border-radius: 3px;
 }
 .msn-popup-btns button.accept { background: #e1f5fe; border-color: #039be5; font-weight: bold; }
+
+/* ═══════════════════════════════════════════════════════════════
+   MOBILE
+══════════════════════════════════════════════════════════════════ */
+@media (max-width:768px) {
+  .logo { font-size:42px; }
+  .sub  { font-size:12px; margin-bottom:20px; }
+  .login-box  { width:92vw; padding:20px 18px; }
+  .perfil-box { width:92vw; }
+
+  .notificacao { bottom:54px; right:10px; left:10px; text-align:center; }
+}
+
+@media (max-width: 600px) {
+  #janela-msn .messages {
+    height: 250px !important;
+    overflow-y: auto !important;
+    flex-shrink: 0 !important;
+  }
+
+  #janela-msn .msn-right-panel img {
+    width: 100% !important;
+    height: auto !important;
+  }
+}
 
 /* ══════════════════════════════════════════
    BOOT SCREEN XP

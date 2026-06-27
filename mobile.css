@@ -1,540 +1,135 @@
-/* ════════════════════════════════════════════════════════════
-   MOBILE — Otimizado para telas até 600px
-   ════════════════════════════════════════════════════════════ */
 @media (max-width: 600px) {
 
-  /* ── RESET GERAL ─────────────────────────────────────────── */
-  * {
-    -webkit-text-size-adjust: 100%;
-    word-break: break-word;
-    overflow-wrap: break-word;
+  /* BODY E DESKTOP — Liberar scroll vertical e área segura iOS */
+  body, #desktop, .desktop {
+    height: auto !important;
+    min-height: 100vh !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    background-attachment: fixed !important;
+    padding-bottom: calc(48px + env(safe-area-inset-bottom)) !important;
   }
 
-  /* ── BODY E DESKTOP — SEM SCROLL EXTERNO ─────────────────── */
-  body {
-    width: 100vw !important;
-    height: 100vh !important;
-    overflow: hidden !important;
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-  }
-
-  #desktop,
-  .desktop {
-    width: 100vw !important;
-    height: 100vh !important;
-    overflow: hidden !important;
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    background-attachment: scroll !important;
-  }
-
-  /* ── ÍCONES — Agora abaixo das janelas para não atrapalhar ── */
+  /* ICONES — Colunas verticais (estilo XP), menores e atrás das janelas */
   #desktop-icons {
     display: flex !important;
     flex-direction: column !important;
     flex-wrap: wrap !important;
-    height: calc(100vh - 48px) !important;
+    height: 80vh !important;
     align-content: flex-start !important;
-    padding: 8px 4px !important;
-    gap: 4px !important;
+    padding: 10px 5px !important;
+    gap: 5px !important;
     position: absolute !important;
     top: 0 !important;
     left: 0 !important;
     z-index: 1 !important;
-    pointer-events: none !important;
   }
 
   #desktop-icons .icon {
-    pointer-events: auto !important;
-    width: 60px !important;
-    padding: 3px !important;
+    width: 65px !important;
+    padding: 4px !important;
   }
 
   #desktop-icons .icon img {
-    width: 28px !important;
-    height: 28px !important;
+    width: 32px !important;
+    height: 32px !important;
   }
 
   #desktop-icons .icon span {
-    font-size: 9px !important;
+    font-size: 10px !important;
     text-shadow: 1px 1px 2px #000 !important;
-    line-height: 1.2 !important;
   }
 
-  /* ── JANELAS — Cobrem 100% da viewport ──────────────────── */
+  /* JANELAS — Cobrem o desktop e respeitam largura da tela */
   .xp-window {
-    position: fixed !important;
+    position: relative !important;
     top: 0 !important;
     left: 0 !important;
     width: 100vw !important;
     max-width: 100vw !important;
-    height: calc(100vh - 38px - env(safe-area-inset-bottom, 0px)) !important;
-    max-height: calc(100vh - 38px - env(safe-area-inset-bottom, 0px)) !important;
-    bottom: 38px !important;
+    height: auto !important;
     transform: none !important;
     display: flex !important;
     flex-direction: column !important;
-    border: none !important;
-    border-radius: 0 !important;
-    overflow: hidden !important;
-    background: #ece9d8 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-
-  /* Ajuste fino para janelas que precisam de altura extra */
-  .xp-window.xp-window-full {
-    height: 100vh !important;
-    max-height: 100vh !important;
-    bottom: 0 !important;
-  }
-
-  /* ── CORPO DAS JANELAS — scroll interno apenas aqui ────── */
-  .xp-body {
-    flex: 1 !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    min-height: 0 !important;
-    -webkit-overflow-scrolling: touch !important;
-  }
-
-  /* ── TITLEBAR ────────────────────────────────────────────── */
-  .xp-titlebar {
-    height: 30px !important;
-    flex-shrink: 0 !important;
-  }
-
-  /* ── MSN ─────────────────────────────────────────────────── */
-  #janela-msn {
-    height: calc(100vh - 38px - env(safe-area-inset-bottom, 0px)) !important;
-    max-height: calc(100vh - 38px - env(safe-area-inset-bottom, 0px)) !important;
-  }
-
-  #janela-msn .msn-main-container {
-    flex-direction: column !important;
-    height: 100% !important;
-  }
-
-  #janela-msn .msn-left-col {
-    width: 100% !important;
+    border-left: none !important;
     border-right: none !important;
-    flex: 1 !important;
+    border-radius: 0 !important;
+    overflow-x: auto !important; /* Scroll horizontal interno se a janela for larga */
+    background: #ece9d8 !important;
+    margin-bottom: 15px !important;
+  }
+
+  /* MSN, FOTOLOG e ORKUT — Do topo até a barra de tarefas com altura fixa */
+  #janela-msn, #janela-fotolog, #janela-orkut {
+    height: calc(100vh - 38px - env(safe-area-inset-bottom)) !important;
+    margin-bottom: 0 !important;
+  }
+
+  /* IE, WINAMP e PERFIS — Centralizados na tela (fixed) */
+  #janela-ie, [id^="janela-perfil-"], #janela-complemento, #janela-ranking, #janela-tarefas {
+    position: fixed !important;
+    top: 45% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 92vw !important;
+    height: 85vh !important;
     display: flex !important;
     flex-direction: column !important;
-    min-height: 0 !important;
+    max-height: 90vh !important;
+    border: 2px solid #0831a0 !important;
+    border-radius: 8px !important;
   }
 
-  #janela-msn .msn-right-col {
-    width: 100% !important;
-    border-left: none !important;
-    border-top: 1px solid #8ab0e0 !important;
-    max-height: 120px !important;
-    flex-shrink: 0 !important;
+  /* Ajuste para o Winamp não quebrar o layout mobile */
+  #webamp-host {
+    top: 20% !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    position: fixed !important;
+    width: 0 !important;
+    height: 0 !important;
   }
 
-  #janela-msn .msn-right-panel {
-    flex-direction: row !important;
-    flex-wrap: wrap !important;
-    padding: 6px !important;
-    gap: 6px !important;
-    align-items: center !important;
-    justify-content: center !important;
-  }
-
-  #janela-msn .msn-frame {
-    width: 60px !important;
-    max-width: 60px !important;
-    height: 60px !important;
-    aspect-ratio: 1/1 !important;
-  }
-
-  #janela-msn .msn-frame img {
-    width: 100% !important;
-    height: 100% !important;
-    object-fit: cover !important;
-  }
-
-  #janela-msn .msn-panel-block {
-    flex-shrink: 0 !important;
-  }
-
+  /* AREA DE MENSAGENS — Scroll interno no MSN */
   #janela-msn .messages {
     flex: 1 !important;
-    min-height: 120px !important;
-    max-height: none !important;
+    min-height: 260px !important;
     overflow-y: auto !important;
-    overflow-x: hidden !important;
-    -webkit-overflow-scrolling: touch !important;
-    padding: 8px !important;
-    font-size: 12px !important;
   }
 
-  #janela-msn .send-box input {
-    font-size: 14px !important; /* Evita zoom no iOS ao focar */
-    height: 36px !important;
-  }
-
-  .msg-conteudo {
-    word-break: break-word !important;
-    overflow-wrap: break-word !important;
-    max-width: 90vw !important;
-  }
-
-  .msg-bloco {
-    max-width: 95% !important;
-  }
-
-  /* ── FOTOLOG ─────────────────────────────────────────────── */
-  #janela-fotolog {
-    height: calc(100vh - 38px - env(safe-area-inset-bottom, 0px)) !important;
-    max-height: calc(100vh - 38px - env(safe-area-inset-bottom, 0px)) !important;
-  }
-
-  #janela-fotolog .fotolog-body {
-    flex-direction: column !important;
-    height: 100% !important;
-  }
-
+  /* FOTOLOG — Ajuste de colunas e scroll interno */
   #janela-fotolog .fotolog-sidebar {
-    width: 100% !important;
-    min-width: 100% !important;
-    flex-direction: row !important;
-    flex-wrap: wrap !important;
-    max-height: 140px !important;
-    overflow-y: auto !important;
+    width: 35% !important;
+    min-width: 35% !important;
   }
-
-  #janela-fotolog .fotolog-meu-perfil {
-    width: 100% !important;
-    flex-direction: row !important;
-    flex-wrap: wrap !important;
-    padding: 8px !important;
-    gap: 4px !important;
-  }
-
-  #janela-fotolog .fl-avatar,
-  #janela-fotolog .fl-avatar-inicial {
-    width: 40px !important;
-    height: 40px !important;
-    font-size: 18px !important;
-  }
-
-  #janela-fotolog .fl-nick {
-    font-size: 11px !important;
-  }
-
-  #janela-fotolog .fl-post-box {
-    width: 100% !important;
-    flex-direction: row !important;
-    flex-wrap: wrap !important;
-    padding: 6px !important;
-    border-bottom: none !important;
-    border-top: 1px solid #c0b090 !important;
-  }
-
-  #janela-fotolog .fl-post-foto {
-    width: 60px !important;
-    height: 60px !important;
-    flex-shrink: 0 !important;
-    font-size: 9px !important;
-  }
-
-  #janela-fotolog .fl-post-title-input,
-  #janela-fotolog textarea {
-    font-size: 12px !important;
-  }
-
   #janela-fotolog .fotolog-feed {
     flex: 1 !important;
     overflow-y: auto !important;
-    overflow-x: hidden !important;
-    min-height: 0 !important;
-    -webkit-overflow-scrolling: touch !important;
+  }
+
+  /* MSN — Ajuste das imagens na coluna direita (banner e avatar) para caberem na largura */
+  #janela-msn .msn-frame {
+    width: 100% !important;
+    max-width: 150px !important;
+    height: auto !important;
+    aspect-ratio: 1 / 1 !important;
+  }
+  #janela-msn .msn-right-col {
     padding: 8px !important;
   }
 
-  .fl-card {
-    font-size: 12px !important;
-  }
-
-  .fl-card-title {
-    font-size: 14px !important;
-  }
-
-  .fl-card-caption {
-    font-size: 11px !important;
-  }
-
-  /* ── ORKUT ───────────────────────────────────────────────── */
-  #janela-orkut {
-    height: calc(100vh - 38px - env(safe-area-inset-bottom, 0px)) !important;
-    max-height: calc(100vh - 38px - env(safe-area-inset-bottom, 0px)) !important;
-  }
-
-  #janela-orkut .xp-body {
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-  }
-
-  /* ── TAREFAS ──────────────────────────────────────────────── */
-  #janela-tarefas {
-    height: calc(100vh - 38px - env(safe-area-inset-bottom, 0px)) !important;
-    max-height: calc(100vh - 38px - env(safe-area-inset-bottom, 0px)) !important;
-  }
-
-  #janela-tarefas .task-list-container {
-    font-size: 12px !important;
-    padding: 8px !important;
-  }
-
-  /* ── RANKING ──────────────────────────────────────────────── */
-  #janela-ranking {
-    height: calc(100vh - 38px - env(safe-area-inset-bottom, 0px)) !important;
-    max-height: calc(100vh - 38px - env(safe-area-inset-bottom, 0px)) !important;
-  }
-
-  /* ── IE / INGRESSOS EXPLORER ────────────────────────────── */
-  #janela-ie {
-    height: calc(100vh - 38px - env(safe-area-inset-bottom, 0px)) !important;
-    max-height: calc(100vh - 38px - env(safe-area-inset-bottom, 0px)) !important;
-  }
-
-  #janela-ie .ie-content {
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    -webkit-overflow-scrolling: touch !important;
-  }
-
-  .ie-event-card {
-    flex-direction: column !important;
-    gap: 8px !important;
-  }
-
-  .ie-event-img-container {
-    width: 100% !important;
-    height: auto !important;
-    aspect-ratio: 16/9 !important;
-  }
-
-  .ie-event-name {
-    font-size: 14px !important;
-  }
-
-  .ie-event-date {
-    font-size: 11px !important;
-  }
-
-  /* ── PERFIL ──────────────────────────────────────────────── */
-  #janela-complemento {
-    height: calc(100vh - 38px - env(safe-area-inset-bottom, 0px)) !important;
-    max-height: calc(100vh - 38px - env(safe-area-inset-bottom, 0px)) !important;
-  }
-
-  #janela-complemento .up-field-group {
-    padding: 10px !important;
-    font-size: 12px !important;
-  }
-
-  [id^="janela-perfil-"] {
-    height: calc(100vh - 38px - env(safe-area-inset-bottom, 0px)) !important;
-    max-height: calc(100vh - 38px - env(safe-area-inset-bottom, 0px)) !important;
-  }
-
-  /* ── UP (Meu Perfil dentro da janela) ────────────────────── */
-  .up-header {
-    padding: 10px !important;
-    gap: 10px !important;
-  }
-
-  .up-avatar-img,
-  .up-avatar-inicial {
-    width: 48px !important;
-    height: 48px !important;
-    font-size: 22px !important;
-  }
-
-  .up-nick {
-    font-size: 14px !important;
-  }
-
-  .up-cupom-code {
-    font-size: 16px !important;
-    letter-spacing: 2px !important;
-  }
-
-  .up-body {
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    -webkit-overflow-scrolling: touch !important;
-  }
-
-  /* ── MENU INICIAR ────────────────────────────────────────── */
-  .start-menu {
-    width: 100vw !important;
-    max-width: 100vw !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 38px !important;
-    top: auto !important;
-    border-radius: 8px 8px 0 0 !important;
-    max-height: 70vh !important;
-    overflow-y: auto !important;
-  }
-
-  .start-menu-body {
-    flex-direction: column !important;
-    min-height: auto !important;
-  }
-
-  .start-menu-col.left,
-  .start-menu-col.right {
-    width: 100% !important;
-  }
-
-  .start-menu-col.right {
-    border-top: 1px solid #b0c4e8 !important;
-  }
-
-  .start-menu-divider {
-    display: none !important;
-  }
-
-  /* ── ALERTAS / TUTORIAIS ─────────────────────────────────── */
-  [id^="tutorial-"],
-  [id^="alert-"] {
-    position: fixed !important;
-    top: 50% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) !important;
-    width: 90vw !important;
-    max-width: 90vw !important;
-    height: auto !important;
-    max-height: 80vh !important;
-    border: 2px solid #0831a0 !important;
-    border-radius: 8px !important;
-    display: flex !important;
-    flex-direction: column !important;
-  }
-
-  [id^="tutorial-"] .xp-body,
-  [id^="alert-"] .xp-body {
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-    max-height: 60vh !important;
-  }
-
-  /* ── TASKBAR ─────────────────────────────────────────────── */
+  /* TASKBAR — Fixa no rodapé respeitando a safe area */
   #taskbar {
     position: fixed !important;
     bottom: 0 !important;
     top: auto !important;
     left: 0 !important;
-    right: 0 !important;
     display: flex !important;
-    align-items: center !important;
-    padding-bottom: env(safe-area-inset-bottom, 0px) !important;
-    height: calc(38px + env(safe-area-inset-bottom, 0px)) !important;
+    align-items: flex-start !important;
+    padding-bottom: env(safe-area-inset-bottom) !important;
+    height: calc(38px + env(safe-area-inset-bottom)) !important;
     width: 100% !important;
     z-index: 10000 !important;
   }
 
-  .taskbar-xp {
-    font-size: 10px !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    white-space: nowrap !important;
-    max-width: 45vw !important;
-  }
-
-  /* ── NOTIFICAÇÃO ─────────────────────────────────────────── */
-  .notificacao {
-    position: fixed !important;
-    bottom: calc(50px + env(safe-area-inset-bottom, 0px)) !important;
-    right: 10px !important;
-    left: 10px !important;
-    text-align: center !important;
-    z-index: 10001 !important;
-    font-size: 12px !important;
-  }
-
-  /* ── WINAMP ──────────────────────────────────────────────── */
-  #webamp-host {
-    position: fixed !important;
-    top: 10% !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-    width: 0 !important;
-    height: 0 !important;
-  }
-
-  /* ── LOGIN ────────────────────────────────────────────────── */
-  .login-box {
-    width: 92vw !important;
-    padding: 16px 14px !important;
-  }
-
-  .login-box input[type="email"],
-  .login-box input[type="password"],
-  .login-box input[type="text"] {
-    font-size: 16px !important; /* Evita zoom no iOS */
-  }
-
-  .perfil-box {
-    width: 92vw !important;
-  }
-
-  .logo {
-    font-size: 36px !important;
-  }
-
-  .sub {
-    font-size: 11px !important;
-    margin-bottom: 16px !important;
-  }
-
-  /* ── PRÊMIOS DA TEMPORADA ────────────────────────────────── */
-  .prize-grid-secondary {
-    grid-template-columns: 1fr !important;
-  }
-
-  .season-prizes-container {
-    padding: 8px !important;
-  }
-
-  /* ── SEASON PROMO BANNER ─────────────────────────────────── */
-  .season-promo-banner {
-    padding: 6px 10px !important;
-    font-size: 11px !important;
-  }
-
-  /* ── START MENU HEADER ───────────────────────────────────── */
-  .start-menu-header {
-    padding: 10px !important;
-    flex-wrap: wrap !important;
-    gap: 8px !important;
-  }
-
-  .start-menu-avatar {
-    width: 40px !important;
-    height: 40px !important;
-  }
-
-  /* ── AMIGOS ───────────────────────────────────────────────── */
-  #janela-amigos {
-    height: calc(100vh - 38px - env(safe-area-inset-bottom, 0px)) !important;
-    max-height: calc(100vh - 38px - env(safe-area-inset-bottom, 0px)) !important;
-  }
-
-  /* ── SEASON RANKING ──────────────────────────────────────── */
-  .up-ranking-box {
-    margin: 0 8px 8px !important;
-  }
-
-  .up-cupom-box {
-    margin: 8px !important;
-    padding: 10px !important;
-  }
 }
