@@ -1,24 +1,30 @@
 @media (max-width: 600px) {
 
-  /* BODY E DESKTOP — Liberar scroll vertical e área segura iOS */
+  /* BODY E DESKTOP — Sem scroll externo, wallpaper cobre exatamente a tela */
   body, #desktop, .desktop {
-    height: auto !important;
+    height: 100vh !important;
     min-height: 100vh !important;
-    overflow-y: auto !important;
+    max-height: 100vh !important;
+    overflow: hidden !important;
+    overflow-y: hidden !important;
     overflow-x: hidden !important;
-    background-attachment: fixed !important;
-    padding-bottom: calc(48px + env(safe-area-inset-bottom)) !important;
+    background-size: cover !important;
+    background-repeat: no-repeat !important;
+    background-position: center center !important;
+    background-attachment: scroll !important;
+    padding-bottom: 0 !important;
   }
 
-  /* ICONES — Colunas verticais (estilo XP), menores e atrás das janelas */
+  /* ICONES — Multi-colunas estilo XP, todos visíveis */
   #desktop-icons {
     display: flex !important;
     flex-direction: column !important;
     flex-wrap: wrap !important;
-    height: 80vh !important;
+    height: calc(100vh - 48px) !important;
+    max-height: calc(100vh - 48px) !important;
     align-content: flex-start !important;
-    padding: 10px 5px !important;
-    gap: 5px !important;
+    padding: 6px 4px !important;
+    gap: 3px 8px !important;
     position: absolute !important;
     top: 0 !important;
     left: 0 !important;
@@ -26,17 +32,19 @@
   }
 
   #desktop-icons .icon {
-    width: 65px !important;
-    padding: 4px !important;
+    width: 62px !important;
+    padding: 3px !important;
+    gap: 2px !important;
   }
 
   #desktop-icons .icon img {
-    width: 32px !important;
-    height: 32px !important;
+    width: 28px !important;
+    height: 28px !important;
   }
 
   #desktop-icons .icon span {
-    font-size: 10px !important;
+    font-size: 9px !important;
+    line-height: 1.15 !important;
     text-shadow: 1px 1px 2px #000 !important;
   }
 
