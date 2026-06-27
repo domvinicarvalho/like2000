@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&display=swap');
 
-* { margin:0; padding:0; box-sizing:border-box; font-family:Tahoma,'Noto Sans',sans-serif; }
+* { margin:0; padding:0; box-sizing:border-box; font-family:Tahoma,'Noto Sans',sans-serif; word-break:break-word; overflow-wrap:break-word; }
 body { width:100vw; height:100vh; overflow:hidden; }
 
 /* ══════════════════════════════════════════
@@ -87,30 +87,6 @@ body { width:100vw; height:100vh; overflow:hidden; }
 .cor:hover { transform:scale(1.15); }
 .cor.selected { border:3px solid white; box-shadow:0 0 0 2px rgba(0,0,0,.4); }
 
-/* ══════════════════════════════════════════
-   DESKTOP
-══════════════════════════════════════════ */
-.desktop {
-  width:100vw; height:100vh;
-  background-color: #3a6ec8;
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
-  position:relative; overflow:hidden;
-  transition: background-image 0.5s ease-in-out; /* Adicionado para uma transição suave */
-}
-.icons {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  bottom: 48px; /* space for taskbar */
-  display: flex;
-  flex-direction: column;
-  flex-wrap: wrap;
-  align-content: flex-start;
-  gap: 6px 16px;
-  padding: 4px;
-}
 .icon {
   width:72px; display:flex; flex-direction:column; align-items:center; color:white;
   cursor:pointer; text-shadow:1px 1px 2px black,0 0 4px black; gap:4px;
@@ -630,31 +606,6 @@ body { width:100vw; height:100vh; overflow:hidden; }
   background: #f0f0f0; border: 1px solid #999; border-radius: 3px;
 }
 .msn-popup-btns button.accept { background: #e1f5fe; border-color: #039be5; font-weight: bold; }
-
-/* ══════════════════════════════════════════
-   MOBILE
-══════════════════════════════════════════ */
-@media (max-width:768px) {
-  .logo { font-size:42px; }
-  .sub  { font-size:12px; margin-bottom:20px; }
-  .login-box  { width:92vw; padding:20px 18px; }
-  .perfil-box { width:92vw; }
-
-  .notificacao { bottom:54px; right:10px; left:10px; text-align:center; }
-}
-
-@media (max-width: 600px) {
-  #janela-msn .messages {
-    height: 250px !important;
-    overflow-y: auto !important;
-    flex-shrink: 0 !important;
-  }
-
-  #janela-msn .msn-right-panel img {
-    width: 100% !important;
-    height: auto !important;
-  }
-}
 
 /* ══════════════════════════════════════════
    BOOT SCREEN XP
