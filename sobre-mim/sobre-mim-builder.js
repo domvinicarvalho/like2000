@@ -245,29 +245,24 @@ function smSalvar() {
 
 async function smSalvarNoPerfil(textoDecorado, configRaw) {
   try {
-    const { supabaseClient, currentUser, mostrarNotificacao } = window;
-    
-    // SEGURANCA: nunca salvar bio vazia se o perfil ja tinha conteudo
-    var _bioOrig = (window.currentProfile && window.currentProfile.bio) || '';
-    if (!textoDecorado && _bioOrig) {
-      mostrarNotificacao('Nada para salvar - pelo menos um campo precisa ter texto.');
+    var sc = typeof supabaseClient !== "undefined" ? supabaseClient : window.supabaseClient;
+    if (!sc) { console.error("supabaseClient indisponivel"); return; }
+    var bioOrig = (window.currentProfile && window.currentProfile.bio) || "";
+    if (!textoDecorado && bioOrig) {
+      if (window.mostrarNotificacao) window.mostrarNotificacao("Nada para salvar.");
       return;
     }
-    
-    const payload = {
-      bio: textoDecorado,
-      sobre_mim_config: JSON.stringify(configRaw)
-    };
-    const { error } = await supabaseClient.from('profiles').update(payload).eq('id', currentUser.id);
-    if (error) throw error;
+    var payload = { bio: textoDecorado, sobre_mim_config: JSON.stringify(configRaw) };
+    var result = await sc.from("profiles").update(payload).eq("id", currentUser.id);
+    if (result.error) throw result.error;
     if (window.currentProfile) {
       window.currentProfile.bio = textoDecorado;
       window.currentProfile.sobre_mim_config = JSON.stringify(configRaw);
     }
-    mostrarNotificacao('✅ "Sobre mim" salvo com decoração!');
+    if (window.mostrarNotificacao) window.mostrarNotificacao("Sobre mim decorado salvo!");
   } catch(e) {
-    console.error('Erro ao salvar sobre_mim:', e);
-    if(window.mostrarNotificacao) window.mostrarNotificacao('❌ Erro: '+e.message);
+    console.error("Erro:", e);
+    if (window.mostrarNotificacao) window.mostrarNotificacao("Erro ao salvar: " + e.message);
   }
 }
 

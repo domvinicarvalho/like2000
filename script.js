@@ -1,7 +1,7 @@
 const { createClient } = supabase;
 const supabaseClient = createClient(
   'https://hjglujffcjbrmugoprjh.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhqZ2x1amZmY2picm11Z29wcmpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5NTQ5NjUsImV4cCI6MjA5NDUzMDk2NX0.hbeP1zWBYvsH9BCsoyaBOkoZfIvY9U1uXdSSwxmuvos'
+'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhqZ2x1amZmY2picm11Z29wcmpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5NTQ5NjUsImV4cCI6MjA5NDUzMDk2NX0.hbeP1zWBYvsH9BCsoyaBOkoZfIvY9U1uXdSSwxmuvos'
 );
 
 let currentUser     = null;
@@ -1049,13 +1049,8 @@ function criarJanela(id,titulo,iconKey,largura,altura,top,left,conteudo) {
     </div>
     <div class="xp-body">${conteudo}</div>`;
   document.querySelector('.desktop').appendChild(j);
-  // Inicializar builder do "Sobre mim"
-  setTimeout(() => {
-    const bc = document.getElementById('sm-builder-container');
-    if (bc && typeof renderSobreMimBuilder === 'function') {
-      renderSobreMimBuilder(bc, currentProfile);
-    }
-  }, 100);
+
+window.supabaseClient = supabaseClient;  
 
   tornarArrastavel(j);
   return j;
@@ -2080,7 +2075,9 @@ async function abrirPerfil() {
       <div class="up-ranking-box" style="padding:12px; background:#fffdf5; border-color:#6B90C0;">
         <div style="font-weight:bold; color:#1F4E89; margin-bottom:12px; border-bottom:1px solid #C5D5E8; padding-bottom:4px; font-size:12px;">Dados do Perfil Orkut</div>
         <div class="up-orkut-fields">
-           <div id="sm-builder-container"></div>
+           <textarea id="up-edit-bio" placeholder="Fale um pouco sobre voce..." style="width:100%;padding:5px;border:1px solid #7f9db9;font-size:11px;font-family:Tahoma,sans-serif;min-height:60px;resize:vertical;box-sizing:border-box;">${currentProfile.bio || ""}</textarea>
+           <div style="margin-top:4px;"><button onclick="toggleSobreMimBuilder()" id="sm-toggle-btn" style="font-size:10px;cursor:pointer;background:#e8ecf2;border:1px solid #b0bfd0;padding:3px 10px;border-radius:3px;color:#3B5998;font-family:Tahoma,sans-serif;">✨ Decorar texto com estilo Orkut</button></div>
+           <div id="sm-builder-container" style="display:none;"></div>
            
            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
              <div>
@@ -2115,13 +2112,7 @@ async function abrirPerfil() {
     </div>`;
 
   document.querySelector('.desktop').appendChild(j);
-  // Inicializar builder do "Sobre mim"
-  setTimeout(() => {
-    const bc = document.getElementById('sm-builder-container');
-    if (bc && typeof renderSobreMimBuilder === 'function') {
-      renderSobreMimBuilder(bc, currentProfile);
-    }
-  }, 100);
+
   tornarArrastavel(j);
 }
 
@@ -2325,48 +2316,45 @@ async function alterarNickname() {
 
 
 async function salvarInfoCompleta() {
-  // SEGURANCA: preservar bio original como fallback
-  const bioOriginal = (currentProfile && currentProfile.bio) || '';
-  let bioTexto = bioOriginal;
-  let sobreMimConfig = currentProfile.sobre_mim_config || null;
+  var bioOrig = (currentProfile && currentProfile.bio) || "";
+  var bioTexto = bioOrig;
+  var smConfig = (currentProfile && currentProfile.sobre_mim_config) || null;
+  var bc = document.getElementById("sm-builder-container");
+  var builderVisible = bc && bc.style.display !== "none" && bc.style.display !== "";
 
-  const builderContainer = document.getElementById('sm-builder-container');
-  if (builderContainer && typeof smSalvarNoPerfil === 'function') {
-    const textoDecorado = gerarSobreMim(smEstado.campos, smEstado.separador);
-    
-    // SEGURANCA: se o builder nao gerou nada E o perfil ja tinha bio,
-    // NAO sobrescrever — mantem o conteudo original
-    if (!textoDecorado && bioOriginal) {
-      mostrarNotificacao('Preencha pelo menos um campo para atualizar seu "Sobre mim".');
+  if (builderVisible && typeof smSalvarNoPerfil === "function") {
+    var dec = gerarSobreMim(smEstado.campos, smEstado.separador);
+    if (!dec && bioOrig) {
+      mostrarNotificacao("Preencha pelo menos um campo para atualizar.");
       return;
     }
-    
-    await smSalvarNoPerfil(
-      textoDecorado,
-      { campos: smEstado.campos.map(c => ({ key:c.key, texto:c.texto, config:{...c.config} })), separador: smEstado.separador }
-    );
-    bioTexto = currentProfile.bio || '';
-    sobreMimConfig = currentProfile.sobre_mim_config || null;
+    await smSalvarNoPerfil(dec, { campos: smEstado.campos.map(function(c){return {key:c.key,texto:c.texto,config:{...c.config}}; }), separador: smEstado.separador });
+    bioTexto = (currentProfile && currentProfile.bio) || "";
+    smConfig = (currentProfile && currentProfile.sobre_mim_config) || null;
+  } else {
+    var el = document.getElementById("up-edit-bio");
+    if (el) bioTexto = el.value.trim();
+    smConfig = null;
   }
 
-  const payload = {
-    bio: bioTexto || bioOriginal, // SEGURANCA: se bioTexto ficou vazio, usa original
-    sobre_mim_config: sobreMimConfig,
-    relacionamento: document.getElementById('up-edit-rel').value,
-    identidade_sexual: document.getElementById('up-edit-sexo').value.trim(),
-    musicas: document.getElementById('up-edit-musicas').value.trim(),
-    filmes: document.getElementById('up-edit-filmes').value.trim(),
-    livros: document.getElementById('up-edit-livros').value.trim(),
-    esportes: document.getElementById('up-edit-esportes').value.trim(),
+  var payload = {
+    bio: bioTexto || bioOrig,
+    sobre_mim_config: smConfig,
+    relacionamento: document.getElementById("up-edit-rel").value,
+    identidade_sexual: document.getElementById("up-edit-sexo").value.trim(),
+    musicas: document.getElementById("up-edit-musicas").value.trim(),
+    filmes: document.getElementById("up-edit-filmes").value.trim(),
+    livros: document.getElementById("up-edit-livros").value.trim(),
+    esportes: document.getElementById("up-edit-esportes").value.trim()
   };
 
-  const { error } = await supabaseClient.from('profiles').update(payload).eq('id', currentUser.id);
-
-  if (error) {
-    mostrarNotificacao('Erro ao salvar dados.');
-  } else {
-    mostrarNotificacao('Perfil Orkut atualizado!');
+  try {
+    var r = await supabaseClient.from("profiles").update(payload).eq("id", currentUser.id);
+    if (r.error) throw r.error;
+    mostrarNotificacao("Perfil Orkut atualizado!");
     Object.assign(currentProfile, payload);
+  } catch(e) {
+    mostrarNotificacao("Erro: " + e.message);
   }
 }
 
@@ -3189,6 +3177,22 @@ async function listarAlertasAdmin() {
   } catch (e) {
     console.error("Erro ao buscar alertas:", e);
     return [];
+  }
+}
+
+
+function toggleSobreMimBuilder() {
+  var c = document.getElementById("sm-builder-container");
+  var b = document.getElementById("sm-toggle-btn");
+  if (!c || !b) return;
+  var h = c.style.display === "none" || c.style.display === "";
+  if (h) {
+    c.style.display = "block";
+    b.textContent = "✕ Fechar decorador";
+    if (typeof renderSobreMimBuilder === "function") renderSobreMimBuilder(c, currentProfile);
+  } else {
+    c.style.display = "none";
+    b.textContent = "✨ Decorar texto com estilo Orkut";
   }
 }
 
