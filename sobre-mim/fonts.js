@@ -1,92 +1,5 @@
-// ════════════════════════════════════════════════════════════════
-// CATÁLOGO DE FONTES / ESTILOS DE LETRA — "Sobre mim" Decorator
-// Mínimo 25 opções — fidelidade à estética Orkut/MSN 2006
-// ════════════════════════════════════════════════════════════════
-
-const FONT_CATALOG = [
-  // ── LEETSPEAK / ORKUTÊS CLÁSSICO (4 variações) ─────────────
-  {
-    key: 'leet_classic',
-    name: 'Leet Clássico',
-    category: 'Leetspeak',
-    description: '3 d c l á s s i c 0',
-    map: (c) => {
-      const m = { 'a':'4','A':'4','e':'3','E':'3','i':'1','I':'1','o':'0','O':'0','s':'5','S':'5','t':'7','T':'7' };
-      return m[c] || c;
-    }
-  },
-  {
-    key: 'leet_extreme',
-    name: 'Leet Radical',
-    category: 'Leetspeak',
-    description: '4|\|d3 734|\_|4874|_|',
-    map: (c) => {
-      const m = { 'a':'4','A':'4','b':'8','B':'8','e':'3','E':'3','g':'9','G':'9','i':'1','I':'1','o':'0','O':'0','s':'5','S':'5','t':'7','T':'7','z':'2','Z':'2' };
-      return m[c] || c;
-    }
-  },
-  {
-    key: 'leet_hacker',
-    name: 'Leet H4x0r',
-    category: 'Leetspeak',
-    description: 'h4x0r 5tyl3',
-    map: (c) => {
-      const m = { 'a':'4','A':'4','e':'3','E':'3','i':'!','I':'!','o':'0','O':'0','s':'$','S':'$','t':'+','T':'+','c':'¢','C':'¢','l':'£','L':'£' };
-      return m[c] || c;
-
-  // ── CURSIVO / ESTILIZADO UNICODE (4 variações) ────────────
-  {
-    key: 'cursive_math',
-    name: 'Cursivo Matemático',
-    category: 'Cursivo',
-    description: '𝒶 𝒷 𝓉 ℯ 𝓍 𝓉 ℴ',
-    map: (c) => {
-      const base = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-      const curr = '𝒶𝒷𝒸𝒹ℯ𝒻ℊ𝒽𝒾𝒿𝓀𝓁𝓂𝓃ℴ𝓅𝓆𝓇𝓈𝓉𝓊𝓋𝓌𝓍𝓎𝓏𝒜ℬ𝒞𝒟ℰℱ𝒢ℋℐ𝒥𝒦ℒℳ𝒩𝒪𝒫𝒬ℛ𝒮𝒯𝒰𝒱𝒲𝒳𝒴𝒵';
-      const i = base.indexOf(c);
-      return i >= 0 ? curr[i] : c;
-    }
-  },
-  {
-    key: 'cursive_loop',
-    name: 'Cursivo Laço',
-    category: 'Cursivo',
-    description: 'ℓσóριиg ℓιкє тнιѕ',
-    map: (c) => {
-      const base = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-      const curr = 'αɓƈδɛϝɠɦιʝкℓɳσρզяรƬυʋωxყȥAƂƇƊЄҒƓĤĪĴҞĻМЍФРỢŘŞŦỮѶŴЖЎȤ';
-      const i = base.indexOf(c);
-      return i >= 0 ? curr[i] : c;
-    }
-  },
-  {
-    key: 'cursive_script',
-    name: 'Script Elegante',
-    category: 'Cursivo',
-    description: '𝓈𝒸𝓇𝒾𝓅𝓉 𝒻𝒶𝓃𝒸𝓎',
-    map: (c) => {
-      const base = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-      const curr = '𝒶𝒷𝒸𝒹ℯ𝒻ℊ𝒽𝒾𝒿𝓀𝓁𝓂𝓃ℴ𝓅𝓆𝓇𝓈𝓉𝓊𝓋𝓌𝓍𝓎𝓏𝒜ℬ𝒞𝒟ℰℱ𝒢ℋℐ𝒥𝒦ℒℳ𝒩𝒪𝒫𝒬ℛ𝒮𝒯𝒰𝒱𝒲𝒳𝒴𝒵';
-      const i = base.indexOf(c);
-      return i >= 0 ? curr[i] : c;
-    }
-  },
-  {
-    key: 'cursive_fancy',
-    name: 'Fancy Cursivo',
-    category: 'Cursivo',
-    description: '𝓯𝓪𝓷𝓬𝔂 𝔀𝓻𝓲𝓽𝓲𝓷𝓰',
-    map: (c) => {
-      const base = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-      const curr = '𝓯𝓪𝓷𝓬𝔂𝔀𝓻𝓲𝓽𝓲𝓷𝓰𝓹𝓮𝓻𝓯𝓮𝓲𝓽𝓸𝓢𝓣𝓤𝓥𝓦𝓧𝓨𝓩𝓐𝓑𝓒𝓓𝓔𝓕𝓖𝓗𝓘𝓙𝓚𝓛𝓜𝓝𝓞𝓟𝓠𝓡';
-      const i = base.indexOf(c);
-      return i >= 0 ? curr[i] : c;
-    }
-  }
-];
-
-  // ── CIRÍLICO MIX (3 variações) ─────────────────────────────
-  {
+var FONT_CATALOG = [
+{
     key: 'cyrillic_light',
     name: 'Cirílico Leve',
     category: 'Cirílico',
@@ -96,7 +9,7 @@ const FONT_CATALOG = [
       return m[c] || c;
     }
   },
-  {
+{
     key: 'cyrillic_mix',
     name: 'Cirílico Mix',
     category: 'Cirílico',
@@ -106,7 +19,7 @@ const FONT_CATALOG = [
       return m[c] || c;
     }
   },
-  {
+{
     key: 'cyrillic_dark',
     name: 'Cirílico Pesado',
     category: 'Cirílico',
@@ -115,13 +28,8 @@ const FONT_CATALOG = [
       const m = { 'a':'α','A':'Α','b':'в','B':'В','c':'¢','C':'С','e':'є','E':'Е','h':'н','H':'Н','i':'ι','I':'І','k':'к','K':'К','m':'м','M':'М','n':'η','N':'Ν','o':'σ','O':'Ο','p':'ρ','P':'Р','r':'я','R':'Я','s':'ѕ','S':'Ѕ','t':'т','T':'Т','u':'υ','U':'Υ','x':'χ','X':'Χ','y':'у','Y':'Υ' };
       return m[c] || c;
     }
-  }
-];
-
-
-    }
   },
-  {
+{
     key: 'leet_soft',
 
   // ── BOLHAS (2 variações) ────────────────────────────────────
@@ -405,5 +313,46 @@ if (typeof module !== 'undefined' && module.exports) {
       const m = { 'a':'4','A':'4','e':'3','E':'3','i':'1','I':'1','s':'5','S':'5' };
       return m[c] || c;
     }
+  },
+{
+    key: 'leet_classic',
+    name: 'Leet Clássico',
+    category: 'Leetspeak',
+    description: '3 d c l á s s i c 0',
+    map: (c) => {
+      const m = { 'a':'4','A':'4','e':'3','E':'3','i':'1','I':'1','o':'0','O':'0','s':'5','S':'5','t':'7','T':'7' };
+      return m[c] || c;
+    }
+  },
+{
+    key: 'leet_extreme',
+    name: 'Leet Radical',
+    category: 'Leetspeak',
+    description: '4|\|d3 734|\_|4874|_|',
+    map: (c) => {
+      const m = { 'a':'4','A':'4','b':'8','B':'8','e':'3','E':'3','g':'9','G':'9','i':'1','I':'1','o':'0','O':'0','s':'5','S':'5','t':'7','T':'7','z':'2','Z':'2' };
+      return m[c] || c;
+    }
   }
 ];
+
+function aplicarFonte(texto, fontKey) {
+  if (!texto || !fontKey) return texto || "";
+  for (var i = 0; i < FONT_CATALOG.length; i++) {
+    if (FONT_CATALOG[i].key === fontKey) {
+      return texto.split("").map(function(c) { return FONT_CATALOG[i].map(c); }).join("");
+    }
+  }
+  return texto;
+}
+
+function getFontByKey(key) {
+  for (var i = 0; i < FONT_CATALOG.length; i++) {
+    if (FONT_CATALOG[i].key === key) return FONT_CATALOG[i];
+  }
+  return null;
+}
+
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = { FONT_CATALOG: FONT_CATALOG, aplicarFonte: aplicarFonte, getFontByKey: getFontByKey };
+}

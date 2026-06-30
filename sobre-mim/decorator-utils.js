@@ -3,10 +3,7 @@
 // Combina fonte + moldura + emoji + kaomoji em texto decorado
 // ════════════════════════════════════════════════════════════════
 
-/**
- * Aplica decoração completa em um campo de texto.
- * Ordem: fonte -> emoji -> kaomoji -> moldura (por último, envolvendo tudo)
- */
+
 function decorarCampo(texto, config) {
   if (!texto || !texto.trim()) return '';
   
@@ -35,9 +32,7 @@ function decorarCampo(texto, config) {
   return result;
 }
 
-/**
- * Preview HTML de um campo decorado (preserva quebras de linha)
- */
+
 function decorarCampoPreview(texto, config) {
   if (!texto || !texto.trim()) return '';
   
@@ -59,10 +54,7 @@ function decorarCampoPreview(texto, config) {
   return result;
 }
 
-/**
- * Gera o texto completo combinando todos os campos com separadores.
- * Campos vazios são omitidos.
- */
+
 function gerarSobreMim(campos, separadorKey) {
   const partes = [];
   
@@ -84,13 +76,7 @@ function gerarSobreMim(campos, separadorKey) {
   return partes.join(sep);
 }
 
-/**
- * Gera HTML de preview completo, escapando caracteres e convertendo
- * quebras de linha para <br>.
 
-/**
- * Gera sugestões automáticas combinando fonte+moldura+emoji.
- */
 function gerarSugestoes(texto, count = 3) {
   if (!texto || !texto.trim()) return [];
   
@@ -143,7 +129,6 @@ function escapeHtml(text) {
   return d.innerHTML;
 }
 
- */
 function gerarPreviewSobreMim(campos, separadorKey) {
   const partes = [];
   
