@@ -1049,6 +1049,14 @@ function criarJanela(id,titulo,iconKey,largura,altura,top,left,conteudo) {
     </div>
     <div class="xp-body">${conteudo}</div>`;
   document.querySelector('.desktop').appendChild(j);
+  // Inicializar builder do "Sobre mim"
+  setTimeout(() => {
+    const bc = document.getElementById('sm-builder-container');
+    if (bc && typeof renderSobreMimBuilder === 'function') {
+      renderSobreMimBuilder(bc, currentProfile);
+    }
+  }, 100);
+
   tornarArrastavel(j);
   return j;
 }
@@ -2072,8 +2080,7 @@ async function abrirPerfil() {
       <div class="up-ranking-box" style="padding:12px; background:#fffdf5; border-color:#6B90C0;">
         <div style="font-weight:bold; color:#1F4E89; margin-bottom:12px; border-bottom:1px solid #C5D5E8; padding-bottom:4px; font-size:12px;">Dados do Perfil Orkut</div>
         <div class="up-orkut-fields">
-           <label>Bio / Quem sou eu:</label>
-           <textarea id="up-edit-bio" placeholder="Fale um pouco sobre você...">${currentProfile.bio || ''}</textarea>
+           <div id="sm-builder-container"></div>
            
            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
              <div>
@@ -2102,12 +2109,19 @@ async function abrirPerfil() {
              <div><label>Esportes:</label><input type="text" id="up-edit-esportes" value="${currentProfile.esportes || ''}"></div>
            </div>
         </div>
-        <button onclick="salvarInfoOrkut()" class="up-orkut-save-btn">💾 Salvar Dados Orkut</button>
+        <button onclick="salvarInfoCompleta()" class="up-orkut-save-btn">💾 Salvar Dados Orkut</button>
       </div>
 
     </div>`;
 
   document.querySelector('.desktop').appendChild(j);
+  // Inicializar builder do "Sobre mim"
+  setTimeout(() => {
+    const bc = document.getElementById('sm-builder-container');
+    if (bc && typeof renderSobreMimBuilder === 'function') {
+      renderSobreMimBuilder(bc, currentProfile);
+    }
+  }, 100);
   tornarArrastavel(j);
 }
 
@@ -2309,9 +2323,35 @@ async function alterarNickname() {
   setTimeout(() => location.reload(), 1500);
 }
 
-async function salvarInfoOrkut() {
+
+async function salvarInfoCompleta() {
+  // SEGURANCA: preservar bio original como fallback
+  const bioOriginal = (currentProfile && currentProfile.bio) || '';
+  let bioTexto = bioOriginal;
+  let sobreMimConfig = currentProfile.sobre_mim_config || null;
+
+  const builderContainer = document.getElementById('sm-builder-container');
+  if (builderContainer && typeof smSalvarNoPerfil === 'function') {
+    const textoDecorado = gerarSobreMim(smEstado.campos, smEstado.separador);
+    
+    // SEGURANCA: se o builder nao gerou nada E o perfil ja tinha bio,
+    // NAO sobrescrever — mantem o conteudo original
+    if (!textoDecorado && bioOriginal) {
+      mostrarNotificacao('Preencha pelo menos um campo para atualizar seu "Sobre mim".');
+      return;
+    }
+    
+    await smSalvarNoPerfil(
+      textoDecorado,
+      { campos: smEstado.campos.map(c => ({ key:c.key, texto:c.texto, config:{...c.config} })), separador: smEstado.separador }
+    );
+    bioTexto = currentProfile.bio || '';
+    sobreMimConfig = currentProfile.sobre_mim_config || null;
+  }
+
   const payload = {
-    bio: document.getElementById('up-edit-bio').value.trim(),
+    bio: bioTexto || bioOriginal, // SEGURANCA: se bioTexto ficou vazio, usa original
+    sobre_mim_config: sobreMimConfig,
     relacionamento: document.getElementById('up-edit-rel').value,
     identidade_sexual: document.getElementById('up-edit-sexo').value.trim(),
     musicas: document.getElementById('up-edit-musicas').value.trim(),
@@ -2321,14 +2361,16 @@ async function salvarInfoOrkut() {
   };
 
   const { error } = await supabaseClient.from('profiles').update(payload).eq('id', currentUser.id);
-  
+
   if (error) {
     mostrarNotificacao('Erro ao salvar dados.');
   } else {
-    mostrarNotificacao('✅ Perfil Orkut atualizado!');
+    mostrarNotificacao('Perfil Orkut atualizado!');
     Object.assign(currentProfile, payload);
   }
 }
+
+
 
 async function carregarRanking() {
   const lista = document.getElementById('up-ranking-lista');
