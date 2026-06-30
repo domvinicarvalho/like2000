@@ -58,6 +58,17 @@
 
     .votes-line { display: flex; gap: 12px; margin-bottom: 15px; }
     .vote-item { display: flex; align-items: center; gap: 3px; cursor: pointer; font-size: 10px; color: #666; opacity: 0.6; transition: opacity 0.2s; user-select: none; }
+
+    /* Responsivo mobile */
+    @media (max-width: 700px) {
+      .container { width: 100%; flex-direction: column; }
+      .col-esquerda { width: 100%; }
+      .col-direita { width: 100%; }
+      .sm-edit-link { display: inline !important; }
+    }
+    .sm-edit-link { display: none; }
+
+    
     .vote-item.voted { opacity: 1; font-weight: bold; color: #333; }
 
     /* Coluna Direita & Boxes */
@@ -320,6 +331,7 @@
               <div class="stats-line">
                 recados <span>0</span> | fotos <span>0</span> | vídeos <span>0</span> | fãs <span>0</span>
               </div>
+              ${isMe ? `<div class="sm-edit-link" style="margin-bottom:8px;"><a href="javascript:void(0)" onclick="abrirEdicaoPerfil()" style="color:#E8457A;font-weight:bold;font-size:11px;">✏️ Editar Perfil</a></div>` : ""}
 
               <div class="votes-line">
                 <div class="vote-item" id="item-confiavel" onclick="toggleVote('${p.id}', 'confiavel')">
