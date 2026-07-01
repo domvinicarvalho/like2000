@@ -53,91 +53,52 @@ Deno.serve(async (req) => {
     });
   }
 
-  // Buscar evento
-  const { data: event, error: eventError } = await supabase
-    .from("events")
-    .select("id, name, qr_checkin_active, start_time")
-    .eq("id", event_id)
-    .single();
+  // Usa RPC process_checkin para evitar schema cache do PostgREST
+  // A função SQL faz toda a lógica no banco: valida evento, janela, antifarm, credita XP
+  const { data: result, error: rpcError } = await supabase.rpc("process_checkin", {
+    p_event_id: event_id,
+    p_user_id: user.id,
+    p_xp_amount: XP_CHECKIN,
+  });
 
-  if (eventError || !event) {
-    return new Response(JSON.stringify({ error: "Evento não encontrado" }), {
-      status: 404,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-
-  // Verificar se check-in via QR está ativo para este evento
-  if (!event.qr_checkin_active) {
-    return new Response(
-      JSON.stringify({ error: "Check-in por QR não está ativo para este evento" }),
-      { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-  }
-
-  // Validar janela de validade: desde a geração do QR (start_time) até 24h após start_time
-  const now = new Date();
-
-  if (event.start_time) {
-    const windowEnd = new Date(new Date(event.start_time).getTime() + 24 * 60 * 60 * 1000);
-    if (now > windowEnd) {
-      return new Response(
-        JSON.stringify({ error: "O período de check-in para este evento expirou (24h após o início)" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-  }
-
-  // Verificar antifarm: único check-in por usuário por evento
-  const { data: existingCheckin } = await supabase
-    .from("event_checkins")
-    .select("id")
-    .eq("event_id", event_id)
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (existingCheckin) {
-    return new Response(
-      JSON.stringify({ error: "Você já fez check-in neste evento!", already_checked: true }),
-      { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-  }
-
-  // Inserir check-in
-  const { error: checkinError } = await supabase
-    .from("event_checkins")
-    .insert({ event_id: event.id, user_id: user.id, xp_earned: XP_CHECKIN });
-
-  if (checkinError) {
-    if (checkinError.code === "23505") {
-      return new Response(
-        JSON.stringify({ error: "Check-in já realizado para este evento", already_checked: true }),
-        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-    return new Response(JSON.stringify({ error: checkinError.message }), {
+  if (rpcError) {
+    console.error("[checkin] RPC error:", rpcError);
+    return new Response(JSON.stringify({ error: rpcError.message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
-  // Creditar XP via RPC increment_xp
-  const { error: xpError } = await supabase.rpc("increment_xp", {
-    p_user_id: user.id,
-    p_amount: XP_CHECKIN,
-    p_reason: `event_checkin_${event.id}`,
-  });
+  // result é um JSONB retornado pela função SQL
+  if (result && result.error) {
+    // Erros de negócio: evento não encontrado, já checkin, expirado, etc.
+    if (result.already_checked) {
+      return new Response(
+        JSON.stringify({ error: result.error, already_checked: true }),
+        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
-  if (xpError) {
-    console.error("Erro ao creditar XP:", xpError.message);
+    // Erros 403 (checkin inativo, janela expirada) ou 404
+    const status = result.error.includes("expirou") || result.error.includes("não está ativo")
+      ? 403
+      : result.error.includes("não encontrado")
+        ? 404
+        : 400;
+
+    return new Response(
+      JSON.stringify({ error: result.error }),
+      { status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   }
 
+  // Sucesso
   return new Response(
     JSON.stringify({
       success: true,
-      xp_earned: XP_CHECKIN,
-      event_name: event.name,
-      message: `+${XP_CHECKIN} XP por check-in no evento!`,
+      xp_earned: result.xp_earned || XP_CHECKIN,
+      event_name: result.event_name || "",
+      message: result.message || `+${XP_CHECKIN} XP por check-in no evento!`,
     }),
     { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
   );
