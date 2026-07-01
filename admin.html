@@ -225,6 +225,7 @@
       <li><a href="#" id="nav-daily-tasks" class="active" onclick="showSection('daily-tasks', this)">Tarefas Diárias</a></li>
       <li><a href="#" id="nav-events" onclick="showSection('events', this)">Eventos Compartilhamento</a></li>
       <li><a href="#" id="nav-events-ie" onclick="showSection('events-ie', this)">Eventos IE</a></li>
+      <li><a href="#" id="nav-checkin" onclick="showSection('checkin', this)">Check-in QR</a></li>
       <li><a href="#" id="nav-configs" onclick="showSection('configs', this)">Configurações Gerais</a></li>
       <li><a href="#" id="nav-alerts" onclick="showSection('alerts', this)">Disparar Alertas</a></li>
       <li><a href="#" id="nav-users" onclick="showSection('users', this)">Usuários</a></li>
@@ -518,6 +519,37 @@
             <label style="font-weight:bold;">Badges atuais do usuário:</label>
             <div id="assign-user-badges-list" style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;"></div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="checkin-section" class="admin-section" style="display:none;">
+      <h3>QR Code para Check-in</h3>
+      <p style="font-size:13px; color:#666; margin-bottom:20px;">
+        Selecione um evento abaixo para visualizar e baixar o QR Code de check-in.
+        O QR Code dá <strong>+100 XP</strong> para cada usuário (uma única vez por evento).
+      </p>
+      <div id="checkin-event-selector" style="margin-bottom:20px;">
+        <label for="checkin-event-select" style="font-weight:bold; font-size:13px;">Evento:</label>
+        <select id="checkin-event-select" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; font-size:14px;" onchange="gerarQRCodeCheckin()">
+          <option value="">Selecione um evento...</option>
+        </select>
+      </div>
+      <div id="checkin-qr-area" style="display:none; text-align:center; padding:20px; border:2px dashed #ddd; border-radius:12px; background:#fafafa;">
+        <div id="checkin-qr-image" style="margin-bottom:16px;">
+          <img src="" alt="QR Code" style="max-width:300px; width:100%; image-rendering:pixelated; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+        </div>
+        <div style="font-size:14px; color:#555; margin-bottom:12px;">
+          <strong id="checkin-event-name"></strong>
+        </div>
+        <div style="font-size:12px; color:#888; margin-bottom:16px; word-break:break-all;" id="checkin-url-display"></div>
+        <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+          <button onclick="baixarQRCode()" class="btn" style="background:#2e6da4; color:white; border:none; padding:10px 20px; border-radius:6px; cursor:pointer; font-size:14px;">
+            📥 Baixar QR Code
+          </button>
+          <button onclick="copiarUrlCheckin()" class="btn" style="background:#5cb85c; color:white; border:none; padding:10px 20px; border-radius:6px; cursor:pointer; font-size:14px;">
+            📋 Copiar URL
+          </button>
         </div>
       </div>
     </div>
@@ -1592,12 +1624,128 @@
       if (sectionId === 'daily-tasks') renderDailyTasks();
       else if (sectionId === 'events') renderEvents();
       else if (sectionId === 'events-ie') renderEventsIE();
+      else if (sectionId === 'checkin') { carregarEventosCheckin(); }
       else if (sectionId === 'configs') { renderAppConfig(); carregarInfoTemporada(); }
       else if (sectionId === 'alerts') renderAlerts();
       else if (sectionId === 'communities') renderCommunities();
       else if (sectionId === 'users') { renderUsers(); renderReports(); }
       else if (sectionId === 'badges') { autoCriarBadgesIniciais(); renderBadges(); }
     };
+
+    // ────────────────────────────────────────────
+    //  QR CODE CHECK-IN SECTION
+    // ────────────────────────────────────────────
+
+    let checkinEventData = null; // Stores the last generated QR data
+
+    async function carregarEventosCheckin() {
+      const select = document.getElementById('checkin-event-select');
+      select.innerHTML = '<option value="">Carregando eventos...</option>';
+      document.getElementById('checkin-qr-area').style.display = 'none';
+
+      const { data, error } = await supabaseClient
+        .from('events')
+        .select('id, name, event_date')
+        .order('event_date', { ascending: false });
+
+      if (error) {
+        select.innerHTML = '<option value="">Erro ao carregar eventos</option>';
+        return;
+      }
+
+      select.innerHTML = '<option value="">Selecione um evento...</option>';
+      data.forEach(event => {
+        const dateStr = event.event_date ? new Date(event.event_date).toLocaleDateString('pt-BR') : '';
+        select.innerHTML += `<option value="${event.id}">${escapeHtml(event.name)} (${dateStr})</option>`;
+      });
+    }
+
+    async function gerarQRCodeCheckin() {
+      const eventId = document.getElementById('checkin-event-select').value;
+      const qrArea = document.getElementById('checkin-qr-area');
+
+      if (!eventId) {
+        qrArea.style.display = 'none';
+        return;
+      }
+
+      qrArea.style.display = 'block';
+      document.getElementById('checkin-qr-image').innerHTML = '<div style="padding:40px;"><div class="spinner" style="width:40px;height:40px;border-width:4px;border-top-color:#667eea;display:inline-block;"></div></div>';
+      document.getElementById('checkin-event-name').textContent = 'Carregando...';
+
+      // Get the session for auth
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (!session) {
+        document.getElementById('checkin-qr-image').innerHTML = '<p style="color:red;">Faça login como admin primeiro.</p>';
+        return;
+      }
+
+      try {
+        const response = await fetch(SUPABASE_URL + '/functions/v1/generate-event-qr', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + session.access_token
+          },
+          body: JSON.stringify({ event_id: eventId })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          document.getElementById('checkin-qr-image').innerHTML = '<p style="color:red;">Erro: ' + (data.error || 'Falha ao gerar QR Code') + '</p>';
+          return;
+        }
+
+        checkinEventData = data;
+
+        document.getElementById('checkin-qr-image').innerHTML = `<img src="${data.qr_image_url}" alt="QR Code" style="max-width:300px; width:100%; image-rendering:pixelated; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.1);">`;
+        document.getElementById('checkin-event-name').textContent = data.event_name;
+        document.getElementById('checkin-url-display').textContent = 'URL: ' + data.checkin_url;
+      } catch (e) {
+        document.getElementById('checkin-qr-image').innerHTML = '<p style="color:red;">Erro de conexão: ' + e.message + '</p>';
+      }
+    }
+
+    function baixarQRCode() {
+      if (!checkinEventData) return;
+      
+      // Download the QR image using fetch and blob
+      fetch(checkinEventData.qr_image_url)
+        .then(response => response.blob())
+        .then(blob => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `checkin_${checkinEventData.event_name.replace(/[^a-zA-Z0-9]/g, '_')}.png`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          showNotification('QR Code baixado!');
+        })
+        .catch(() => {
+          // Fallback: open in new tab and user can save manually
+          window.open(checkinEventData.qr_image_url, '_blank');
+        });
+    }
+
+    function copiarUrlCheckin() {
+      if (!checkinEventData) return;
+      
+      navigator.clipboard.writeText(checkinEventData.checkin_url)
+        .then(() => showNotification('URL copiada!'))
+        .catch(() => {
+          // Fallback for older browsers
+          const textarea = document.createElement('textarea');
+          textarea.value = checkinEventData.checkin_url;
+          document.body.appendChild(textarea);
+          textarea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textarea);
+          showNotification('URL copiada!');
+        });
+    }
 
     // --- Event Listeners for Alerts Section ---
     document.addEventListener('DOMContentLoaded', () => {

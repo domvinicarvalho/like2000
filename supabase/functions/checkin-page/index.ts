@@ -1,0 +1,532 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const XP_CHECKIN = 100;
+const XP_BONUS_CADASTRO = 100;
+
+const PAGE_HTML = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Check-in · LIKE 2000</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: Tahoma, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .card {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      padding: 40px;
+      max-width: 420px;
+      width: 100%;
+      text-align: center;
+    }
+    .card h1 {
+      font-size: 24px;
+      margin-bottom: 8px;
+      color: #333;
+    }
+    .card .subtitle {
+      color: #888;
+      font-size: 14px;
+      margin-bottom: 24px;
+    }
+    .card .event-name {
+      background: #f0f0f0;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 24px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #555;
+    }
+    .card .xp-badge {
+      display: inline-block;
+      background: #FFD700;
+      color: #333;
+      font-weight: bold;
+      font-size: 20px;
+      padding: 10px 24px;
+      border-radius: 30px;
+      margin-bottom: 20px;
+    }
+    .card .btn {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      margin-bottom: 12px;
+    }
+    .card .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    }
+    .card .btn-primary {
+      background: #667eea;
+      color: white;
+    }
+    .card .btn-success {
+      background: #2ecc71;
+      color: white;
+    }
+    .card .btn-disabled {
+      background: #bdc3c7;
+      color: white;
+      cursor: not-allowed;
+    }
+    .card .btn-google {
+      background: white;
+      color: #333;
+      border: 2px solid #ddd;
+    }
+    .card .btn-google:hover {
+      border-color: #667eea;
+    }
+    .card input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #ddd;
+      border-radius: 10px;
+      font-size: 14px;
+      margin-bottom: 12px;
+      transition: border-color 0.2s;
+    }
+    .card input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    .card .message {
+      padding: 12px;
+      border-radius: 10px;
+      margin-bottom: 16px;
+      font-size: 14px;
+    }
+    .card .message-success {
+      background: #d4edda;
+      color: #155724;
+    }
+    .card .message-info {
+      background: #d1ecf1;
+      color: #0c5460;
+    }
+    .card .message-error {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    .card .message-warning {
+      background: #fff3cd;
+      color: #856404;
+    }
+    .card .form-toggle {
+      font-size: 13px;
+      color: #667eea;
+      cursor: pointer;
+      display: inline-block;
+      margin-top: 8px;
+    }
+    .card .form-toggle:hover {
+      text-decoration: underline;
+    }
+    .card .divider {
+      display: flex;
+      align-items: center;
+      margin: 20px 0;
+      color: #ccc;
+      font-size: 12px;
+    }
+    .card .divider::before, .card .divider::after {
+      content: '';
+      flex: 1;
+      border-top: 1px solid #eee;
+    }
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 0.6s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .hidden { display: none !important; }
+    .check-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card" id="app">
+    <!-- Loading -->
+    <div id="loading-view">
+      <div style="padding: 40px 0;">
+        <div class="spinner" style="width:40px;height:40px;border-width:4px;border-top-color:#667eea;"></div>
+        <p style="color:#888;margin-top:12px;">Carregando...</p>
+      </div>
+    </div>
+
+    <!-- Error view -->
+    <div id="error-view" class="hidden">
+      <div class="check-icon">😕</div>
+      <h1>Ops!</h1>
+      <p id="error-message" style="color:#888;margin:12px 0 20px;">Não foi possível carregar as informações do evento.</p>
+      <a href="/" class="btn btn-primary">Voltar ao LIKE 2000</a>
+    </div>
+
+    <!-- Checkin success view -->
+    <div id="success-view" class="hidden">
+      <div class="check-icon">✅</div>
+      <h1>Check-in realizado!</h1>
+      <div class="xp-badge" id="success-xp">+100 XP</div>
+      <p id="success-message" style="color:#888;margin-bottom:20px;">Você ganhou XP por participar do evento!</p>
+      <a href="/" class="btn btn-primary">Voltar ao LIKE 2000</a>
+    </div>
+
+    <!-- Already checked view -->
+    <div id="already-view" class="hidden">
+      <div class="check-icon">🔄</div>
+      <h1>Já conferido!</h1>
+      <div class="message message-info" style="margin-bottom:20px;">
+        Você já fez check-in neste evento. Continue participando para ganhar mais XP!
+      </div>
+      <a href="/" class="btn btn-primary">Voltar ao LIKE 2000</a>
+    </div>
+
+    <!-- Expired/window closed view -->
+    <div id="expired-view" class="hidden">
+      <div class="check-icon">⏰</div>
+      <h1>Fora do período</h1>
+      <div class="message message-warning" style="margin-bottom:20px;">
+        O check-in para este evento não está mais disponível. 
+        O QR Code tem validade até 1 hora após o término do evento.
+      </div>
+      <a href="/" class="btn btn-primary">Voltar ao LIKE 2000</a>
+    </div>
+
+    <!-- Login view -->
+    <div id="login-view" class="hidden">
+      <h1>Faça check-in!</h1>
+      <div class="subtitle">Escaneie e ganhe XP no evento</div>
+      <div class="event-name" id="login-event-name">Carregando...</div>
+      <div class="xp-badge">+100 XP</div>
+
+      <div id="login-message-area"></div>
+
+      <button class="btn btn-google" onclick="loginWithGoogle()">
+        <span style="font-size:18px;margin-right:8px;">G</span> Entrar com Google
+      </button>
+      
+      <div class="divider">ou</div>
+
+      <div id="login-form">
+        <input type="email" id="login-email" placeholder="Seu e-mail" autocomplete="email">
+        <input type="password" id="login-password" placeholder="Sua senha" autocomplete="current-password">
+        <button class="btn btn-primary" onclick="loginWithEmail()">Entrar</button>
+        <span class="form-toggle" onclick="showSignup()">Ainda não tem conta? Cadastre-se</span>
+      </div>
+
+      <div id="signup-form" class="hidden">
+        <input type="email" id="signup-email" placeholder="Seu e-mail" autocomplete="email">
+        <input type="password" id="signup-password" placeholder="Crie uma senha" autocomplete="new-password">
+        <input type="text" id="signup-nickname" placeholder="Seu nickname (como quer ser chamado)">
+        <button class="btn btn-primary" onclick="signupAndCheckin()">Criar conta e ganhar XP</button>
+        <span class="form-toggle" onclick="showLogin()">Já tem conta? Faça login</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = '{{SUPABASE_URL}}';
+    const SUPABASE_ANON_KEY = '{{SUPABASE_ANON_KEY}}';
+    const { createClient } = supabase;
+    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Get evento from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const EVENTO_ID = urlParams.get('evento');
+
+    const XP_CHECKIN = {{XP_CHECKIN}};
+    const XP_BONUS_CADASTRO = {{XP_BONUS_CADASTRO}};
+
+    function showView(viewId) {
+      document.querySelectorAll('#app > div').forEach(div => div.classList.add('hidden'));
+      document.getElementById(viewId).classList.remove('hidden');
+    }
+
+    function showMessage(areaId, text, type) {
+      const area = document.getElementById(areaId);
+      area.innerHTML = '<div class="message message-' + type + '">' + escapeHtml(text) + '</div>';
+    }
+
+    function clearMessages() {
+      document.getElementById('login-message-area').innerHTML = '';
+    }
+
+    function escapeHtml(text) {
+      const map = { '&': '&', '<': '<', '>': '>', '"': '"', "'": '&#039;' };
+      return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
+
+    function setLoading(btn, loading) {
+      if (loading) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Aguarde...';
+      } else {
+        btn.disabled = false;
+        btn.innerHTML = btn.getAttribute('data-original-text') || btn.innerHTML;
+      }
+    }
+
+    // ── Check-in API call ──
+    async function doCheckin() {
+      const session = (await supabaseClient.auth.getSession()).data.session;
+      if (!session) return false;
+
+      const response = await fetch(SUPABASE_URL + '/functions/v1/checkin-event', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + session.access_token
+        },
+        body: JSON.stringify({ event_id: EVENTO_ID })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Success
+        document.getElementById('success-xp').textContent = '+' + data.xp_earned + ' XP';
+        document.getElementById('success-message').textContent = data.message || 'Você ganhou XP por participar do evento!';
+        showView('success-view');
+        return true;
+      }
+
+      if (response.status === 409) {
+        // Already checked
+        showView('already-view');
+        return true;
+      }
+
+      if (response.status === 403 && data.error && data.error.includes('expirou')) {
+        showView('expired-view');
+        return true;
+      }
+
+      return false;
+    }
+
+    // ── Auth flows ──
+    async function loginWithGoogle() {
+      clearMessages();
+      const { error } = await supabaseClient.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.href }
+      });
+      if (error) {
+        showMessage('login-message-area', 'Erro ao fazer login: ' + error.message, 'error');
+      }
+    }
+
+    async function loginWithEmail() {
+      clearMessages();
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+
+      if (!email || !password) {
+        showMessage('login-message-area', 'Preencha e-mail e senha.', 'error');
+        return;
+      }
+
+      const btn = document.querySelector('#login-form .btn-primary');
+      setLoading(btn, true);
+
+      const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        setLoading(btn, false);
+        showMessage('login-message-area', 'Erro: ' + error.message, 'error');
+        return;
+      }
+
+      // Logado! Tenta fazer check-in
+      const checked = await doCheckin();
+      if (!checked) {
+        showView('login-view');
+        showMessage('login-message-area', 'Erro ao fazer check-in. Tente novamente.', 'error');
+      }
+      setLoading(btn, false);
+    }
+
+    async function signupAndCheckin() {
+      clearMessages();
+      const email = document.getElementById('signup-email').value.trim();
+      const password = document.getElementById('signup-password').value;
+      const nickname = document.getElementById('signup-nickname').value.trim();
+
+      if (!email || !password || !nickname) {
+        showMessage('login-message-area', 'Preencha todos os campos.', 'error');
+        return;
+      }
+
+      if (password.length < 6) {
+        showMessage('login-message-area', 'A senha deve ter pelo menos 6 caracteres.', 'error');
+        return;
+      }
+
+      const btn = document.querySelector('#signup-form .btn-primary');
+      setLoading(btn, true);
+
+      // Create the user
+      const { data: signUpData, error: signUpError } = await supabaseClient.auth.signUp({
+        email,
+        password,
+        options: { data: { nickname } }
+      });
+
+      if (signUpError) {
+        setLoading(btn, false);
+        showMessage('login-message-area', 'Erro: ' + signUpError.message, 'error');
+        return;
+      }
+
+      // Auto-login after signup
+      if (signUpData.session) {
+        // Create the profile
+        await supabaseClient.from('profiles').upsert({
+          id: signUpData.user.id,
+          nickname: nickname,
+          email: email
+        });
+
+        // Tenta check-in (ganha 100 XP via checkin-event)
+        // Se o check-in já foi feito (409), mostra como sucesso também
+        const doCheckinResult = await fetch(SUPABASE_URL + '/functions/v1/checkin-event', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + signUpData.session.access_token
+          },
+          body: JSON.stringify({ event_id: EVENTO_ID })
+        }).then(r => r.json()).catch(() => ({}));
+
+        showView('success-view');
+        document.getElementById('success-xp').textContent = doCheckinResult.xp_earned ? '+' + doCheckinResult.xp_earned + ' XP' : '+100 XP';
+        document.getElementById('success-message').textContent = 
+          'Bem-vindo ao LIKE 2000! Você ganhou +100 XP por check-in via evento!';
+        setLoading(btn, false);
+      } else {
+        // Confirmation email sent
+        showMessage('login-message-area', 
+          'Conta criada! Verifique seu e-mail para confirmar. Após confirmar, faça login e escaneie o QR Code novamente.', 'info');
+        setLoading(btn, false);
+      }
+    }
+
+    function showSignup() {
+      document.getElementById('login-form').classList.add('hidden');
+      document.getElementById('signup-form').classList.remove('hidden');
+      clearMessages();
+    }
+
+    function showLogin() {
+      document.getElementById('signup-form').classList.add('hidden');
+      document.getElementById('login-form').classList.remove('hidden');
+      clearMessages();
+    }
+
+    // ── Init ──
+    async function init() {
+      if (!EVENTO_ID) {
+        document.getElementById('error-message').textContent = 'URL inválida: parâmetro "evento" não encontrado.';
+        showView('error-view');
+        return;
+      }
+
+      // Get event name
+      const { data: event } = await supabaseClient
+        .from('events')
+        .select('name')
+        .eq('id', EVENTO_ID)
+        .single();
+
+      if (!event) {
+        document.getElementById('error-message').textContent = 'Evento não encontrado.';
+        showView('error-view');
+        return;
+      }
+
+      document.getElementById('login-event-name').textContent = event.name;
+
+      // Check if user is logged in
+      const session = (await supabaseClient.auth.getSession()).data.session;
+
+      if (session) {
+        // User is logged in - try check-in directly
+        const checked = await doCheckin();
+        if (!checked) {
+          // Fallback: show login view with message
+          showView('login-view');
+          showMessage('login-message-area', 'Erro ao processar check-in. Tente novamente.', 'error');
+        }
+      } else {
+        // Show login/signup view
+        showView('login-view');
+      }
+    }
+
+    // Handle OAuth redirect (Google)
+    supabaseClient.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session && EVENTO_ID) {
+        const checked = await doCheckin();
+        if (!checked) {
+          showView('login-view');
+          showMessage('login-message-area', 'Erro ao processar check-in após login.', 'error');
+        }
+      }
+    });
+
+    init();
+  </script>
+</body>
+</html>`;
+
+Deno.serve(async (req) => {
+  const url = new URL(req.url);
+  const eventoId = url.searchParams.get("evento");
+
+  if (!eventoId) {
+    return new Response("Parâmetro 'evento' é obrigatório", { status: 400 });
+  }
+
+  // Substituir placeholders pelos valores reais
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+  const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
+
+  const html = PAGE_HTML
+    .replace("{{SUPABASE_URL}}", supabaseUrl)
+    .replace("{{SUPABASE_ANON_KEY}}", supabaseAnonKey)
+    .replace("{{XP_CHECKIN}}", String(XP_CHECKIN))
+    .replace("{{XP_BONUS_CADASTRO}}", String(XP_BONUS_CADASTRO));
+
+  return new Response(html, {
+    status: 200,
+    headers: { "Content-Type": "text/html; charset=utf-8" },
+  });
+});
