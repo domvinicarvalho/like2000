@@ -214,29 +214,45 @@
 
     async function doCheckin() {
       const session = (await supabaseClient.auth.getSession()).data.session;
-      if (!session) return false;
+      if (!session) {
+        console.log('[checkin] No session');
+        return false;
+      }
 
-      const response = await fetch(SUPABASE_URL + '/functions/v1/checkin-event', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + session.access_token
-        },
-        body: JSON.stringify({ event_id: EVENTO_ID })
-      });
+      console.log('[checkin] Calling checkin-event for event:', EVENTO_ID);
+      console.log('[checkin] Token:', session.access_token.substring(0, 20) + '...');
 
-      const data = await response.json();
+      let response, data;
+      try {
+        response = await fetch(SUPABASE_URL + '/functions/v1/checkin-event', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + session.access_token
+          },
+          body: JSON.stringify({ event_id: EVENTO_ID })
+        });
+        data = await response.json();
+      } catch (e) {
+        console.log('[checkin] Fetch error:', e);
+        return false;
+      }
+
+      console.log('[checkin] Response status:', response.status);
+      console.log('[checkin] Response data:', JSON.stringify(data));
 
       if (response.ok) {
+        console.log('[checkin] SUCCESS! XP earned:', data.xp_earned);
         document.getElementById('success-xp').textContent = '+' + data.xp_earned + ' XP';
         document.getElementById('success-message').textContent = data.message || 'Você ganhou XP por participar do evento!';
         showView('success-view');
         return true;
       }
 
-      if (response.status === 409) { showView('already-view'); return true; }
-      if (response.status === 403) { showView('expired-view'); return true; }
+      if (response.status === 409) { console.log('[checkin] Already checked'); showView('already-view'); return true; }
+      if (response.status === 403) { console.log('[checkin] Expired:', data.error); showView('expired-view'); return true; }
 
+      console.log('[checkin] Failed:', response.status, data.error);
       return false;
     }
 
