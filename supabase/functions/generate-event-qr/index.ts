@@ -72,12 +72,11 @@ Deno.serve(async (req) => {
       .eq("id", event.id);
   }
 
-  // URL base do projeto para o check-in
-  const projectUrl = Deno.env.get("SUPABASE_URL") || "";
-  const siteBaseUrl = projectUrl.replace(/\/$/, "");
+  // URL base do site (dominio principal)
+  const siteUrl = Deno.env.get("SITE_URL") || "https://like2000.com.br";
 
-  // Gera a URL de check-in para este evento
-  const checkinUrl = `${siteBaseUrl}/functions/v1/checkin-page?evento=${event.id}`;
+  // Gera a URL de check-in para este evento — página estática no dominio principal
+  const checkinUrl = `${siteUrl}/checkin.html?evento=${event.id}`;
 
   // URL para gerar QR Code via API pública (api.qrserver.com)
   const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(checkinUrl)}`;

@@ -1,5 +1,6 @@
 -- Migration: Sistema de check-in por QR Code para eventos
 -- Aditivo: não remove nem altera colunas existentes
+-- Totalmente idempotente: pode ser executado múltiplas vezes sem erro
 
 -- 1. Adiciona colunas de horário aos eventos (para validar janela de check-in)
 ALTER TABLE events
@@ -25,14 +26,11 @@ CREATE INDEX IF NOT EXISTS idx_event_checkins_user   ON event_checkins(user_id);
 -- 4. RLS
 ALTER TABLE event_checkins ENABLE ROW LEVEL SECURITY;
 
--- Permite leitura para todos (para UI verificar status)
+-- Drop antes de criar para garantir idempotência (CREATE POLICY não tem IF NOT EXISTS)
+DROP POLICY IF EXISTS "Anyone can view event checkins" ON event_checkins;
 CREATE POLICY "Anyone can view event checkins" ON event_checkins
   FOR SELECT USING (true);
 
--- Permite inserção para todos (anon key consegue inserir via Edge Function)
+DROP POLICY IF EXISTS "Anyone can insert event checkins" ON event_checkins;
 CREATE POLICY "Anyone can insert event checkins" ON event_checkins
   FOR INSERT WITH CHECK (true);
-
--- 5. Nova tabela para registrar XP ganho via check-in (se quiser tracking separado)
--- Mas como já usamos xp_transactions + increment_xp, não precisamos de outra.
--- O próprio event_checkins já serve como antifarm.
