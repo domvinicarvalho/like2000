@@ -3,6 +3,12 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const XP_CHECKIN = 100;
 const XP_BONUS_CADASTRO = 100;
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "GET, OPTIONS",
+};
+
 const PAGE_HTML = `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -214,8 +220,8 @@ const PAGE_HTML = `<!DOCTYPE html>
       <div class="check-icon">⏰</div>
       <h1>Fora do período</h1>
       <div class="message message-warning" style="margin-bottom:20px;">
-        O check-in para este evento não está mais disponível. 
-        O QR Code tem validade até 1 hora após o término do evento.
+        O check-in para este evento não está mais disponível.
+        O QR Code tem validade de até 24 horas após o início do evento.
       </div>
       <a href="/" class="btn btn-primary">Voltar ao LIKE 2000</a>
     </div>
@@ -319,12 +325,11 @@ const PAGE_HTML = `<!DOCTYPE html>
       }
 
       if (response.status === 409) {
-        // Already checked
         showView('already-view');
         return true;
       }
 
-      if (response.status === 403 && data.error && data.error.includes('expirou')) {
+      if (response.status === 403) {
         showView('expired-view');
         return true;
       }
@@ -365,7 +370,6 @@ const PAGE_HTML = `<!DOCTYPE html>
         return;
       }
 
-      // Logado! Tenta fazer check-in
       const checked = await doCheckin();
       if (!checked) {
         showView('login-view');
@@ -393,7 +397,6 @@ const PAGE_HTML = `<!DOCTYPE html>
       const btn = document.querySelector('#signup-form .btn-primary');
       setLoading(btn, true);
 
-      // Create the user
       const { data: signUpData, error: signUpError } = await supabaseClient.auth.signUp({
         email,
         password,
@@ -406,17 +409,14 @@ const PAGE_HTML = `<!DOCTYPE html>
         return;
       }
 
-      // Auto-login after signup
       if (signUpData.session) {
-        // Create the profile
         await supabaseClient.from('profiles').upsert({
           id: signUpData.user.id,
           nickname: nickname,
           email: email
         });
 
-        // Tenta check-in (ganha 100 XP via checkin-event)
-        // Se o check-in já foi feito (409), mostra como sucesso também
+        // Tenta check-in (credita +100 XP via checkin-event, uma vez por evento)
         const doCheckinResult = await fetch(SUPABASE_URL + '/functions/v1/checkin-event', {
           method: 'POST',
           headers: {
@@ -428,12 +428,11 @@ const PAGE_HTML = `<!DOCTYPE html>
 
         showView('success-view');
         document.getElementById('success-xp').textContent = doCheckinResult.xp_earned ? '+' + doCheckinResult.xp_earned + ' XP' : '+100 XP';
-        document.getElementById('success-message').textContent = 
+        document.getElementById('success-message').textContent =
           'Bem-vindo ao LIKE 2000! Você ganhou +100 XP por check-in via evento!';
         setLoading(btn, false);
       } else {
-        // Confirmation email sent
-        showMessage('login-message-area', 
+        showMessage('login-message-area',
           'Conta criada! Verifique seu e-mail para confirmar. Após confirmar, faça login e escaneie o QR Code novamente.', 'info');
         setLoading(btn, false);
       }
@@ -459,7 +458,6 @@ const PAGE_HTML = `<!DOCTYPE html>
         return;
       }
 
-      // Get event name
       const { data: event } = await supabaseClient
         .from('events')
         .select('name')
@@ -474,24 +472,19 @@ const PAGE_HTML = `<!DOCTYPE html>
 
       document.getElementById('login-event-name').textContent = event.name;
 
-      // Check if user is logged in
       const session = (await supabaseClient.auth.getSession()).data.session;
 
       if (session) {
-        // User is logged in - try check-in directly
         const checked = await doCheckin();
         if (!checked) {
-          // Fallback: show login view with message
           showView('login-view');
           showMessage('login-message-area', 'Erro ao processar check-in. Tente novamente.', 'error');
         }
       } else {
-        // Show login/signup view
         showView('login-view');
       }
     }
 
-    // Handle OAuth redirect (Google)
     supabaseClient.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session && EVENTO_ID) {
         const checked = await doCheckin();
@@ -508,6 +501,11 @@ const PAGE_HTML = `<!DOCTYPE html>
 </html>`;
 
 Deno.serve(async (req) => {
+  // Handle CORS preflight
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
   const url = new URL(req.url);
   const eventoId = url.searchParams.get("evento");
 
@@ -515,7 +513,6 @@ Deno.serve(async (req) => {
     return new Response("Parâmetro 'evento' é obrigatório", { status: 400 });
   }
 
-  // Substituir placeholders pelos valores reais
   const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
   const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
 
@@ -527,6 +524,6 @@ Deno.serve(async (req) => {
 
   return new Response(html, {
     status: 200,
-    headers: { "Content-Type": "text/html; charset=utf-8" },
+    headers: { ...corsHeaders, "Content-Type": "text/html; charset=utf-8" },
   });
 });
