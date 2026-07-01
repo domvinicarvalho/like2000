@@ -319,15 +319,15 @@
         return;
       }
 
-      const { data: event } = await supabaseClient.from('events').select('name').eq('id', EVENTO_ID).single();
-      if (!event) {
-        document.getElementById('error-message').textContent = 'Evento não encontrado.';
-        showView('error-view');
-        return;
+      // Tenta buscar nome do evento (pode falhar por RLS, não é crítico)
+      try {
+        const { data: event } = await supabaseClient.from('events').select('name').eq('id', EVENTO_ID).single();
+        if (event) document.getElementById('login-event-name').textContent = event.name;
+      } catch (e) {
+        // Ignora — o nome do evento fica como "Carregando..." se RLS bloquear
       }
 
-      document.getElementById('login-event-name').textContent = event.name;
-
+      // Vai direto para a tela de login/cadastro se não estiver logado
       const session = (await supabaseClient.auth.getSession()).data.session;
       if (session) {
         const checked = await doCheckin();
